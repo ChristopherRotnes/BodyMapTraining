@@ -1,30 +1,52 @@
 import { supabase } from "./supabase";
 
-export async function saveSession(exercises) {
+export async function saveSession(exercises, { imageUrl = null, notes = null, trainingGroupId = null } = {}) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
-    .insert({ user_id: user.id })
+    .insert({
+      trainer_id: user.id,
+      training_group_id: trainingGroupId,
+      session_date: new Date().toISOString().slice(0, 10),
+      image_url: imageUrl,
+      notes,
+    })
     .select()
     .single();
 
   if (sessionError) throw sessionError;
 
-  const rows = exercises
-    .filter(e => e.enabled && e.name)
-    .map(e => ({
-      session_id: session.id,
-      name: e.name,
-      standard_name: e.standardName || null,
-      sets: e.sets || null,
-      reps: e.reps || null,
-      primary_muscles: e.primary || [],
-      secondary_muscles: e.secondary || [],
-    }));
+  const enabledExercises = exercises.filter(e => e.enabled && e.name);
 
-  const { error: exError } = await supabase.from("exercises").insert(rows);
-  if (exError) throw exError;
+  for (let i = 0; i < enabledExercises.length; i++) {
+    const e = enabledExercises[i];
+
+    const { data: ex, error: exError } = await supabase
+      .from("session_exercises")
+      .insert({
+        session_id: session.id,
+        name: e.name,
+        standard_name: e.standardName || null,
+        sets: e.sets ? parseInt(e.sets, 10) || null : null,
+        reps: e.reps ? parseInt(e.reps, 10) || null : null,
+        position: i,
+      })
+      .select()
+      .single();
+
+    if (exError) throw exError;
+
+    const activations = [
+      ...(e.primary || []).map(muscle_id => ({ session_exercise_id: ex.id, muscle_id, activation_type: "primary" })),
+      ...(e.secondary || []).map(muscle_id => ({ session_exercise_id: ex.id, muscle_id, activation_type: "secondary" })),
+    ];
+
+    if (activations.length > 0) {
+      const { error: actError } = await supabase.from("muscle_activations").insert(activations);
+      if (actError) throw actError;
+    }
+  }
 
   return session;
 }
