@@ -1,0 +1,7 @@
+node_modules/
+dist/
+files.zip
+.env
+.env.local
+.claude/worktrees/
+.claude/settings.local.json
