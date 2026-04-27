@@ -254,6 +254,9 @@ export default function MuscleMap() {
   const [editingId, setEditingId] = useState(null);
   const [recs, setRecs] = useState(null);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const fileRef = useRef();
 
   const addImage = useCallback(async (file) => {
@@ -313,15 +316,28 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 
   const confirm = () => {
     const enabled = exercises.filter(e => e.enabled && e.name);
-    setMuscles(calcMuscles(enabled));
+    const enriched = enabled.map(ex => {
+      if (ex.primary?.length || ex.secondary?.length) return ex;
+      const txt = (ex.name + " " + (ex.standardName || "")).toLowerCase();
+      for (const rule of EX_DB) {
+        if (rule.kw.some(k => txt.includes(k))) return { ...ex, primary: rule.p, secondary: rule.s };
+      }
+      return ex;
+    });
+    setMuscles(calcMuscles(enriched));
     setStep("muscles");
-    saveSession(enabled).catch(err => console.error("Lagring feilet:", err));
+    setSaving(true); setSaved(false); setSaveError(false);
+    saveSession(enriched)
+      .then(() => setSaved(true))
+      .catch(err => { console.error("Lagring feilet:", err); setSaveError(true); })
+      .finally(() => setSaving(false));
   };
 
   const reset = () => {
     setStep("upload"); setImages([]);
     setExercises([]); setMuscles({ primary: [], secondary: [] });
     setError(null); setRecs(null);
+    setSaving(false); setSaved(false); setSaveError(false);
   };
 
   const getUntrainedMuscles = () =>
@@ -591,7 +607,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         {/* ── MUSCLES ── */}
         {step === "muscles" && (
           <div className="fade-in">
-            <div style={{ display: "flex", gap: 20, marginBottom: 18, fontSize: 12 }}>
+            <div style={{ display: "flex", gap: 20, marginBottom: 18, fontSize: 12, alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(200,255,0,0.78)" }} />
                 <span style={{ color: C.muted }}>Primær ({muscles.primary.length})</span>
@@ -599,6 +615,11 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(80,180,255,0.45)" }} />
                 <span style={{ color: C.muted }}>Sekundær ({muscles.secondary.length})</span>
+              </div>
+              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5 }}>
+                {saving && <><div style={{ width:10, height:10, border:`2px solid ${C.border}`, borderTop:`2px solid ${C.accent}`, borderRadius:"50%", animation:"spin 0.75s linear infinite" }} /><span style={{ color: C.muted }}>Lagrer…</span></>}
+                {saved && <span style={{ color: C.accent }}>✓ Lagret</span>}
+                {saveError && <span style={{ color: C.danger }}>Lagring feilet</span>}
               </div>
             </div>
 
