@@ -270,20 +270,14 @@ export default function MuscleMap() {
 
   const analyze = async () => {
     setStep("analyzing"); setError(null);
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      setError("API-nøkkel mangler. Legg til VITE_ANTHROPIC_API_KEY i .env.local.");
-      setStep("upload");
-      return;
-    }
     try {
       const imageBlocks = images.map(img => ({
         type: "image",
         source: { type: "base64", media_type: img.mediaType, data: img.base64 },
       }));
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/claude", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1500,
@@ -309,8 +303,8 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
       setExercises(parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })));
       setStep("confirm");
     } catch (err) {
-      const msg = err?.message?.includes("401") || err?.status === 401
-        ? "Ugyldig API-nøkkel. Sjekk VITE_ANTHROPIC_API_KEY i .env.local."
+      const msg = err?.status === 401
+        ? "API-nøkkel feil. Sjekk ANTHROPIC_API_KEY i Netlify-miljøet."
         : "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.";
       setError(msg);
       setStep("upload");
@@ -337,12 +331,10 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setLoadingRecs(true); setRecs(null);
     const untrained = getUntrainedMuscles().map(id => MUSCLES[id].label);
     const trained = [...muscles.primary, ...muscles.secondary].map(id => MUSCLES[id]?.label).filter(Boolean);
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) { setRecs([]); setLoadingRecs(false); return; }
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/claude", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1000,
