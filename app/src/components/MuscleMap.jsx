@@ -278,7 +278,7 @@ export default function MuscleMap() {
         type: "image",
         source: { type: "base64", media_type: img.mediaType, data: img.base64 },
       }));
-      const res = await fetch("/api/claude", {
+      const res = await fetch("/.netlify/functions/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -348,7 +348,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     const untrained = getUntrainedMuscles().map(id => MUSCLES[id].label);
     const trained = [...muscles.primary, ...muscles.secondary].map(id => MUSCLES[id]?.label).filter(Boolean);
     try {
-      const res = await fetch("/api/claude", {
+      const res = await fetch("/.netlify/functions/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

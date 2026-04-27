@@ -1,24 +1,26 @@
-export default async (req) => {
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+exports.handler = async function (event) {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method not allowed" };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }), {
-      status: 500,
+    return {
+      statusCode: 500,
       headers: { "Content-Type": "application/json" },
-    });
+      body: JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
+    };
   }
 
   let body;
   try {
-    body = await req.json();
+    body = JSON.parse(event.body);
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
+    return {
+      statusCode: 400,
       headers: { "Content-Type": "application/json" },
-    });
+      body: JSON.stringify({ error: "Invalid JSON" }),
+    };
   }
 
   const upstream = await fetch("https://api.anthropic.com/v1/messages", {
@@ -32,10 +34,9 @@ export default async (req) => {
   });
 
   const data = await upstream.json();
-  return new Response(JSON.stringify(data), {
-    status: upstream.status,
+  return {
+    statusCode: upstream.status,
     headers: { "Content-Type": "application/json" },
-  });
+    body: JSON.stringify(data),
+  };
 };
-
-export const config = { path: "/api/claude" };
