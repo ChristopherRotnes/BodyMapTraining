@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
+import { saveSession } from "../lib/db";
 
 // ── THEME ─────────────────────────────────────────────────────────────
 const C = {
@@ -75,7 +76,6 @@ const SHAPES = {
   calves_back:     [{ cx:63, cy:292, rx:13, ry:24 }, { cx:97, cy:292, rx:13, ry:24 }],
 };
 
-// Body silhouette polygon (same front/back, only highlights differ)
 const BODY_POLY = "30,50 17,52 11,132 17,148 24,152 25,132 30,62 50,57 55,118 51,148 48,162 48,355 78,355 78,162 82,162 82,355 112,355 112,162 109,148 105,118 110,57 130,62 135,132 136,152 143,148 149,132 143,52 130,50";
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -94,12 +94,10 @@ const getMediaType = (file) => {
 function calcMuscles(exercises) {
   const p = new Set(), s = new Set();
   exercises.forEach(ex => {
-    // Use Claude-provided muscle data if available
     if (ex.primary?.length || ex.secondary?.length) {
       (ex.primary || []).forEach(m => p.add(m));
       (ex.secondary || []).forEach(m => s.add(m));
     } else {
-      // Fallback: local keyword matching
       const txt = (ex.name + " " + (ex.standardName || "")).toLowerCase();
       for (const rule of EX_DB) {
         if (rule.kw.some(k => txt.includes(k))) {
@@ -118,7 +116,7 @@ function calcMuscles(exercises) {
 function BodySVG({ view, primary, secondary, muscleMap = {} }) {
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
-  const [tooltip, setTooltip] = React.useState(null); // {id, x, y}
+  const [tooltip, setTooltip] = React.useState(null);
   const wrapRef = React.useRef();
 
   const handleEnter = (id, e) => {
@@ -148,14 +146,12 @@ function BodySVG({ view, primary, secondary, muscleMap = {} }) {
           </filter>
         </defs>
 
-        {/* Silhouette */}
         <g fill="#1C1C1C" stroke="#2C2C2C" strokeWidth="0.6">
           <circle cx="80" cy="21" r="17" />
           <polygon points="74,37 86,37 87,50 73,50" />
           <polygon points={BODY_POLY} />
         </g>
 
-        {/* Muscle highlights */}
         {Object.entries(SHAPES)
           .filter(([id]) => MUSCLES[id]?.view === view)
           .map(([id, shapes]) => {
@@ -186,7 +182,6 @@ function BodySVG({ view, primary, secondary, muscleMap = {} }) {
           fontFamily="monospace" letterSpacing="2">{view === "front" ? "FRONT" : "BACK"}</text>
       </svg>
 
-      {/* Tooltip */}
       {tooltip && muscleMap[tooltip.id]?.length > 0 && (
         <div style={{
           position:"absolute",
@@ -250,9 +245,8 @@ function buildRecMuscleMap(recs) {
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
 export default function MuscleMap() {
   const [step, setStep] = useState("upload");
-  const [imagePreview, setImagePreview] = useState(null);
-  const [imageBase64, setImageBase64] = useState(null);
-  const [mediaType, setMediaType] = useState("image/jpeg");
+  // images: array of { id, base64, mediaType, preview }
+  const [images, setImages] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [muscles, setMuscles] = useState({ primary: [], secondary: [] });
   const [error, setError] = useState(null);
@@ -262,15 +256,17 @@ export default function MuscleMap() {
   const [loadingRecs, setLoadingRecs] = useState(false);
   const fileRef = useRef();
 
-  const handleFile = useCallback(async (file) => {
+  const addImage = useCallback(async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
     const mt = getMediaType(file);
     const b64 = await toBase64(file);
-    setImageBase64(b64);
-    setMediaType(mt);
-    setImagePreview(`data:${mt};base64,${b64}`);
+    setImages(prev => [...prev, { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` }]);
     setError(null);
   }, []);
+
+  const handleFiles = useCallback(async (files) => {
+    for (const file of Array.from(files)) await addImage(file);
+  }, [addImage]);
 
   const analyze = async () => {
     setStep("analyzing"); setError(null);
@@ -281,18 +277,23 @@ export default function MuscleMap() {
       return;
     }
     try {
+      const imageBlocks = images.map(img => ({
+        type: "image",
+        source: { type: "base64", media_type: img.mediaType, data: img.base64 },
+      }));
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
+          max_tokens: 1500,
           messages: [{
             role: "user",
             content: [
-              { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
-              { type: "text", text: `Du ser et treningsprogram fra en norsk treningsstudio-tavle (gjerne håndskrevet).
-Identifiser ALLE treningsøvelser. For hver øvelse, angi hvilke muskler som er primære og sekundære.
+              ...imageBlocks,
+              { type: "text", text: `Du ser ett eller flere bilder av treningsprogrammer fra norske treningsstudio-tavler (gjerne håndskrevet).
+Identifiser ALLE treningsøvelser fra alle bildene. Ikke dupliser øvelser som finnes i flere bilder.
+For hver øvelse, angi hvilke muskler som er primære og sekundære.
 Bruk KUN disse muscle-ID-ene: chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves, traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back.
 Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 [{"name":"Nøyaktig navn fra tavlen","standardName":"Standard norsk/engelsk navn","sets":"3","reps":"10","primary":["chest"],"secondary":["shoulders_front","triceps"]}]
@@ -317,14 +318,16 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
   };
 
   const confirm = () => {
-    setMuscles(calcMuscles(exercises.filter(e => e.enabled && e.name)));
+    const enabled = exercises.filter(e => e.enabled && e.name);
+    setMuscles(calcMuscles(enabled));
     setStep("muscles");
+    saveSession(enabled).catch(err => console.error("Lagring feilet:", err));
   };
 
   const reset = () => {
-    setStep("upload"); setImagePreview(null); setImageBase64(null);
-    setExercises([]); setMuscles({ primary: [], secondary: [] }); setError(null);
-    setRecs(null);
+    setStep("upload"); setImages([]);
+    setExercises([]); setMuscles({ primary: [], secondary: [] });
+    setError(null); setRecs(null);
   };
 
   const getUntrainedMuscles = () =>
@@ -380,7 +383,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         <div style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: "24px", letterSpacing: "3px", color: C.accent }}>
           MUSKELKART
         </div>
-        {/* Step indicator */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {[1, 2, 3].map((n, i) => (
             <div key={n} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -402,37 +404,78 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         {step === "upload" && (
           <div className="fade-in">
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 18 }}>
-              Last opp bilde av treningsprogrammet fra tavlen.
+              Last opp ett eller flere bilder av treningsprogrammet.
             </div>
 
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-              onClick={() => !imagePreview && fileRef.current?.click()}
-              style={{
-                border: `2px dashed ${dragging ? C.accent : imagePreview ? C.accent + "80" : C.border}`,
-                borderRadius: 12, marginBottom: 14, overflow: "hidden",
-                background: dragging ? C.accentDim : "transparent",
-                transition: "all 0.2s",
-                cursor: imagePreview ? "default" : "pointer",
-                minHeight: imagePreview ? 0 : 200,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-            >
-              {imagePreview
-                ? <img src={imagePreview} alt="preview" style={{ width: "100%", maxHeight: 340, objectFit: "contain", display: "block" }} />
-                : (
-                  <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                    <div style={{ fontSize: 38, marginBottom: 10 }}>📷</div>
-                    <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 5 }}>Trykk for å velge bilde</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>eller dra og slipp · JPEG, PNG, WebP</div>
+            {images.length === 0 ? (
+              // Empty state — big drop zone
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  border: `2px dashed ${dragging ? C.accent : C.border}`,
+                  borderRadius: 12, marginBottom: 14, overflow: "hidden",
+                  background: dragging ? C.accentDim : "transparent",
+                  transition: "all 0.2s", cursor: "pointer",
+                  minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ fontSize: 38, marginBottom: 10 }}>📷</div>
+                  <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 5 }}>Trykk for å velge bilde</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>eller dra og slipp · JPEG, PNG, WebP · flere bilder støttes</div>
+                </div>
+              </div>
+            ) : (
+              // Images loaded — thumbnail grid
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+                style={{ marginBottom: 14 }}
+              >
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                  {images.map(img => (
+                    <div key={img.id} style={{ position: "relative", borderRadius: 8, overflow: "hidden", aspectRatio: "1", background: C.card }}>
+                      <img src={img.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <button
+                        onClick={() => setImages(p => p.filter(i => i.id !== img.id))}
+                        style={{
+                          position: "absolute", top: 4, right: 4,
+                          background: "rgba(0,0,0,0.75)", border: "none", color: C.text,
+                          borderRadius: "50%", width: 22, height: 22, fontSize: 15,
+                          lineHeight: "22px", textAlign: "center", padding: 0,
+                        }}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {/* Add more tile */}
+                  <div
+                    onClick={() => fileRef.current?.click()}
+                    style={{
+                      borderRadius: 8, border: `2px dashed ${dragging ? C.accent : C.border}`,
+                      background: dragging ? C.accentDim : "transparent",
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                      aspectRatio: "1", cursor: "pointer", gap: 4, transition: "all 0.2s",
+                    }}>
+                    <div style={{ fontSize: 22, color: C.muted, lineHeight: 1 }}>+</div>
+                    <div style={{ fontSize: 10, color: C.muted, letterSpacing: "0.5px" }}>Legg til</div>
                   </div>
-                )}
-            </div>
+                </div>
+              </div>
+            )}
 
-            <input ref={fileRef} type="file" accept="image/*" capture="environment"
-              style={{ display: "none" }} onChange={(e) => handleFile(e.target.files[0])} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={(e) => handleFiles(e.target.files)}
+            />
 
             {error && (
               <div style={{ color: C.danger, fontSize: 13, padding: "10px 14px", background: "rgba(255,68,68,0.08)", border: "1px solid rgba(255,68,68,0.2)", borderRadius: 8, marginBottom: 14 }}>
@@ -440,23 +483,19 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 10 }}>
-              {imagePreview && (
-                <button onClick={() => { setImagePreview(null); setImageBase64(null); }}
-                  style={{ padding: "12px 18px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, color: C.muted, fontSize: 13 }}>
-                  Bytt
-                </button>
-              )}
-              <button
-                onClick={imagePreview ? analyze : () => fileRef.current?.click()}
-                style={{
-                  flex: 1, padding: 13, borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600,
-                  letterSpacing: "0.5px", background: imagePreview ? C.accent : C.border,
-                  color: imagePreview ? "#000" : C.muted, transition: "all 0.2s",
-                }}>
-                {imagePreview ? "ANALYSER PROGRAM →" : "VELG BILDE"}
-              </button>
-            </div>
+            <button
+              onClick={images.length > 0 ? analyze : () => fileRef.current?.click()}
+              style={{
+                width: "100%", padding: 13, borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600,
+                letterSpacing: "0.5px", background: images.length > 0 ? C.accent : C.border,
+                color: images.length > 0 ? "#000" : C.muted, transition: "all 0.2s",
+              }}>
+              {images.length > 1
+                ? `ANALYSER ${images.length} BILDER →`
+                : images.length === 1
+                  ? "ANALYSER PROGRAM →"
+                  : "VELG BILDE"}
+            </button>
           </div>
         )}
 
@@ -560,7 +599,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         {/* ── MUSCLES ── */}
         {step === "muscles" && (
           <div className="fade-in">
-            {/* Legend */}
             <div style={{ display: "flex", gap: 20, marginBottom: 18, fontSize: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 10, height: 10, borderRadius: "50%", background: "rgba(200,255,0,0.78)" }} />
@@ -572,7 +610,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               </div>
             </div>
 
-            {/* Body maps */}
             <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
               {["front", "back"].map(view => (
                 <div key={view} style={{ flex: 1, background: C.card, borderRadius: 12, padding: "10px 6px" }}>
@@ -582,7 +619,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               ))}
             </div>
 
-            {/* Muscle list */}
             <div style={{ background: C.card, borderRadius: 12, padding: 14, marginBottom: 12 }}>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 11, color: C.muted, letterSpacing: "2px", marginBottom: 10 }}>
                 TRENTE MUSKELGRUPPER
@@ -609,7 +645,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               )}
             </div>
 
-            {/* Exercise summary */}
             <div style={{ background: C.card, borderRadius: 12, padding: 14, marginBottom: 16 }}>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 11, color: C.muted, letterSpacing: "2px", marginBottom: 10 }}>
                 ØVELSER DENNE ØKTEN
@@ -624,7 +659,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               ))}
             </div>
 
-            {/* Recommendation button */}
             <button onClick={recommend} disabled={loadingRecs}
               style={{
                 width: "100%", padding: 13, borderRadius: 8, border: `1px solid ${C.accent}40`,
@@ -634,10 +668,9 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               }}>
               {loadingRecs
                 ? <><div style={{ width:14, height:14, border:`2px solid ${C.accent}40`, borderTop:`2px solid ${C.accent}`, borderRadius:"50%", animation:"spin 0.75s linear infinite" }} /> Henter anbefalinger…</>
-                : "💡 Hva bør jeg trene neste gang?"}
+                : "Hva bør jeg trene neste gang?"}
             </button>
 
-            {/* Recommendations */}
             {recs && recs.length > 0 && (() => {
               const recPrimary = [...new Set(recs.flatMap(r => r.primary || []))];
               const recSecAll  = [...new Set(recs.flatMap(r => r.secondary || []))];
@@ -668,7 +701,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                     ))}
                   </div>
 
-                  {/* Rec body map */}
                   <div style={{ display:"flex", gap:12, marginBottom:10 }}>
                     {["front","back"].map(view => (
                       <div key={view} style={{ flex:1, background:C.card, borderRadius:12, padding:"10px 6px" }}>
