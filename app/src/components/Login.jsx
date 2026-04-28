@@ -30,7 +30,7 @@ export default function Login() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
       <div style={{ width: "100%", maxWidth: 380, padding: "0 20px" }}>
         <div style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32, letterSpacing: 4, color: C.accent, marginBottom: 8 }}>
-          MUSKELKART
+          WORKOUT LENS
         </div>
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 32 }}>
           Logg inn for å fortsette

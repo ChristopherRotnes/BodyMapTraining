@@ -389,8 +389,8 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
       {/* Header */}
       <div style={{ padding: "18px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: "24px", letterSpacing: "3px", color: C.accent }}>
-          MUSKELKART
-        </div>
+          WORKOUT LENS
+</div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {[1, 2, 3].map((n, i) => (
             <div key={n} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
