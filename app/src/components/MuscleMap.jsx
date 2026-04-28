@@ -282,7 +282,7 @@ export default function MuscleMap() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-opus-4-5",
           max_tokens: 1500,
           messages: [{
             role: "user",
@@ -352,7 +352,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 1000,
           messages: [{
             role: "user",
