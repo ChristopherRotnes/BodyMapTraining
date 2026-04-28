@@ -40,11 +40,11 @@ app/
 ## Environment variables
 | Variable | Where set | Used by |
 |---|---|---|
-| `VITE_SUPABASE_URL` | GitHub Actions secret + Azure SWA app settings | Supabase client (build-time, baked in by Vite) |
-| `VITE_SUPABASE_ANON_KEY` | GitHub Actions secret + Azure SWA app settings | Supabase client (build-time, baked in by Vite) |
+| `VITE_SUPABASE_URL` | GitHub Actions secret | Supabase client (baked into bundle at build time) |
+| `VITE_SUPABASE_ANON_KEY` | GitHub Actions secret | Supabase client (baked into bundle at build time) |
 | `ANTHROPIC_API_KEY` | Azure SWA app settings only | Azure Function — server-side, never in browser |
 
-> **Important:** `VITE_*` vars must be in **GitHub Actions secrets** (not just Azure app settings) because Vite bakes them into the bundle at build time. Azure app settings are runtime-only and only reach the API function.
+> **Important:** `VITE_*` vars are injected via the `env:` block on the **"Build app"** GitHub Actions step (not the Azure SWA deploy step). Azure app settings are runtime-only and never reach the Vite build. Do NOT rely on passing them to the Azure SWA action — Oryx strips them before spawning Vite.
 
 ## Muscle ID system (17 total)
 ```
@@ -67,7 +67,7 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 - Supabase Auth redirect URLs updated to include Azure domain
 
 ## What is NOT yet built
-- **Azure API function working end-to-end** — fix deployed (v4 model rewrite), pending verification
+- **Session save working end-to-end** — fix deployed (issue #9), pending live verification
 - **History view** — past sessions with muscle maps (GitHub issue #2)
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
 - **Favicon** — replace default Vite icon with camera SVG in accent colour (queued)
@@ -92,7 +92,7 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 - SVG body is simplified geometry (viewBox `0 0 160 360`), not anatomically precise — good enough for PoC, could be replaced with a proper anatomical SVG later.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
-- `VITE_*` env vars injected at build time via GitHub Actions secrets; Azure app settings cover runtime API vars only
+- **CI/CD build split:** the frontend is pre-built in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in `env:`), then the Azure SWA action uploads `app/dist/` directly (`app_location: "app/dist"`). This bypasses Oryx for the frontend — Oryx strips `VITE_*` env vars before spawning Vite and they never reach the bundle. Oryx still handles the API (`app/api`). `vite.config.js` has a build-time assertion that fails immediately if the required vars are missing.
 
 ## Known limitations
 - SVG body is geometrically simplified, not anatomically precise
@@ -105,10 +105,11 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 - **Resource group:** `rg-muskelkart` (West Europe)
 - **Azure resource name:** `muskelkart`
 - Build triggered on every push to `master`
-- App settings (runtime): `ANTHROPIC_API_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- App settings (runtime): `ANTHROPIC_API_KEY`
 - GitHub secrets (build-time): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `AZURE_STATIC_WEB_APPS_API_TOKEN_WHITE_ISLAND_090DFD003`
-- Supabase Auth redirect URLs: Netlify + localhost + Azure domain all registered
+- Supabase Auth redirect URLs: localhost + Azure domain registered
 - Netlify site is locked (no longer deploys on push)
+- **CI/CD pipeline:** frontend built in runner → `app/dist/` uploaded via `app_location: "app/dist"`, `output_location: "."`. API built by Oryx from `app/api`. Do NOT move the frontend build back into Oryx — see Key architecture decisions.
 
 ## GitHub issues
 | # | Title | Status |

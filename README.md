@@ -68,8 +68,8 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 
 | Secret | Purpose |
 |---|---|
-| `VITE_SUPABASE_URL` | Baked into frontend bundle at build time |
-| `VITE_SUPABASE_ANON_KEY` | Baked into frontend bundle at build time |
+| `VITE_SUPABASE_URL` | Injected into frontend bundle via `env:` block on the build step |
+| `VITE_SUPABASE_ANON_KEY` | Injected into frontend bundle via `env:` block on the build step |
 | `AZURE_STATIC_WEB_APPS_API_TOKEN_WHITE_ISLAND_090DFD003` | Azure deploy token |
 
 ### Required app settings (Azure SWA)
@@ -77,8 +77,8 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Setting | Purpose |
 |---|---|
 | `ANTHROPIC_API_KEY` | Used by the Azure Function at runtime — never exposed to browser |
-| `VITE_SUPABASE_URL` | Runtime reference (build-time value comes from GitHub secret) |
-| `VITE_SUPABASE_ANON_KEY` | Runtime reference (build-time value comes from GitHub secret) |
+
+> **Note:** The frontend is built in the GitHub Actions runner (not by Oryx inside Azure SWA's Docker container). Oryx strips `VITE_*` env vars before spawning Vite, so they would never reach the bundle if built there. The workflow pre-builds `app/dist/` and the Azure SWA action uploads it directly via `app_location: "app/dist"`. Do not revert this.
 
 ## Status
 
