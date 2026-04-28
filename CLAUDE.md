@@ -67,7 +67,6 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 - Supabase Auth redirect URLs updated to include Azure domain
 
 ## What is NOT yet built
-- **Session save working end-to-end** — fix deployed (issue #9), pending live verification
 - **History view** — past sessions with muscle maps (GitHub issue #2)
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
 - **Favicon** — replace default Vite icon with camera SVG in accent colour (queued)
@@ -93,6 +92,7 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
 - **CI/CD build split:** the frontend is pre-built in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in `env:`), then the Azure SWA action uploads `app/dist/` directly (`app_location: "app/dist"`). This bypasses Oryx for the frontend — Oryx strips `VITE_*` env vars before spawning Vite and they never reach the bundle. Oryx still handles the API (`app/api`). `vite.config.js` has a build-time assertion that fails immediately if the required vars are missing.
+- **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
 
 ## Known limitations
 - SVG body is geometrically simplified, not anatomically precise
@@ -111,9 +111,24 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 - Netlify site is locked (no longer deploys on push)
 - **CI/CD pipeline:** frontend built in runner → `app/dist/` uploaded via `app_location: "app/dist"`, `output_location: "."`. API built by Oryx from `app/api`. Do NOT move the frontend build back into Oryx — see Key architecture decisions.
 
+## Known pitfalls (previously hit, fixed, must not regress)
+
+### Issue #9 — Session save failing (resolved 2026-04-28)
+Two bugs combined to break `POST /rest/v1/sessions`:
+
+**Bug 1 — `VITE_SUPABASE_ANON_KEY` not in bundle:**
+Azure SWA's Oryx Docker build engine strips `VITE_*` env vars before spawning the Vite subprocess. The key was set as a GitHub Actions secret but never reached the bundle. Fix: pre-build the frontend in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in the `env:` block), point `app_location: "app/dist"` so the SWA action uploads the pre-built dist directly without re-building.
+
+**Bug 2 — Supabase JS fetch interceptor not adding `apikey` header in browser:**
+Even after the key was correctly baked into the bundle, browser REST requests arrived at Supabase without the `apikey` header. The v2 fetch interceptor (`Ui`) should add it, but did not. Fix: pass `global: { headers: { apikey: supabaseKey } }` to `createClient` — this puts the key directly on `PostgrestClient`'s base headers, bypassing the interceptor entirely. See `app/src/lib/supabase.js`.
+
+**Bug 3 — RLS infinite recursion on `profiles` (Postgres error 42P17):**
+Once the apikey was in requests, saves still failed with `42P17: infinite recursion detected in policy for relation "profiles"`. Root cause: `INSERT INTO sessions` with `Prefer: return=representation` triggers a RETURNING select, which evaluated the `"Admin ser alle økter"` SELECT policy on `sessions` — that policy queried `profiles`, which in turn triggered the `"Admin ser alle profiler"` SELECT policy on `profiles` — and that policy queried `profiles` again, looping forever. Fix: dropped both admin policies (`"Admin ser alle profiler"` on `profiles` and `"Admin ser alle økter"` on `sessions`) via Supabase MCP migration. Neither is needed for a single-user workout logger.
+
 ## GitHub issues
 | # | Title | Status |
 |---|---|---|
+| #9 | Session save failing | Closed — resolved 2026-04-28 |
 | #2 | History view | Open |
 | #3 | Period/volume report | Open |
 | #6 | Dev/prod pipeline (CI/CD) | Largely covered by Azure SWA — review/close |

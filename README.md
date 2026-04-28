@@ -91,6 +91,7 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Magic link login | ✅ |
 | Next-session recommendations | ✅ |
 | Session persistence (Supabase) | ✅ |
+| Session save end-to-end | ✅ (fixed #9) |
 | Workout history view | 🔧 Planned (#2) |
 | Period / volume report | 🔧 Planned (#3) |
 | IBM Carbon Design System | 🔧 Planned (#8) |
