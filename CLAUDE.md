@@ -12,96 +12,6 @@
 - **CI/CD:** GitHub Actions — push to `master` → auto-deploy to Azure SWA
 - **Language:** Norwegian UI throughout
 
-## Project structure
-```
-app/
-  src/
-    main.jsx                 # Entry: imports Carbon + app CSS, wraps with ThemeProvider
-    theme.jsx                # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
-    App.jsx                  # Root: auth gate → Login or MuscleMap
-    components/
-      Login.jsx              # Magic-link email login (Carbon TextInput, Button, InlineNotification)
-      MuscleMap.jsx          # Main component — all workout flow (Carbon Header, Progress, Tiles, Tags, etc.)
-      ThemeToggle.jsx        # Standalone light/dark toggle (used where Header is unavailable)
-    lib/
-      supabase.js            # Supabase client (reads VITE_SUPABASE_*)
-      db.js                  # Supabase DB helpers (sessions, exercises, muscle_activations)
-    styles/
-      carbon-tokens.css      # IBM Carbon tokens (g10 + g100 themes) + IBM Plex @font-face rules
-      app.css                # Global resets, fadeIn keyframe, Carbon button width override
-  api/
-    claude.js                # Azure Function (v4 model) — proxies requests to Anthropic API
-    host.json                # Azure Functions runtime config
-    package.json             # API dependencies (@azure/functions)
-  public/
-    fonts/                   # IBM Plex Sans/Mono/Serif/Condensed woff2 (locally bundled, Apache 2.0)
-    icons/                   # Carbon SVG icon subset (16/20/32px)
-    favicon.svg              # App favicon (TODO: replace with camera icon)
-  index.html                 # Page title currently "app" (TODO: rename to "Workout Lens")
-  staticwebapp.config.json   # Azure SWA routing + API config
-  .nvmrc                     # Node 20.11.0
-  .env.local                 # Supabase URL + anon key (NOT committed)
-.github/
-  workflows/
-    azure-static-web-apps-white-island-090dfd003.yml  # CI/CD pipeline
-```
-
-## Local development
-
-Use the **Azure Static Web Apps CLI** (`swa start`) — it runs Vite and the Azure Function together behind a single proxy at `http://localhost:4280`.
-
-### One-time setup
-
-1. Install SWA CLI:
-   ```
-   npm install -g @azure/static-web-apps-cli
-   ```
-
-2. Copy and fill in the Vite env file:
-   ```
-   cp app/.env.local.example app/.env.local
-   # fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-   ```
-
-3. Copy and fill in the Azure Functions local settings:
-   ```
-   cp app/api/local.settings.json.example app/api/local.settings.json
-   # fill in ANTHROPIC_API_KEY
-   ```
-
-### Running locally
-
-Two terminals are needed — SWA CLI on Windows does not reliably spawn Vite as a subprocess.
-
-**Terminal 1** — start Vite:
-```
-cd app && npm run dev
-```
-
-**Terminal 2** — once Vite is ready, start SWA CLI from the repo root:
-```
-swa start
-```
-
-SWA CLI proxies Vite (port 5173) and the Azure Function together at **http://localhost:4280**.
-
-> Always open http://localhost:4280, not 5173 — the API is only available through the SWA proxy.
-
-## Branch strategy
-
-- `master` → production deploy at `white-island-090dfd003.7.azurestaticapps.net`
-- `dev` → staging deploy (separate Azure SWA preview URL, auto-created on push)
-- Feature branches → PR against `dev`; Azure SWA creates a preview environment automatically for every PR
-
-## Environment variables
-| Variable | Where set | Used by |
-|---|---|---|
-| `VITE_SUPABASE_URL` | GitHub Actions secret | Supabase client (baked into bundle at build time) |
-| `VITE_SUPABASE_ANON_KEY` | GitHub Actions secret | Supabase client (baked into bundle at build time) |
-| `ANTHROPIC_API_KEY` | Azure SWA app settings only | Azure Function — server-side, never in browser |
-
-> **Important:** `VITE_*` vars are injected via the `env:` block on the **"Build app"** GitHub Actions step (not the Azure SWA deploy step). Azure app settings are runtime-only and never reach the Vite build. Do NOT rely on passing them to the Azure SWA action — Oryx strips them before spawning Vite.
-
 ## Muscle ID system (17 total)
 ```
 chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves
@@ -150,22 +60,11 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 ### Adding more Carbon components
 Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens.css` for available tokens. The `@carbon/react` package ships full TypeScript types — use them as the component API reference.
 
-## Current state (implemented and live)
-- Image upload (drag & drop, file picker, camera, multi-image)
-- Claude Vision analysis → structured JSON with exercise + muscle IDs
-- Confirm step (toggle, edit, adjust sets/reps, add manually)
-- Muscle map display (SVG front+back, glow highlights, hover tooltips)
-- Next-session recommendation via Claude API
-- Supabase schema: `sessions`, `exercises`, `muscle_activations` tables
-- Session persistence — completed workouts saved to Supabase
-- Azure Function proxy for Anthropic API — API key is server-side only
-- Live deploy on Azure SWA with GitHub Actions CI/CD
-- Magic link login verified working on Azure domain
-- Supabase Auth redirect URLs updated to include Azure domain
-
 ## What is NOT yet built
 - **History view** — past sessions with muscle maps (GitHub issue #2)
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
+- **Sporty.no calendar fetch** — Azure Function timer trigger fetching today's gym sessions from the open API at `https://sporty.no/api/v1/businessunits/8/groupactivities`. Response: `data[]` with `id`, `name`, `duration.{start,end}` (UTC ISO), `instructors[0].name`, `cancelled`. Planned schema: `gym_calendar` with `sporty_id integer unique` (for upsert), `start_time`/`end_time` as `timestamptz`, FK `gym_calendar_id` on `sessions`. CRON: 04:00 + 11:00 UTC (= 05:00/06:00 CET or 06:00/13:00 CEST, DST-safe). Needs `SUPABASE_SERVICE_ROLE_KEY` added as Azure app setting. UI: optional Carbon `Select` in confirm step ("Hvilken time var dette?"). (GitHub issue #12)
+- **Bodymap improvements** — anatomically more accurate SVG paths, better primary/secondary visual differentiation, improved mobile layout (GitHub issue #10)
 - **Favicon** — replace default Vite icon with camera SVG in Carbon style (queued)
 - **Page title** — change from "app" to "Workout Lens" (queued)
 
@@ -198,15 +97,10 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 - No error handling for API rate limits
 
 ## Azure deploy notes
-- **Live URL:** `https://white-island-090dfd003.7.azurestaticapps.net`
-- **Resource group:** `rg-muskelkart` (West Europe)
-- **Azure resource name:** `muskelkart`
-- Build triggered on every push to `master`
-- App settings (runtime): `ANTHROPIC_API_KEY`
-- GitHub secrets (build-time): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `AZURE_STATIC_WEB_APPS_API_TOKEN_WHITE_ISLAND_090DFD003`
-- Supabase Auth redirect URLs: localhost + Azure domain registered
+- **Resource group:** `rg-muskelkart` (West Europe) — **Azure resource name:** `muskelkart`
+- Supabase Auth redirect URLs: localhost + Azure domain both registered
 - Netlify site is locked (no longer deploys on push)
-- **CI/CD pipeline:** frontend built in runner → `app/dist/` uploaded via `app_location: "app/dist"`, `output_location: "."`. API built by Oryx from `app/api`. Do NOT move the frontend build back into Oryx — see Key architecture decisions.
+- For secrets/settings/live URL, see README → Deployment section
 
 ## Known pitfalls (previously hit, fixed, must not regress)
 
@@ -231,3 +125,6 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #6 | Dev/prod pipeline (CI/CD) | Closed — resolved 2026-04-29 |
 | #7 | Move to Azure (replace Netlify) | Closed — done 2026-04-28 |
 | #8 | IBM Carbon Design System | Closed — resolved 2026-04-29 |
+| #10 | Improve bodymap layout and graphics | Open |
+| #11 | Checkbox/exercise name visual coupling in confirm step | Closed — resolved 2026-04-29 |
+| #12 | Fetch daily gym session calendar from sporty.no | Open |

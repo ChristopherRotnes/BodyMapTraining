@@ -16,6 +16,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 | Layer | Tech |
 |---|---|
 | Frontend | React 19 + Vite |
+| Design system | IBM Carbon Design System |
 | Auth | Supabase Auth (magic link) |
 | Database | Supabase (Postgres) |
 | AI | Anthropic Claude API (proxied via Azure Function) |
@@ -73,6 +74,14 @@ app/
   staticwebapp.config.json   # Azure SWA routing config
 ```
 
+## Branch strategy
+
+| Branch | Purpose |
+|---|---|
+| `master` | Production — auto-deploys to Azure SWA on every push |
+| `dev` | Staging — Azure SWA creates a preview URL on push |
+| Feature branches | PR against `dev`; Azure SWA creates a preview per PR |
+
 ## Deployment
 
 Hosted on **Azure Static Web Apps** — every push to `master` triggers a build and deploy via GitHub Actions.
@@ -102,12 +111,15 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Image upload (drag & drop, multi-image, camera) | ✅ |
 | Claude Vision analysis | ✅ |
 | Exercise confirm + edit step | ✅ |
+| Checkbox/exercise inline layout in confirm step | ✅ Fixed (#11) |
 | Muscle map SVG with tooltips | ✅ |
 | Magic link login | ✅ |
 | Next-session recommendations | ✅ |
 | Session persistence (Supabase) | ✅ |
-| Session save end-to-end | ✅ (fixed #9) |
-| Workout history view | 🔧 Planned (#2) |
-| Period / volume report | 🔧 Planned (#3) |
+| Session save end-to-end | ✅ Fixed (#9) |
 | IBM Carbon Design System | ✅ Done (#8) |
 | Local dev + branch CI/CD | ✅ Done (#6) |
+| Workout history view | 🔧 Planned (#2) |
+| Period / volume report | 🔧 Planned (#3) |
+| Sporty.no gym calendar fetch | 🔧 Planned (#12) |
+| Bodymap layout and graphics improvements | 🔧 Planned (#10) |
