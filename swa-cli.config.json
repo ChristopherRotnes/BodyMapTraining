@@ -6,8 +6,10 @@
       "apiLocation": "app/api",
       "outputLocation": "dist",
       "appDevserverUrl": "http://localhost:5173",
-      "run": "npm --prefix app run dev",
-      "env": "local"
+      "env": "local",
+      "port": 4280,
+      "appName": "body-map-training",
+      "resourceGroup": "body-map-training-rg"
     }
   }
 }

@@ -24,20 +24,29 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 
 ## Local development
 
+### One-time setup
+
 ```bash
-cd app
-npm install
-npm run dev
+npm install -g @azure/static-web-apps-cli
+cp app/.env.local.example app/.env.local                             # fill in Supabase credentials
+cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY
+cd app && npm install
+cd api && npm install
 ```
 
-Create `app/.env.local` with:
+Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Authentication → URL Configuration).
 
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+### Running
+
+```bash
+# Terminal 1
+cd app && npm run dev
+
+# Terminal 2 (once Vite is ready)
+swa start
 ```
 
-> `ANTHROPIC_API_KEY` is server-side only — set it in Azure SWA app settings or via the Azure Function local settings for local dev. It is never exposed to the browser.
+Open **http://localhost:4280** — not 5173. The API is only available through the SWA proxy.
 
 ## Project structure
 
@@ -101,3 +110,4 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Workout history view | 🔧 Planned (#2) |
 | Period / volume report | 🔧 Planned (#3) |
 | IBM Carbon Design System | ✅ Done (#8) |
+| Local dev + branch CI/CD | ✅ Done (#6) |

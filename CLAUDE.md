@@ -71,14 +71,21 @@ Use the **Azure Static Web Apps CLI** (`swa start`) — it runs Vite and the Azu
 
 ### Running locally
 
-From the repo root (where `swa-cli.config.json` lives):
+Two terminals are needed — SWA CLI on Windows does not reliably spawn Vite as a subprocess.
+
+**Terminal 1** — start Vite:
+```
+cd app && npm run dev
+```
+
+**Terminal 2** — once Vite is ready, start SWA CLI from the repo root:
 ```
 swa start
 ```
 
-This starts Vite in `app/` and serves the Azure Function at `/api/claude`. Open **http://localhost:4280**.
+SWA CLI proxies Vite (port 5173) and the Azure Function together at **http://localhost:4280**.
 
-> Do NOT use plain `npm run dev` — it won't start the Azure Function, so image analysis and recommendations will fail.
+> Always open http://localhost:4280, not 5173 — the API is only available through the SWA proxy.
 
 ## Branch strategy
 
