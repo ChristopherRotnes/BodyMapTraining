@@ -5,6 +5,7 @@
 
 ## Tech stack
 - **Frontend:** React 19 + Vite (in `app/`)
+- **Design system:** IBM Carbon Design System (`@carbon/react`, `@carbon/icons-react`) — see [Carbon design system](#carbon-design-system) section
 - **Auth + DB:** Supabase (magic-link login, Supabase Auth + PostgreSQL)
 - **AI:** Anthropic Claude API (`claude-sonnet-4-20250514`) — proxied via Azure Function (server-side)
 - **Hosting:** Azure Static Web Apps — **live at [white-island-090dfd003.7.azurestaticapps.net](https://white-island-090dfd003.7.azurestaticapps.net)**
@@ -15,18 +16,26 @@
 ```
 app/
   src/
+    main.jsx                 # Entry: imports Carbon + app CSS, wraps with ThemeProvider
+    theme.jsx                # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
     App.jsx                  # Root: auth gate → Login or MuscleMap
     components/
-      Login.jsx              # Magic-link email login
-      MuscleMap.jsx          # Main component — all workout flow
+      Login.jsx              # Magic-link email login (Carbon TextInput, Button, InlineNotification)
+      MuscleMap.jsx          # Main component — all workout flow (Carbon Header, Progress, Tiles, Tags, etc.)
+      ThemeToggle.jsx        # Standalone light/dark toggle (used where Header is unavailable)
     lib/
       supabase.js            # Supabase client (reads VITE_SUPABASE_*)
       db.js                  # Supabase DB helpers (sessions, exercises, muscle_activations)
+    styles/
+      carbon-tokens.css      # IBM Carbon tokens (g10 + g100 themes) + IBM Plex @font-face rules
+      app.css                # Global resets, fadeIn keyframe, Carbon button width override
   api/
     claude.js                # Azure Function (v4 model) — proxies requests to Anthropic API
     host.json                # Azure Functions runtime config
     package.json             # API dependencies (@azure/functions)
   public/
+    fonts/                   # IBM Plex Sans/Mono/Serif/Condensed woff2 (locally bundled, Apache 2.0)
+    icons/                   # Carbon SVG icon subset (16/20/32px)
     favicon.svg              # App favicon (TODO: replace with camera icon)
   index.html                 # Page title currently "app" (TODO: rename to "Workout Lens")
   staticwebapp.config.json   # Azure SWA routing + API config
@@ -35,6 +44,8 @@ app/
 .github/
   workflows/
     azure-static-web-apps-white-island-090dfd003.yml  # CI/CD pipeline
+handoff/
+  design_system/             # Carbon design system handover — source of truth for tokens/fonts/icons
 ```
 
 ## Environment variables
@@ -53,6 +64,51 @@ traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back
 ```
 Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in MuscleMap.jsx.
 
+## Carbon design system
+
+Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
+
+### What was done
+- Installed `@carbon/react` and `@carbon/icons-react`
+- IBM Plex fonts (Sans, Mono, Serif, Condensed) bundled locally in `app/public/fonts/` — no Google Fonts, no CDN
+- `app/src/styles/carbon-tokens.css` — all Carbon CSS variables for g10 (light) and g100 (dark) themes, plus `@font-face` declarations; font URLs use `/fonts/...` (Vite public-dir absolute paths)
+- `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
+- `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
+- `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with light/dark toggle via `Asleep`/`Light` icons), `ProgressIndicator`, `Button`, `Checkbox`, `Tag`, `InlineLoading`, `InlineNotification`
+- `BodySVG` muscle highlights: primary → green-50 `rgba(36,161,72,…)`, secondary → blue-40 `rgba(120,169,255,…)`
+- Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners
+
+### Hard rules (must not regress)
+- **Sentence case** for all labels — `Add exercise`, not `Add Exercise`
+- **0px border-radius** on buttons, inputs, cards — Carbon's only exception is Tags (16px pill)
+- **No emoji** — use `@carbon/icons-react` exclusively
+- **IBM Plex everywhere** — no system-font fallbacks visible in the rendered page
+- **Semantic tokens** (`var(--cds-*)`) not raw hex — otherwise the theme toggle breaks
+- **No gradients** in product UI — solid colors only
+- **Focus ring** = 2px solid `#0f62fe` outline (Carbon handles this via its component styles)
+
+### Token cheat sheet
+| Concept | Token |
+|---|---|
+| Page background | `var(--cds-background)` |
+| Card/tile surface | `var(--cds-layer-01)` |
+| Nested card | `var(--cds-layer-02)` |
+| Border | `var(--cds-border-subtle-01)` |
+| Strong border / input border | `var(--cds-border-strong-01)` |
+| Primary text | `var(--cds-text-primary)` |
+| Secondary/muted text | `var(--cds-text-secondary)` |
+| Interactive (blue) | `var(--cds-interactive)` |
+| Error | `var(--cds-support-error)` |
+| Body font | `var(--cds-font-sans)` |
+| Mono font | `var(--cds-font-mono)` |
+
+### Adding more Carbon components
+Source of truth in `handoff/design_system/` (extracted from `Carbon Design System.zip`):
+- `handoff/design_system/colors_and_type.css` — all tokens
+- `handoff/design_system/preview/*.html` — live component previews
+- `handoff/design_system/README.md` — visual foundations, iconography rules
+- `handoff/design_system/SKILL.md` — compact rulebook
+
 ## Current state (implemented and live)
 - Image upload (drag & drop, file picker, camera, multi-image)
 - Claude Vision analysis → structured JSON with exercise + muscle IDs
@@ -69,7 +125,7 @@ Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in 
 ## What is NOT yet built
 - **History view** — past sessions with muscle maps (GitHub issue #2)
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
-- **Favicon** — replace default Vite icon with camera SVG in accent colour (queued)
+- **Favicon** — replace default Vite icon with camera SVG in Carbon style (queued)
 - **Page title** — change from "app" to "Workout Lens" (queued)
 
 ## Exercise data model
@@ -132,4 +188,5 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #2 | History view | Open |
 | #3 | Period/volume report | Open |
 | #6 | Dev/prod pipeline (CI/CD) | Largely covered by Azure SWA — review/close |
-| #7 | Move to Azure (replace Netlify) | In progress — API function fix pending |
+| #7 | Move to Azure (replace Netlify) | Closed — done 2026-04-28 |
+| #8 | IBM Carbon Design System | Closed — resolved 2026-04-29 |
