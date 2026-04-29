@@ -44,8 +44,6 @@ app/
 .github/
   workflows/
     azure-static-web-apps-white-island-090dfd003.yml  # CI/CD pipeline
-handoff/
-  design_system/             # Carbon design system handover — source of truth for tokens/fonts/icons
 ```
 
 ## Environment variables
@@ -103,11 +101,7 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 | Mono font | `var(--cds-font-mono)` |
 
 ### Adding more Carbon components
-Source of truth in `handoff/design_system/` (extracted from `Carbon Design System.zip`):
-- `handoff/design_system/colors_and_type.css` — all tokens
-- `handoff/design_system/preview/*.html` — live component previews
-- `handoff/design_system/README.md` — visual foundations, iconography rules
-- `handoff/design_system/SKILL.md` — compact rulebook
+Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens.css` for available tokens. The `@carbon/react` package ships full TypeScript types — use them as the component API reference.
 
 ## Current state (implemented and live)
 - Image upload (drag & drop, file picker, camera, multi-image)

@@ -7,7 +7,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 1. **Upload** one or more photos of a whiteboard workout program
 2. **Claude Vision** reads the handwriting and returns a structured list of exercises with muscle IDs
 3. **Confirm** — toggle, rename, or adjust sets/reps before saving
-4. **Muscle map** — front and back body SVG with glow highlights (yellow = primary, blue = secondary)
+4. **Muscle map** — front and back body SVG with glow highlights (green = primary, blue = secondary)
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
 
@@ -44,13 +44,19 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 app/
   src/
+    main.jsx                 # Entry — imports Carbon + app CSS, wraps with ThemeProvider
     App.jsx                  # Auth gate → Login or MuscleMap
+    theme.jsx                # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
     components/
       Login.jsx              # Magic-link email login
       MuscleMap.jsx          # Main component — upload, analyse, confirm, visualise
+      ThemeToggle.jsx        # Standalone light/dark toggle
     lib/
       supabase.js            # Supabase client
       db.js                  # DB helpers (sessions, exercises, muscle_activations)
+    styles/
+      carbon-tokens.css      # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
+      app.css                # Global resets and Carbon overrides
   api/
     claude.js                # Azure Function — proxies requests to Anthropic API
     host.json                # Azure Functions runtime config
@@ -94,4 +100,4 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Session save end-to-end | ✅ (fixed #9) |
 | Workout history view | 🔧 Planned (#2) |
 | Period / volume report | 🔧 Planned (#3) |
-| IBM Carbon Design System | 🔧 Planned (#8) |
+| IBM Carbon Design System | ✅ Done (#8) |
