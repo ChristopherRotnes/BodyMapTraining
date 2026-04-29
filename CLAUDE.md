@@ -46,6 +46,46 @@ app/
     azure-static-web-apps-white-island-090dfd003.yml  # CI/CD pipeline
 ```
 
+## Local development
+
+Use the **Azure Static Web Apps CLI** (`swa start`) — it runs Vite and the Azure Function together behind a single proxy at `http://localhost:4280`.
+
+### One-time setup
+
+1. Install SWA CLI:
+   ```
+   npm install -g @azure/static-web-apps-cli
+   ```
+
+2. Copy and fill in the Vite env file:
+   ```
+   cp app/.env.local.example app/.env.local
+   # fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+   ```
+
+3. Copy and fill in the Azure Functions local settings:
+   ```
+   cp app/api/local.settings.json.example app/api/local.settings.json
+   # fill in ANTHROPIC_API_KEY
+   ```
+
+### Running locally
+
+From the repo root (where `swa-cli.config.json` lives):
+```
+swa start
+```
+
+This starts Vite in `app/` and serves the Azure Function at `/api/claude`. Open **http://localhost:4280**.
+
+> Do NOT use plain `npm run dev` — it won't start the Azure Function, so image analysis and recommendations will fail.
+
+## Branch strategy
+
+- `master` → production deploy at `white-island-090dfd003.7.azurestaticapps.net`
+- `dev` → staging deploy (separate Azure SWA preview URL, auto-created on push)
+- Feature branches → PR against `dev`; Azure SWA creates a preview environment automatically for every PR
+
 ## Environment variables
 | Variable | Where set | Used by |
 |---|---|---|
@@ -181,6 +221,6 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #9 | Session save failing | Closed — resolved 2026-04-28 |
 | #2 | History view | Open |
 | #3 | Period/volume report | Open |
-| #6 | Dev/prod pipeline (CI/CD) | Largely covered by Azure SWA — review/close |
+| #6 | Dev/prod pipeline (CI/CD) | Closed — resolved 2026-04-29 |
 | #7 | Move to Azure (replace Netlify) | Closed — done 2026-04-28 |
 | #8 | IBM Carbon Design System | Closed — resolved 2026-04-29 |
