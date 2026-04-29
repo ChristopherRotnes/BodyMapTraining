@@ -539,26 +539,32 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
                 {exercises.map((ex) => (
-                  <div key={ex.id} style={{
-                    background: ex.enabled ? "var(--cds-layer-01)" : "transparent",
-                    border: `1px solid var(--cds-border-subtle-01)`,
-                    padding: "10px 12px",
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    opacity: ex.enabled ? 1 : 0.4,
-                    transition: "opacity 0.15s",
-                  }}>
-                    <Checkbox
-                      id={`ex-${ex.id}`}
-                      labelText=""
-                      hideLabel
-                      checked={ex.enabled}
-                      onChange={() => setExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
-                      style={{ marginTop: 2 }}
-                    />
+                  <div
+                    key={ex.id}
+                    onClick={() => setExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
+                    style={{
+                      background: ex.enabled ? "var(--cds-layer-01)" : "transparent",
+                      border: `1px solid var(--cds-border-subtle-01)`,
+                      padding: "6px 8px 6px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      opacity: ex.enabled ? 1 : 0.4,
+                      transition: "opacity 0.15s",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+                      <Checkbox
+                        id={`ex-${ex.id}`}
+                        labelText=""
+                        hideLabel
+                        checked={ex.enabled}
+                        onChange={() => setExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
+                      />
+                    </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0 }} onClick={(e) => e.stopPropagation()}>
                       {editingId === ex.id ? (
                         <input
                           autoFocus
@@ -586,34 +592,35 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                           {ex.name || <span style={{ color: "var(--cds-text-secondary)" }}>Klikk for å skrive øvelse…</span>}
                         </div>
                       )}
-                      <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                        {["sets", "reps"].map(field => (
-                          <div key={field} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <input
-                              type="number"
-                              min="1"
-                              placeholder={field === "sets" ? "sett" : "reps"}
-                              value={ex[field] || ""}
-                              onChange={e => setExercises(p => p.map(x => x.id === ex.id ? { ...x, [field]: e.target.value } : x))}
-                              style={{
-                                width: 52,
-                                height: 32,
-                                padding: "0 8px",
-                                background: "var(--cds-field-01)",
-                                border: "1px solid var(--cds-border-strong-01)",
-                                color: "var(--cds-text-primary)",
-                                fontFamily: "var(--cds-font-sans)",
-                                fontSize: 12,
-                                outline: "none",
-                                textAlign: "center",
-                              }}
-                            />
-                            <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                              {field === "sets" ? "sett" : "reps"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                    </div>
+
+                    <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                      {["sets", "reps"].map(field => (
+                        <div key={field} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="–"
+                            value={ex[field] || ""}
+                            onChange={e => setExercises(p => p.map(x => x.id === ex.id ? { ...x, [field]: e.target.value } : x))}
+                            style={{
+                              width: 40,
+                              height: 28,
+                              padding: "0 4px",
+                              background: "var(--cds-field-01)",
+                              border: "1px solid var(--cds-border-strong-01)",
+                              color: "var(--cds-text-primary)",
+                              fontFamily: "var(--cds-font-sans)",
+                              fontSize: 12,
+                              outline: "none",
+                              textAlign: "center",
+                            }}
+                          />
+                          <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
+                            {field === "sets" ? "sett" : "reps"}
+                          </span>
+                        </div>
+                      ))}
                     </div>
 
                     <Button
@@ -622,7 +629,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                       renderIcon={TrashCan}
                       iconDescription="Slett øvelse"
                       size="sm"
-                      onClick={() => setExercises(p => p.filter(e => e.id !== ex.id))}
+                      onClick={(e) => { e.stopPropagation(); setExercises(p => p.filter(e => e.id !== ex.id)); }}
                     />
                   </div>
                 ))}
