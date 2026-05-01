@@ -152,3 +152,6 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #10 | Improve bodymap layout and graphics | Closed — resolved 2026-05-01 |
 | #11 | Checkbox/exercise name visual coupling in confirm step | Closed — resolved 2026-04-29 |
 | #12 | Fetch daily gym session calendar from sporty.no | Closed — resolved 2026-05-01 |
+| #15 | Hover tooltips on muscle list and exercise list in muscles step | Open |
+| #16 | History: show linked gym session name on each session entry | Open |
+| #17 | Period report: heatmap tooltip drill-down (sessions + exercises) | Open |
