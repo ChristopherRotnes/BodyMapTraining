@@ -155,3 +155,4 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #15 | Hover tooltips on muscle list and exercise list in muscles step | Open |
 | #16 | History: show linked gym session name on each session entry | Open |
 | #17 | Period report: heatmap tooltip drill-down (sessions + exercises) | Open |
+| #18 | Heatmap tooltip reports wrong muscle — overlapping shoulder shapes | Open |
