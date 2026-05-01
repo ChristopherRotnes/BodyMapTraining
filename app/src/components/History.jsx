@@ -97,7 +97,7 @@ export default function History({ onNewSession, onShowReport }) {
   const trainedDates = sessions.map(s => new Date(s.session_date + "T12:00:00"));
 
   useEffect(() => {
-    if (daySessions.length > 0) {
+    if (daySessions.length === 1) {
       setExpandedIds(new Set([daySessions[0].id]));
     } else {
       setExpandedIds(new Set());
