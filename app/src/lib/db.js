@@ -50,3 +50,28 @@ export async function saveSession(exercises, { imageUrl = null, notes = null, tr
 
   return session;
 }
+
+export async function fetchSessions() {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select("id, session_date")
+    .order("session_date", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchSessionsByDate(dateStr) {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select(`
+      id, session_date, created_at,
+      session_exercises(
+        id, name, standard_name, sets, reps, position,
+        muscle_activations(muscle_id, activation_type)
+      )
+    `)
+    .eq("session_date", dateStr)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
