@@ -74,6 +74,16 @@ export default function History({ onNewSession, onShowReport }) {
   const [mobileView, setMobileView] = useState("front");
   const isMobile = useIsMobile();
 
+  const [today, setToday] = useState(() => new Date());
+
+  useEffect(() => {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const timer = setTimeout(() => setToday(new Date()), midnight - now);
+    return () => clearTimeout(timer);
+  }, [today]);
+
   const [editMode, setEditMode] = useState(false);
   const [editExercises, setEditExercises] = useState([]);
   const [editingExId, setEditingExId] = useState(null);
@@ -293,7 +303,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                 onSelect={handleSelect}
                 modifiers={{ trained: trainedDates }}
                 modifiersClassNames={{ trained: "rdp-day-trained" }}
-                disabled={{ after: new Date() }}
+                disabled={{ after: today }}
               />
             </div>
           )}
