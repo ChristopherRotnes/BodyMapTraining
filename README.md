@@ -128,3 +128,5 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Bodymap layout and graphics improvements | ✅ Done (#10) |
 | Shoulder shape separation (correct hover hit targets) | 🔧 In verification (#18) |
 | Period / volume report | 🔧 Planned (#3) |
+| Duplicate session prevention (unique constraint per class) | ✅ Done (#13) |
+| Past-date logging + edit existing sessions | ✅ Done (#19) |
