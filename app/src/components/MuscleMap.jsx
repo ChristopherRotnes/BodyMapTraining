@@ -6,7 +6,7 @@ import {
   Button, Checkbox, Select, SelectItem,
   ProgressIndicator, ProgressStep,
   InlineNotification, InlineLoading,
-  Tag,
+  Tag, DefinitionTooltip,
 } from "@carbon/react";
 import { Add, TrashCan, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed, Analytics } from "@carbon/icons-react";
 import { useTheme } from "../theme";
@@ -552,20 +552,34 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   <p style={{ color: "var(--cds-text-secondary)", fontSize: 13 }}>Ingen muskelgrupper gjenkjent for de valgte øvelsene.</p>
                 ) : (
                   <>
-                    {muscles.primary.map(id => (
-                      <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>{MUSCLES[id]?.label || id}</span>
-                        <Tag type="green" size="sm">Primær</Tag>
-                      </div>
-                    ))}
-                    {muscles.secondary.map(id => (
-                      <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>{MUSCLES[id]?.label || id}</span>
-                        <Tag type="blue" size="sm">Sekundær</Tag>
-                      </div>
-                    ))}
+                    {muscles.primary.map(id => {
+                      const exNames = (buildMuscleMap(exercises)[id] || []).join(", ");
+                      return (
+                        <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>
+                            {exNames ? (
+                              <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
+                            ) : MUSCLES[id]?.label || id}
+                          </span>
+                          <Tag type="green" size="sm">Primær</Tag>
+                        </div>
+                      );
+                    })}
+                    {muscles.secondary.map(id => {
+                      const exNames = (buildMuscleMap(exercises)[id] || []).join(", ");
+                      return (
+                        <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                          <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
+                          <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>
+                            {exNames ? (
+                              <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
+                            ) : MUSCLES[id]?.label || id}
+                          </span>
+                          <Tag type="blue" size="sm">Sekundær</Tag>
+                        </div>
+                      );
+                    })}
                   </>
                 )}
               </div>
@@ -575,14 +589,21 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                 <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
                   Øvelser denne økten
                 </p>
-                {exercises.filter(e => e.enabled && e.name).map(ex => (
-                  <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13, borderBottom: "1px solid var(--cds-border-subtle-01)", color: "var(--cds-text-primary)" }}>
-                    <span>{ex.name}</span>
-                    {(ex.sets || ex.reps) && (
-                      <span style={{ color: "var(--cds-text-secondary)" }}>{[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}</span>
-                    )}
-                  </div>
-                ))}
+                {exercises.filter(e => e.enabled && e.name).map(ex => {
+                  const muscleLabels = [...(ex.primary || []), ...(ex.secondary || [])].map(id => MUSCLES[id]?.label || id).join(", ");
+                  return (
+                    <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13, borderBottom: "1px solid var(--cds-border-subtle-01)", color: "var(--cds-text-primary)" }}>
+                      <span>
+                        {muscleLabels ? (
+                          <DefinitionTooltip definition={muscleLabels} openOnHover align="bottom">{ex.name}</DefinitionTooltip>
+                        ) : ex.name}
+                      </span>
+                      {(ex.sets || ex.reps) && (
+                        <span style={{ color: "var(--cds-text-secondary)" }}>{[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Recommendations */}

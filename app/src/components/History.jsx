@@ -7,7 +7,7 @@ import { fetchSessions, fetchSessionsByDate } from "../lib/db";
 import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Button, Tag, InlineLoading,
+  Button, Tag, InlineLoading, DefinitionTooltip,
 } from "@carbon/react";
 import { Camera, Asleep, Light, Analytics } from "@carbon/icons-react";
 import { useTheme } from "../theme";
@@ -139,9 +139,14 @@ export default function History({ onNewSession, onShowReport }) {
 
           {selectedSession && muscles && (
             <div className="fade-in">
-              <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 16, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
+              <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: selectedSession.gym_calendar ? 8 : 16, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
                 {format(new Date(selectedSession.session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
               </p>
+              {selectedSession.gym_calendar && (
+                <div style={{ marginBottom: 16 }}>
+                  <Tag type="outline" size="sm">{selectedSession.gym_calendar.name}</Tag>
+                </div>
+              )}
 
               {isMobile ? (
                 <>
@@ -176,36 +181,57 @@ export default function History({ onNewSession, onShowReport }) {
                 <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
                   Øvelser
                 </p>
-                {(selectedSession.session_exercises || []).map(ex => (
-                  <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--cds-border-subtle-01)", color: "var(--cds-text-primary)" }}>
-                    <span>{ex.name}</span>
-                    {(ex.sets || ex.reps) && (
-                      <span style={{ color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
-                        {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
+                {(selectedSession.session_exercises || []).map(ex => {
+                  const muscleLabels = (ex.muscle_activations || []).map(ma => MUSCLES[ma.muscle_id]?.label || ma.muscle_id).join(", ");
+                  return (
+                    <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--cds-border-subtle-01)", color: "var(--cds-text-primary)" }}>
+                      <span>
+                        {muscleLabels ? (
+                          <DefinitionTooltip definition={muscleLabels} openOnHover align="bottom">{ex.name}</DefinitionTooltip>
+                        ) : ex.name}
                       </span>
-                    )}
-                  </div>
-                ))}
+                      {(ex.sets || ex.reps) && (
+                        <span style={{ color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
+                          {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14 }}>
                 <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
                   Muskelgrupper
                 </p>
-                {muscles.primary.map(id => (
-                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>{MUSCLES[id]?.label || id}</span>
-                    <Tag type="green" size="sm">Primær</Tag>
-                  </div>
-                ))}
-                {muscles.secondary.map(id => (
-                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>{MUSCLES[id]?.label || id}</span>
-                    <Tag type="blue" size="sm">Sekundær</Tag>
-                  </div>
-                ))}
+                {muscles.primary.map(id => {
+                  const exNames = (muscleMap[id] || []).join(", ");
+                  return (
+                    <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>
+                        {exNames ? (
+                          <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
+                        ) : MUSCLES[id]?.label || id}
+                      </span>
+                      <Tag type="green" size="sm">Primær</Tag>
+                    </div>
+                  );
+                })}
+                {muscles.secondary.map(id => {
+                  const exNames = (muscleMap[id] || []).join(", ");
+                  return (
+                    <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>
+                        {exNames ? (
+                          <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
+                        ) : MUSCLES[id]?.label || id}
+                      </span>
+                      <Tag type="blue" size="sm">Sekundær</Tag>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

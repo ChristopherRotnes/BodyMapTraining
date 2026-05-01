@@ -97,6 +97,7 @@ export async function fetchSessionsByDate(dateStr) {
     .from("sessions")
     .select(`
       id, session_date, created_at,
+      gym_calendar_id, gym_calendar(name, start_time),
       session_exercises(
         id, name, standard_name, sets, reps, position,
         muscle_activations(muscle_id, activation_type)
