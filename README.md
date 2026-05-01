@@ -126,4 +126,5 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Workout history view | ✅ Done (#2) |
 | Sporty.no gym calendar sync + session picker | ✅ Done (#12) |
 | Bodymap layout and graphics improvements | ✅ Done (#10) |
+| Shoulder shape separation (correct hover hit targets) | 🔧 In verification (#18) |
 | Period / volume report | 🔧 Planned (#3) |

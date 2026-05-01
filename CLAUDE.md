@@ -95,6 +95,7 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
+- `shoulders_front` and `shoulders_side` shapes were previously nearly identical in position (3px apart), causing wrong hover hit targets and incorrect tooltip data in the heatmap. Fixed by moving `shoulders_front` inward (cx:42, cy:60) and `shoulders_side` outward to the arm edge (cx:23, cy:68) — see issue #18. Pending live verification.
 - Volume (sets × reps) is logged but not used in muscle analysis
 - Recommendations are contextual per session, not based on accumulated history (will improve with data)
 - No error handling for API rate limits
@@ -140,19 +141,3 @@ Even after the key was correctly baked into the bundle, browser REST requests ar
 **Bug 3 — RLS infinite recursion on `profiles` (Postgres error 42P17):**
 Once the apikey was in requests, saves still failed with `42P17: infinite recursion detected in policy for relation "profiles"`. Root cause: `INSERT INTO sessions` with `Prefer: return=representation` triggers a RETURNING select, which evaluated the `"Admin ser alle økter"` SELECT policy on `sessions` — that policy queried `profiles`, which in turn triggered the `"Admin ser alle profiler"` SELECT policy on `profiles` — and that policy queried `profiles` again, looping forever. Fix: dropped both admin policies (`"Admin ser alle profiler"` on `profiles` and `"Admin ser alle økter"` on `sessions`) via Supabase MCP migration. Neither is needed for a single-user workout logger.
 
-## GitHub issues
-| # | Title | Status |
-|---|---|---|
-| #9 | Session save failing | Closed — resolved 2026-04-28 |
-| #2 | History view | Closed — resolved 2026-05-01 |
-| #3 | Period/volume report | Open |
-| #6 | Dev/prod pipeline (CI/CD) | Closed — resolved 2026-04-29 |
-| #7 | Move to Azure (replace Netlify) | Closed — done 2026-04-28 |
-| #8 | IBM Carbon Design System | Closed — resolved 2026-04-29 |
-| #10 | Improve bodymap layout and graphics | Closed — resolved 2026-05-01 |
-| #11 | Checkbox/exercise name visual coupling in confirm step | Closed — resolved 2026-04-29 |
-| #12 | Fetch daily gym session calendar from sporty.no | Closed — resolved 2026-05-01 |
-| #15 | Hover tooltips on muscle list and exercise list in muscles step | Open |
-| #16 | History: show linked gym session name on each session entry | Open |
-| #17 | Period report: heatmap tooltip drill-down (sessions + exercises) | Open |
-| #18 | Heatmap tooltip reports wrong muscle — overlapping shoulder shapes | Open |

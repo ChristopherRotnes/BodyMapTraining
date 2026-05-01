@@ -48,8 +48,8 @@ export const MUSCLES = {
 // shape.d = SVG path string; otherwise ellipse (cx/cy/rx/ry)
 export const SHAPES = {
   chest:           [{ cx:62, cy:80, rx:18, ry:13 }, { cx:98, cy:80, rx:18, ry:13 }],
-  shoulders_front: [{ cx:35, cy:62, rx:13, ry:10 }, { cx:125, cy:62, rx:13, ry:10 }],
-  shoulders_side:  [{ cx:32, cy:67, rx:10, ry:9  }, { cx:128, cy:67, rx:10, ry:9  }],
+  shoulders_front: [{ cx:42, cy:60, rx:10, ry:8 }, { cx:118, cy:60, rx:10, ry:8 }],
+  shoulders_side:  [{ cx:23, cy:68, rx:9,  ry:8 }, { cx:137, cy:68, rx:9,  ry:8 }],
   biceps:          [{ cx:21, cy:96, rx:9,  ry:15 }, { cx:139, cy:96, rx:9,  ry:15 }],
   forearms:        [{ cx:17, cy:128, rx:8, ry:14 }, { cx:143, cy:128, rx:8, ry:14 }],
   abs:             [{ cx:80, cy:108, rx:13, ry:26 }],
