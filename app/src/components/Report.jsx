@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { subDays, format } from "date-fns";
 import { fetchSessionsForReport } from "../lib/db";
-import { HeatmapBodySVG, MUSCLES } from "../lib/bodymap.jsx";
+import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
@@ -61,17 +61,30 @@ function StatTile({ label, value }) {
   );
 }
 
+function buildRecMuscleMap(recs) {
+  const map = {};
+  (recs || []).forEach(r => {
+    [...(r.primary || []), ...(r.secondary || [])].forEach(id => {
+      if (!map[id]) map[id] = [];
+      if (!map[id].includes(r.name)) map[id].push(r.name);
+    });
+  });
+  return map;
+}
+
 export default function Report({ onNewSession, onShowHistory }) {
   const { theme, setTheme } = useTheme();
+  const isMobile = useIsMobile();
+  const [mobileRecView, setMobileRecView] = useState("front");
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedDays, setSelectedDays] = useState(new Set());
   const [selectedTypes, setSelectedTypes] = useState(new Set());
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [advice, setAdvice] = useState(null);
-  const [loadingAdvice, setLoadingAdvice] = useState(false);
-  const [adviceError, setAdviceError] = useState(null);
+  const [recs, setRecs] = useState(null);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [recsError, setRecsError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -85,35 +98,29 @@ export default function Report({ onNewSession, onShowHistory }) {
   }, [periodDays]);
 
   useEffect(() => {
-    setAdvice(null);
-    setAdviceError(null);
+    setRecs(null);
+    setRecsError(null);
   }, [periodDays, selectedDays, selectedTypes]);
 
   const getAdvice = async () => {
-    setLoadingAdvice(true);
-    setAdvice(null);
-    setAdviceError(null);
+    setLoadingRecs(true);
+    setRecs(null);
+    setRecsError(null);
 
-    const trainedSummary = Object.entries(muscleCounts)
+    const trainedLabels = Object.entries(muscleCounts)
       .filter(([, c]) => c.primary > 0)
-      .sort((a, b) => b[1].primary - a[1].primary)
-      .map(([id, c]) => `${MUSCLES[id]?.label || id} (${c.primary}x primær${c.secondary > 0 ? `, ${c.secondary}x sekundær` : ""})`)
+      .map(([id]) => MUSCLES[id]?.label || id)
       .join(", ");
 
     const untrainedLabels = untrainedMuscles.map(id => MUSCLES[id]?.label || id).join(", ");
 
-    const prompt = `Du er en personlig trener som analyserer en klients treningshistorikk.
-
-Periode: siste ${periodDays} dager
-Antall økter: ${sessionCount} (snitt ${avgPerWeek} per uke)
-
-Trente muskelgrupper (primærfokus, antall økter):
-${trainedSummary || "Ingen"}
-
-Ikke trente muskelgrupper i perioden:
-${untrainedLabels || "Alle muskelgrupper er dekket"}
-
-Gi en konkret og motiverende anbefaling på norsk om hva treneren bør fokusere på i kommende økter. Vær spesifikk: nevn hvilke muskelgrupper som bør prioriteres og foreslå 2–3 konkrete øvelser per gruppe. Hold svaret konsist — maks 5 setninger.`;
+    const prompt = `Du er en personlig trener som analyserer en klients treningshistorikk fra de siste ${periodDays} dagene (${sessionCount} økter).
+Trent (primær): ${trainedLabels || "ingen"}.
+Ikke trent: ${untrainedLabels || "alle muskelgrupper er dekket"}.
+Foreslå 5 øvelser som prioriterer de utrente musklene. Gjerne øvelser som er vanlige på norske treningssentre.
+Bruk KUN disse muscle-ID-ene: chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves, traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back.
+Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
+[{"name":"Øvelsesnavn","primary":["muscle_id"],"secondary":["muscle_id"],"tip":"Kort praktisk tips på norsk"}]`;
 
     try {
       const res = await fetch("/api/claude", {
@@ -121,17 +128,18 @@ Gi en konkret og motiverende anbefaling på norsk om hva treneren bør fokusere 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 600,
+          max_tokens: 1000,
           messages: [{ role: "user", content: prompt }],
         }),
       });
       if (!res.ok) throw new Error(`API-feil ${res.status}`);
-      const json = await res.json();
-      setAdvice(json.content?.[0]?.text || "Ingen svar mottatt.");
+      const data = await res.json();
+      const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
+      setRecs(JSON.parse(text));
     } catch (err) {
-      setAdviceError(err.message);
+      setRecsError(err.message);
     } finally {
-      setLoadingAdvice(false);
+      setLoadingRecs(false);
     }
   };
 
@@ -399,39 +407,88 @@ Gi en konkret og motiverende anbefaling på norsk om hva treneren bør fokusere 
                     size="sm"
                     renderIcon={AiGenerate}
                     onClick={getAdvice}
-                    disabled={loadingAdvice}
+                    disabled={loadingRecs}
                   >
-                    Få anbefaling
+                    {loadingRecs ? "Henter anbefalinger…" : "Få anbefaling"}
                   </Button>
 
-                  {loadingAdvice && (
+                  {loadingRecs && (
                     <InlineLoading description="Analyserer treningsdata…" status="active" style={{ marginTop: 12 }} />
                   )}
 
-                  {adviceError && (
+                  {recsError && (
                     <InlineNotification
                       kind="error"
                       title="Feil:"
-                      subtitle={adviceError}
+                      subtitle={recsError}
                       hideCloseButton
                       lowContrast
                       style={{ marginTop: 12 }}
                     />
                   )}
 
-                  {advice && (
-                    <div style={{
-                      marginTop: 12,
-                      background: "var(--cds-layer-01)",
-                      border: "1px solid var(--cds-border-subtle-01)",
-                      borderLeft: "3px solid var(--cds-interactive)",
-                      padding: "14px 16px",
-                    }}>
-                      <p style={{ ...labelStyle, marginBottom: 10 }}>Anbefaling</p>
-                      <p style={{ fontSize: 14, color: "var(--cds-text-primary)", lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0 }}>
-                        {advice}
-                      </p>
-                    </div>
+                  {recs && recs.length > 0 && (() => {
+                    const recPrimary = [...new Set(recs.flatMap(r => r.primary || []))];
+                    const recSecAll = [...new Set(recs.flatMap(r => r.secondary || []))];
+                    const recSecondary = recSecAll.filter(id => !recPrimary.includes(id));
+                    return (
+                      <div className="fade-in" style={{ marginTop: 12 }}>
+                        <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14, marginBottom: 10 }}>
+                          <p style={{ ...labelStyle, marginBottom: 10 }}>Anbefalte øvelser</p>
+                          {recs.map((r, i) => (
+                            <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--cds-text-primary)" }}>{r.name}</p>
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: r.tip ? 4 : 0 }}>
+                                {(r.primary || []).length > 0 && (
+                                  <Tag type="green" size="sm">{r.primary.map(id => MUSCLES[id]?.label || id).join(", ")}</Tag>
+                                )}
+                                {(r.secondary || []).length > 0 && (
+                                  <Tag type="blue" size="sm">{r.secondary.map(id => MUSCLES[id]?.label || id).join(", ")}</Tag>
+                                )}
+                              </div>
+                              {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>{r.tip}</p>}
+                            </div>
+                          ))}
+                        </div>
+
+                        {isMobile ? (
+                          <>
+                            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                              {["front", "back"].map(v => (
+                                <Button key={v} kind={mobileRecView === v ? "primary" : "ghost"} size="sm"
+                                  onClick={() => setMobileRecView(v)}>
+                                  {v === "front" ? "Front" : "Bak"}
+                                </Button>
+                              ))}
+                            </div>
+                            <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                              <BodySVG view={mobileRecView} primary={recPrimary} secondary={recSecondary}
+                                muscleMap={buildRecMuscleMap(recs)} />
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+                            {["front", "back"].map(view => (
+                              <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                                <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
+                                  muscleMap={buildRecMuscleMap(recs)} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: 12, marginBottom: 12, fontSize: 12 }}>
+                          <Tag type="green" size="sm">Primær</Tag>
+                          <Tag type="blue" size="sm">Sekundær</Tag>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {recs && recs.length === 0 && (
+                    <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", marginTop: 12 }}>
+                      Ingen anbefalinger tilgjengelig.
+                    </p>
                   )}
                 </div>
               )}
