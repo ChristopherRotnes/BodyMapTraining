@@ -103,9 +103,10 @@ export default function Report({ onNewSession, onShowHistory }) {
     });
   }, [sessions, selectedDays, selectedTypes]);
 
-  const { muscleCounts, maxPrimaryCount } = useMemo(() => {
+  const { muscleCounts, maxPrimaryCount, muscleExercises } = useMemo(() => {
     const primarySessions = {};
     const secondarySessions = {};
+    const exercises = {};
 
     filteredSessions.forEach(s => {
       (s.session_exercises || []).forEach(ex => {
@@ -118,6 +119,8 @@ export default function Report({ onNewSession, onShowHistory }) {
             if (!secondarySessions[id]) secondarySessions[id] = new Set();
             secondarySessions[id].add(s.id);
           }
+          if (!exercises[id]) exercises[id] = new Set();
+          exercises[id].add(ex.name);
         });
       });
     });
@@ -131,7 +134,7 @@ export default function Report({ onNewSession, onShowHistory }) {
     });
 
     const maxPrimary = Math.max(1, ...Object.values(counts).map(c => c.primary));
-    return { muscleCounts: counts, maxPrimaryCount: maxPrimary };
+    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises };
   }, [filteredSessions]);
 
   const toggleDay = (day) => {
@@ -256,7 +259,7 @@ export default function Report({ onNewSession, onShowHistory }) {
               <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
                 {["front", "back"].map(view => (
                   <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} />
+                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} />
                   </div>
                 ))}
               </div>

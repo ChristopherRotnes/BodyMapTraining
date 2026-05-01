@@ -121,7 +121,7 @@ function Shape({ sh, i, fill, stroke, style }) {
   return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth="0.8" style={style} />;
 }
 
-export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
+export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {} }) {
   const [tooltip, setTooltip] = React.useState(null);
   const wrapRef = React.useRef();
 
@@ -214,6 +214,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
           </div>
           {(() => {
             const { primary = 0, secondary = 0 } = counts[tooltip.id] || {};
+            const exNames = exerciseMap[tooltip.id] ? [...exerciseMap[tooltip.id]] : [];
             return (
               <>
                 <div style={{ fontSize: 12, color: "var(--cds-text-primary)" }}>
@@ -226,6 +227,13 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
                 )}
                 {primary === 0 && secondary === 0 && (
                   <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>Ikke trent</div>
+                )}
+                {exNames.length > 0 && (
+                  <div style={{ marginTop: 6, borderTop: "1px solid var(--cds-border-subtle-01)", paddingTop: 5 }}>
+                    {exNames.map((name, i) => (
+                      <div key={i} style={{ fontSize: 12, color: "var(--cds-text-primary)", padding: "2px 0" }}>{name}</div>
+                    ))}
+                  </div>
                 )}
               </>
             );
