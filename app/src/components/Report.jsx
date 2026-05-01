@@ -4,7 +4,7 @@ import { fetchSessionsForReport } from "../lib/db";
 import { HeatmapBodySVG, MUSCLES } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Tag, InlineLoading,
+  Tag, InlineLoading, DefinitionTooltip,
 } from "@carbon/react";
 import { Camera, RecentlyViewed, Asleep, Light } from "@carbon/icons-react";
 import { useTheme } from "../theme";
@@ -305,7 +305,11 @@ export default function Report({ onNewSession, onShowHistory }) {
                   return (
                     <div key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
                       <span style={{ fontSize: 12, color: "var(--cds-text-primary)", width: 140, flexShrink: 0 }}>
-                        {MUSCLES[id]?.label || id}
+                        {muscleExercises[id]?.size > 0 ? (
+                          <DefinitionTooltip definition={[...muscleExercises[id]].join(", ")} openOnHover align="bottom">
+                            {MUSCLES[id]?.label || id}
+                          </DefinitionTooltip>
+                        ) : MUSCLES[id]?.label || id}
                       </span>
                       <div style={{ flex: 1, height: 6, background: "var(--cds-layer-02)" }}>
                         {primary > 0 && (
