@@ -63,10 +63,10 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 
 ## What is NOT yet built
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
-- **Sporty.no calendar fetch** — Azure Function timer trigger fetching today's gym sessions from the open API at `https://sporty.no/api/v1/businessunits/8/groupactivities`. Response: `data[]` with `id`, `name`, `duration.{start,end}` (UTC ISO), `instructors[0].name`, `cancelled`. Planned schema: `gym_calendar` with `sporty_id integer unique` (for upsert), `start_time`/`end_time` as `timestamptz`, FK `gym_calendar_id` on `sessions`. CRON: 04:00 + 11:00 UTC (= 05:00/06:00 CET or 06:00/13:00 CEST, DST-safe). Needs `SUPABASE_SERVICE_ROLE_KEY` added as Azure app setting. UI: optional Carbon `Select` in confirm step ("Hvilken time var dette?"). (GitHub issue #12)
 - **Bodymap improvements** — anatomically more accurate SVG paths, better primary/secondary visual differentiation, improved mobile layout (GitHub issue #10)
 - **Favicon** — replace default Vite icon with camera SVG in Carbon style (queued)
 - **Page title** — change from "app" to "Workout Lens" (queued)
+- **Gym calendar manager** — admin UI to manually trigger sporty.no sync and inspect `gym_calendar` rows; when built, the HTTP trigger on `sportySync.js` can be removed from the user-facing API
 
 ## Exercise data model
 ```typescript
@@ -88,6 +88,8 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 - SVG body is simplified geometry (viewBox `0 0 160 360`), not anatomically precise — good enough for PoC, could be replaced with a proper anatomical SVG later.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
+- **Azure Functions entry point:** `app/api/index.js` imports all function files (`claude.js`, `sportySync.js`). `package.json#main` points to `index.js`. Azure Functions v4 only loads the single file referenced in `main` — add new function files here or they will never be registered.
+- **Sporty.no sync:** `app/api/sportySync.js` — timer trigger at 04:00 + 11:00 UTC upserts today's sessions from `https://sporty.no/api/v1/businessunits/8/groupactivities` into `gym_calendar` by `sporty_id`. HTTP trigger `POST /api/sporty-sync` available for manual testing. Requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` as Azure app settings (service role needed because the timer has no auth user).
 - **CI/CD build split:** the frontend is pre-built in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in `env:`), then the Azure SWA action uploads `app/dist/` directly (`app_location: "app/dist"`). This bypasses Oryx for the frontend — Oryx strips `VITE_*` env vars before spawning Vite and they never reach the bundle. Oryx still handles the API (`app/api`). `vite.config.js` has a build-time assertion that fails immediately if the required vars are missing.
 - **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
 
@@ -128,4 +130,4 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #8 | IBM Carbon Design System | Closed — resolved 2026-04-29 |
 | #10 | Improve bodymap layout and graphics | Open |
 | #11 | Checkbox/exercise name visual coupling in confirm step | Closed — resolved 2026-04-29 |
-| #12 | Fetch daily gym session calendar from sporty.no | Open |
+| #12 | Fetch daily gym session calendar from sporty.no | Closed — resolved 2026-05-01 |

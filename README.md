@@ -40,17 +40,11 @@ Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Au
 
 ### Running
 
-```bash
-# Terminal 1 (non-conda — requires Node 20.19+ or 22.12+)
-cd app && npm run dev
-
-# Terminal 2 (once Vite is ready on :5173)
-swa start
+```powershell
+.\dev.ps1
 ```
 
-Open **http://localhost:4280** — not 5173. The API routes are only available through the SWA proxy.
-
-> **Note:** The `npm run dev` step requires Node 20.19+ or 22.12+. If your shell uses an older Node (e.g. conda base), open a separate terminal with the system Node before running it.
+This switches to Node 20 via fnm, opens Vite in a separate window, then starts the SWA emulator. Open **http://localhost:4280** — not 5173. The API routes (`/api/claude`, `/api/sporty-sync`) are only available through the SWA proxy.
 
 ## Project structure
 
@@ -64,16 +58,17 @@ app/
       Login.jsx              # Magic-link email login
       MuscleMap.jsx          # Logger — upload, analyse, confirm, visualise
       History.jsx            # History — two-month calendar + session detail
-      ThemeToggle.jsx        # Standalone light/dark toggle
     lib/
       supabase.js            # Supabase client
-      db.js                  # DB helpers (sessions, exercises, muscle_activations)
+      db.js                  # DB helpers (sessions, exercises, muscle_activations, gym_calendar)
       bodymap.jsx            # Shared: MUSCLES, SHAPES, BodySVG, calcMuscles
     styles/
       carbon-tokens.css      # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
       app.css                # Global resets and Carbon overrides
   api/
+    index.js                 # Entry point — imports all Azure Functions
     claude.js                # Azure Function — proxies requests to Anthropic API
+    sportySync.js            # Azure Function — timer (04:00+11:00 UTC) + HTTP trigger for sporty.no sync
     host.json                # Azure Functions runtime config
     package.json             # API dependencies
   staticwebapp.config.json   # Azure SWA routing config
@@ -105,7 +100,9 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 
 | Setting | Purpose |
 |---|---|
-| `ANTHROPIC_API_KEY` | Used by the Azure Function at runtime — never exposed to browser |
+| `ANTHROPIC_API_KEY` | Used by the Claude proxy function — never exposed to browser |
+| `SUPABASE_URL` | Used by the sporty.no sync function to upsert gym_calendar rows |
+| `SUPABASE_SERVICE_ROLE_KEY` | Used by the sporty.no sync function (bypasses RLS — timer has no auth user) |
 
 > **Note:** The frontend is built in the GitHub Actions runner (not by Oryx inside Azure SWA's Docker container). Oryx strips `VITE_*` env vars before spawning Vite, so they would never reach the bundle if built there. The workflow pre-builds `app/dist/` and the Azure SWA action uploads it directly via `app_location: "app/dist"`. Do not revert this.
 
@@ -125,6 +122,6 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | IBM Carbon Design System | ✅ Done (#8) |
 | Local dev + branch CI/CD | ✅ Done (#6) |
 | Workout history view | ✅ Done (#2) |
+| Sporty.no gym calendar sync + session picker | ✅ Done (#12) |
 | Period / volume report | 🔧 Planned (#3) |
-| Sporty.no gym calendar fetch | 🔧 Planned (#12) |
 | Bodymap layout and graphics improvements | 🔧 Planned (#10) |
