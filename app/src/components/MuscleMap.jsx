@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
 import { saveSession } from "../lib/db";
-import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG } from "../lib/bodymap";
+import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Checkbox,

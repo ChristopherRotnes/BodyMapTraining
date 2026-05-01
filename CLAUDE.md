@@ -17,7 +17,7 @@
 chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves
 traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back
 ```
-Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in MuscleMap.jsx.
+Each has a `view` (front/back) and Norwegian `label` in the `MUSCLES` object in `app/src/lib/bodymap.jsx`.
 
 ## Carbon design system
 
@@ -29,7 +29,8 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `app/src/styles/carbon-tokens.css` — all Carbon CSS variables for g10 (light) and g100 (dark) themes, plus `@font-face` declarations; font URLs use `/fonts/...` (Vite public-dir absolute paths)
 - `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
-- `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with light/dark toggle via `Asleep`/`Light` icons), `ProgressIndicator`, `Button`, `Checkbox`, `Tag`, `InlineLoading`, `InlineNotification`
+- `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav + light/dark toggle), `ProgressIndicator`, `Button`, `Checkbox`, `Tag`, `InlineLoading`, `InlineNotification`
+- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`; `react-day-picker` calendar themed to Carbon tokens
 - `BodySVG` muscle highlights: primary → green-50 `rgba(36,161,72,…)`, secondary → blue-40 `rgba(120,169,255,…)`
 - Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners
 
@@ -61,7 +62,6 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens.css` for available tokens. The `@carbon/react` package ships full TypeScript types — use them as the component API reference.
 
 ## What is NOT yet built
-- **History view** — past sessions with muscle maps (GitHub issue #2)
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
 - **Sporty.no calendar fetch** — Azure Function timer trigger fetching today's gym sessions from the open API at `https://sporty.no/api/v1/businessunits/8/groupactivities`. Response: `data[]` with `id`, `name`, `duration.{start,end}` (UTC ISO), `instructors[0].name`, `cancelled`. Planned schema: `gym_calendar` with `sporty_id integer unique` (for upsert), `start_time`/`end_time` as `timestamptz`, FK `gym_calendar_id` on `sessions`. CRON: 04:00 + 11:00 UTC (= 05:00/06:00 CET or 06:00/13:00 CEST, DST-safe). Needs `SUPABASE_SERVICE_ROLE_KEY` added as Azure app setting. UI: optional Carbon `Select` in confirm step ("Hvilken time var dette?"). (GitHub issue #12)
 - **Bodymap improvements** — anatomically more accurate SVG paths, better primary/secondary visual differentiation, improved mobile layout (GitHub issue #10)
@@ -83,6 +83,7 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 ```
 
 ## Key architecture decisions
+- **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, and `BodySVG`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
 - SVG body is simplified geometry (viewBox `0 0 160 360`), not anatomically precise — good enough for PoC, could be replaced with a proper anatomical SVG later.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
@@ -120,7 +121,7 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | # | Title | Status |
 |---|---|---|
 | #9 | Session save failing | Closed — resolved 2026-04-28 |
-| #2 | History view | Open |
+| #2 | History view | Closed — resolved 2026-05-01 |
 | #3 | Period/volume report | Open |
 | #6 | Dev/prod pipeline (CI/CD) | Closed — resolved 2026-04-29 |
 | #7 | Move to Azure (replace Netlify) | Closed — done 2026-04-28 |

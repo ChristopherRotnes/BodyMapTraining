@@ -4,7 +4,7 @@ import { nb } from "date-fns/locale";
 import { format, subMonths } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate } from "../lib/db";
-import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL } from "../lib/bodymap";
+import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Tag, InlineLoading,
