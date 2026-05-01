@@ -1,6 +1,19 @@
 import { supabase } from "./supabase";
 
-export async function saveSession(exercises, { imageUrl = null, notes = null, trainingGroupId = null } = {}) {
+export async function fetchTodayGymSessions() {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("gym_calendar")
+    .select("id, name, start_time, end_time, instructor")
+    .gte("start_time", `${today}T00:00:00+00:00`)
+    .lte("start_time", `${today}T23:59:59+00:00`)
+    .eq("cancelled", false)
+    .order("start_time", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function saveSession(exercises, { imageUrl = null, notes = null, trainingGroupId = null, gymCalendarId = null } = {}) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: session, error: sessionError } = await supabase
@@ -8,6 +21,7 @@ export async function saveSession(exercises, { imageUrl = null, notes = null, tr
     .insert({
       trainer_id: user.id,
       training_group_id: trainingGroupId,
+      gym_calendar_id: gymCalendarId,
       session_date: new Date().toISOString().slice(0, 10),
       image_url: imageUrl,
       notes,

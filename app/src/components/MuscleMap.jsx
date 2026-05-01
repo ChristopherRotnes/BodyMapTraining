@@ -1,9 +1,9 @@
-import React, { useState, useRef, useCallback } from "react";
-import { saveSession } from "../lib/db";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { saveSession, fetchTodayGymSessions } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Button, Checkbox,
+  Button, Checkbox, Select, SelectItem,
   ProgressIndicator, ProgressStep,
   InlineNotification, InlineLoading,
   Tag,
@@ -74,7 +74,16 @@ export default function MuscleMap({ onShowHistory }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [gymSessions, setGymSessions] = useState([]);
+  const [gymSessionId, setGymSessionId] = useState("");
   const fileRef = useRef();
+
+  useEffect(() => {
+    if (step !== "confirm") return;
+    fetchTodayGymSessions()
+      .then(setGymSessions)
+      .catch(() => setGymSessions([]));
+  }, [step]);
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
 
@@ -146,7 +155,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setMuscles(calcMuscles(enriched));
     setStep("muscles");
     setSaving(true); setSaved(false); setSaveError(false);
-    saveSession(enriched)
+    saveSession(enriched, { gymCalendarId: gymSessionId || null })
       .then(() => setSaved(true))
       .catch(err => { console.error("Lagring feilet:", err); setSaveError(true); })
       .finally(() => setSaving(false));
@@ -157,6 +166,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setExercises([]); setMuscles({ primary: [], secondary: [] });
     setError(null); setRecs(null);
     setSaving(false); setSaved(false); setSaveError(false);
+    setGymSessions([]); setGymSessionId("");
   };
 
   const getUntrainedMuscles = () =>
@@ -340,6 +350,23 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   ? `Fant ${exercises.length} øvelse${exercises.length !== 1 ? "r" : ""}. Juster om nødvendig:`
                   : "Ingen øvelser funnet. Legg til manuelt:"}
               </p>
+
+              {gymSessions.length > 0 && (
+                <Select
+                  id="gym-session-select"
+                  labelText="Hvilken time var dette?"
+                  value={gymSessionId}
+                  onChange={(e) => setGymSessionId(e.target.value)}
+                  style={{ marginBottom: 16 }}
+                >
+                  <SelectItem value="" text="Velg gymtime (valgfritt)" />
+                  {gymSessions.map(s => {
+                    const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                    const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
+                    return <SelectItem key={s.id} value={s.id} text={label} />;
+                  })}
+                </Select>
+              )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
                 {exercises.map((ex) => (
