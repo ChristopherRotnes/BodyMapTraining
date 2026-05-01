@@ -81,7 +81,7 @@ export default function Login() {
                 title="Innlogging feilet:"
                 subtitle={error}
                 hideCloseButton
-                lowContrast
+               
               />
             )}
             <Button

@@ -305,7 +305,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                         title="Eksisterende økt:"
                         subtitle={`Denne gymtimen har allerede en lagret økt (${editGymCalendarConflict.session_date}). Lagring erstatter den.`}
                         hideCloseButton
-                        lowContrast
+                       
                         style={{ marginBottom: 16 }}
                       />
                     )}
@@ -537,10 +537,10 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               {editMode && (
                 <>
                   {analyzeError && (
-                    <InlineNotification kind="error" title="Feil:" subtitle={analyzeError} hideCloseButton lowContrast style={{ marginBottom: 8 }} />
+                    <InlineNotification kind="error" title="Feil:" subtitle={analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
                   )}
                   {editError && (
-                    <InlineNotification kind="error" title="Feil:" subtitle={editError} hideCloseButton lowContrast style={{ marginBottom: 8 }} />
+                    <InlineNotification kind="error" title="Feil:" subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
                   )}
                   <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
                     onChange={(e) => { if (e.target.files[0]) reanalyze(e.target.files[0]); e.target.value = ""; }} />

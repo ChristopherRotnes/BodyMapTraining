@@ -422,7 +422,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                       title="Feil:"
                       subtitle={recsError}
                       hideCloseButton
-                      lowContrast
+                     
                       style={{ marginTop: 12 }}
                     />
                   )}

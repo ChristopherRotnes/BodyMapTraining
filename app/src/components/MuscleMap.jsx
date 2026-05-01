@@ -327,7 +327,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   title="Feil:"
                   subtitle={error}
                   hideCloseButton
-                  lowContrast
+                 
                   style={{ marginBottom: 14 }}
                 />
               )}
@@ -406,7 +406,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   title="Eksisterende økt:"
                   subtitle={`Denne gymtimen har allerede en lagret økt (${gymCalendarConflict.session_date}). Lagring erstatter den.`}
                   hideCloseButton
-                  lowContrast
+                 
                   style={{ marginBottom: 16 }}
                 />
               )}
