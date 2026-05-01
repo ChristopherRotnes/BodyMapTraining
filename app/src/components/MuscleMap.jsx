@@ -12,6 +12,11 @@ import {
 import { Add, TrashCan, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed, Analytics } from "@carbon/icons-react";
 import { useTheme } from "../theme";
 
+const localDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+
 // ── MUSCLE MAP BUILDERS ───────────────────────────────────────────────
 function buildMuscleMap(exercises) {
   const map = {};
@@ -78,7 +83,7 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   const [gymSessions, setGymSessions] = useState([]);
   const [gymSessionId, setGymSessionId] = useState("");
   const [gymCalendarConflict, setGymCalendarConflict] = useState(null);
-  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [sessionDate, setSessionDate] = useState(() => localDateStr());
   const [mobileView, setMobileView] = useState("front");
   const isMobile = useIsMobile();
   const fileRef = useRef();
@@ -179,7 +184,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setError(null); setRecs(null);
     setSaving(false); setSaved(false); setSaveError(false);
     setGymSessions([]); setGymSessionId(""); setGymCalendarConflict(null);
-    setSessionDate(new Date().toISOString().slice(0, 10));
+    setSessionDate(localDateStr());
   };
 
   const getUntrainedMuscles = () =>
@@ -370,7 +375,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               <DatePicker
                 datePickerType="single"
                 value={(() => { const [y, m, d] = sessionDate.split("-"); return `${m}/${d}/${y}`; })()}
-                maxDate={(() => { const [y, m, d] = new Date().toISOString().slice(0,10).split("-"); return `${m}/${d}/${y}`; })()}
+                maxDate={(() => { const [y, m, d] = localDateStr().split("-"); return `${m}/${d}/${y}`; })()}
                 onChange={([date]) => {
                   if (!date) return;
                   const y = date.getFullYear();
