@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { saveSession, fetchTodayGymSessions } from "../lib/db";
+import { saveSession, fetchGymSessionsByDate } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Checkbox, Select, SelectItem,
+  DatePicker, DatePickerInput,
   ProgressIndicator, ProgressStep,
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
@@ -76,16 +77,17 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   const [saveError, setSaveError] = useState(false);
   const [gymSessions, setGymSessions] = useState([]);
   const [gymSessionId, setGymSessionId] = useState("");
+  const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [mobileView, setMobileView] = useState("front");
   const isMobile = useIsMobile();
   const fileRef = useRef();
 
   useEffect(() => {
     if (step !== "confirm") return;
-    fetchTodayGymSessions()
-      .then(setGymSessions)
+    fetchGymSessionsByDate(sessionDate)
+      .then(sessions => { setGymSessions(sessions); setGymSessionId(""); })
       .catch(() => setGymSessions([]));
-  }, [step]);
+  }, [step, sessionDate]);
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
 
@@ -157,7 +159,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setMuscles(calcMuscles(enriched));
     setStep("muscles");
     setSaving(true); setSaved(false); setSaveError(false);
-    saveSession(enriched, { gymCalendarId: gymSessionId || null })
+    saveSession(enriched, { gymCalendarId: gymSessionId || null, sessionDate })
       .then(() => setSaved(true))
       .catch(err => { console.error("Lagring feilet:", err); setSaveError(true); })
       .finally(() => setSaving(false));
@@ -169,6 +171,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setError(null); setRecs(null);
     setSaving(false); setSaved(false); setSaveError(false);
     setGymSessions([]); setGymSessionId("");
+    setSessionDate(new Date().toISOString().slice(0, 10));
   };
 
   const getUntrainedMuscles = () =>
@@ -355,6 +358,22 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   ? `Fant ${exercises.length} øvelse${exercises.length !== 1 ? "r" : ""}. Juster om nødvendig:`
                   : "Ingen øvelser funnet. Legg til manuelt:"}
               </p>
+
+              <DatePicker
+                datePickerType="single"
+                value={(() => { const [y, m, d] = sessionDate.split("-"); return `${m}/${d}/${y}`; })()}
+                maxDate={(() => { const [y, m, d] = new Date().toISOString().slice(0,10).split("-"); return `${m}/${d}/${y}`; })()}
+                onChange={([date]) => {
+                  if (!date) return;
+                  const y = date.getFullYear();
+                  const m = String(date.getMonth() + 1).padStart(2, "0");
+                  const d = String(date.getDate()).padStart(2, "0");
+                  setSessionDate(`${y}-${m}-${d}`);
+                }}
+                style={{ marginBottom: 16 }}
+              >
+                <DatePickerInput id="session-date" labelText="Dato" placeholder="mm/dd/åååå" size="md" />
+              </DatePicker>
 
               {gymSessions.length > 0 && (
                 <Select
