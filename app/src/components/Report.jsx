@@ -4,9 +4,9 @@ import { fetchSessionsForReport } from "../lib/db";
 import { HeatmapBodySVG, MUSCLES } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Tag, InlineLoading, DefinitionTooltip,
+  Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
-import { Camera, RecentlyViewed, Asleep, Light } from "@carbon/icons-react";
+import { Camera, RecentlyViewed, Asleep, Light, AiGenerate } from "@carbon/icons-react";
 import { useTheme } from "../theme";
 
 const PERIODS = [
@@ -69,6 +69,9 @@ export default function Report({ onNewSession, onShowHistory }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [advice, setAdvice] = useState(null);
+  const [loadingAdvice, setLoadingAdvice] = useState(false);
+  const [adviceError, setAdviceError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +83,57 @@ export default function Report({ onNewSession, onShowHistory }) {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [periodDays]);
+
+  useEffect(() => {
+    setAdvice(null);
+    setAdviceError(null);
+  }, [periodDays, selectedDays, selectedTypes]);
+
+  const getAdvice = async () => {
+    setLoadingAdvice(true);
+    setAdvice(null);
+    setAdviceError(null);
+
+    const trainedSummary = Object.entries(muscleCounts)
+      .filter(([, c]) => c.primary > 0)
+      .sort((a, b) => b[1].primary - a[1].primary)
+      .map(([id, c]) => `${MUSCLES[id]?.label || id} (${c.primary}x primær${c.secondary > 0 ? `, ${c.secondary}x sekundær` : ""})`)
+      .join(", ");
+
+    const untrainedLabels = untrainedMuscles.map(id => MUSCLES[id]?.label || id).join(", ");
+
+    const prompt = `Du er en personlig trener som analyserer en klients treningshistorikk.
+
+Periode: siste ${periodDays} dager
+Antall økter: ${sessionCount} (snitt ${avgPerWeek} per uke)
+
+Trente muskelgrupper (primærfokus, antall økter):
+${trainedSummary || "Ingen"}
+
+Ikke trente muskelgrupper i perioden:
+${untrainedLabels || "Alle muskelgrupper er dekket"}
+
+Gi en konkret og motiverende anbefaling på norsk om hva treneren bør fokusere på i kommende økter. Vær spesifikk: nevn hvilke muskelgrupper som bør prioriteres og foreslå 2–3 konkrete øvelser per gruppe. Hold svaret konsist — maks 5 setninger.`;
+
+    try {
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 600,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!res.ok) throw new Error(`API-feil ${res.status}`);
+      const json = await res.json();
+      setAdvice(json.content?.[0]?.text || "Ingen svar mottatt.");
+    } catch (err) {
+      setAdviceError(err.message);
+    } finally {
+      setLoadingAdvice(false);
+    }
+  };
 
   const availableTypes = useMemo(() => {
     const names = new Set();
@@ -323,6 +377,50 @@ export default function Report({ onNewSession, onShowHistory }) {
                   );
                 })}
               </div>
+
+              {sessionCount > 0 && (
+                <div style={{ marginTop: 20 }}>
+                  <Button
+                    kind="tertiary"
+                    size="sm"
+                    renderIcon={AiGenerate}
+                    onClick={getAdvice}
+                    disabled={loadingAdvice}
+                  >
+                    Få anbefaling
+                  </Button>
+
+                  {loadingAdvice && (
+                    <InlineLoading description="Analyserer treningsdata…" status="active" style={{ marginTop: 12 }} />
+                  )}
+
+                  {adviceError && (
+                    <InlineNotification
+                      kind="error"
+                      title="Feil:"
+                      subtitle={adviceError}
+                      hideCloseButton
+                      lowContrast
+                      style={{ marginTop: 12 }}
+                    />
+                  )}
+
+                  {advice && (
+                    <div style={{
+                      marginTop: 12,
+                      background: "var(--cds-layer-01)",
+                      border: "1px solid var(--cds-border-subtle-01)",
+                      borderLeft: "3px solid var(--cds-interactive)",
+                      padding: "14px 16px",
+                    }}>
+                      <p style={{ ...labelStyle, marginBottom: 10 }}>Anbefaling</p>
+                      <p style={{ fontSize: 14, color: "var(--cds-text-primary)", lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0 }}>
+                        {advice}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {sessionCount === 0 && (
                 <p style={{ color: "var(--cds-text-secondary)", fontSize: 14, marginTop: 16 }}>
