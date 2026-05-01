@@ -120,9 +120,14 @@ export default function Report({ onNewSession, onShowHistory }) {
       if (!res.ok) throw new Error(`API-feil ${res.status}`);
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
-      setRecs(JSON.parse(text));
+      let parsed;
+      try { parsed = JSON.parse(text); } catch {
+        throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
+      }
+      setRecs(parsed);
     } catch (err) {
-      setRecsError(err.message);
+      console.error("Rapport-anbefalinger feilet:", err);
+      setRecsError(err.message || "Kunne ikke hente anbefalinger. Prøv igjen.");
     } finally {
       setLoadingRecs(false);
     }

@@ -31,6 +31,7 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   const [editingId, setEditingId] = useState(null);
   const [recs, setRecs] = useState(null);
   const [loadingRecs, setLoadingRecs] = useState(false);
+  const [recsError, setRecsError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -94,14 +95,18 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
       });
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error();
+      let parsed;
+      try { parsed = JSON.parse(text); } catch {
+        throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
+      }
+      if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
       setExercises(parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })));
       setStep("confirm");
     } catch (err) {
+      console.error("Analyse feilet:", err);
       const msg = err?.status === 401
         ? "API-nøkkel feil. Sjekk ANTHROPIC_API_KEY i Azure-miljøet."
-        : "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.";
+        : (err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.");
       setError(msg);
       setStep("upload");
     }
@@ -129,7 +134,7 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   const reset = () => {
     setStep("upload"); setImages([]);
     setExercises([]); setMuscles({ primary: [], secondary: [] });
-    setError(null); setRecs(null);
+    setError(null); setRecs(null); setRecsError(null);
     setSaving(false); setSaved(false); setSaveError(false);
     setGymSessions([]); setGymSessionId(""); setGymCalendarConflict(null);
     setSessionDate(localDateStr());
@@ -139,7 +144,7 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
     Object.keys(MUSCLES).filter(id => !muscles.primary.includes(id) && !muscles.secondary.includes(id));
 
   const recommend = async () => {
-    setLoadingRecs(true); setRecs(null);
+    setLoadingRecs(true); setRecs(null); setRecsError(null);
     const untrained = getUntrainedMuscles().map(id => MUSCLES[id].label);
     const trained = [...muscles.primary, ...muscles.secondary].map(id => MUSCLES[id]?.label).filter(Boolean);
     try {
@@ -157,9 +162,17 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
       });
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
-      setRecs(JSON.parse(text));
-    } catch { setRecs([]); }
-    setLoadingRecs(false);
+      let parsed;
+      try { parsed = JSON.parse(text); } catch {
+        throw new Error("Svaret fra Claude var ikke gyldig JSON.");
+      }
+      setRecs(parsed);
+    } catch (err) {
+      console.error("Anbefalinger feilet:", err);
+      setRecsError("Kunne ikke hente anbefalinger. Prøv igjen.");
+    } finally {
+      setLoadingRecs(false);
+    }
   };
 
   // ── RENDER ────────────────────────────────────────────────────────
@@ -602,6 +615,16 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
               >
                 {loadingRecs ? "Henter anbefalinger…" : "Hva bør jeg trene neste gang?"}
               </Button>
+
+              {recsError && (
+                <InlineNotification
+                  kind="error"
+                  title="Feil:"
+                  subtitle={recsError}
+                  hideCloseButton
+                  style={{ marginBottom: 10 }}
+                />
+              )}
 
               {recs && recs.length > 0 && (() => {
                 const recPrimary  = [...new Set(recs.flatMap(r => r.primary || []))];

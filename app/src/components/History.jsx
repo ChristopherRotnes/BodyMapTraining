@@ -212,11 +212,15 @@ export default function History({ onNewSession, onShowReport }) {
       });
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error();
+      let parsed;
+      try { parsed = JSON.parse(text); } catch {
+        throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
+      }
+      if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
       setEditExercises(parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true, sets: ex.sets ?? "1" })));
-    } catch {
-      setAnalyzeError("Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.");
+    } catch (err) {
+      console.error("Re-analyse feilet:", err);
+      setAnalyzeError(err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.");
     } finally {
       setAnalyzing(false);
     }
