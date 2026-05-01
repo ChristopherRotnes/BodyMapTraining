@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
+import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap } from "../lib/utils";
+import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Checkbox, Select, SelectItem,
@@ -15,54 +17,6 @@ import { useTheme } from "../theme";
 const localDateStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-};
-
-// ── MUSCLE MAP BUILDERS ───────────────────────────────────────────────
-function buildMuscleMap(exercises) {
-  const map = {};
-  exercises.filter(e => e.enabled && e.name).forEach(ex => {
-    if (ex.primary?.length || ex.secondary?.length) {
-      [...(ex.primary || []), ...(ex.secondary || [])].forEach(id => {
-        if (!map[id]) map[id] = [];
-        if (!map[id].includes(ex.name)) map[id].push(ex.name);
-      });
-    } else {
-      const txt = (ex.name + " " + (ex.standardName || "")).toLowerCase();
-      for (const rule of EX_DB) {
-        if (rule.kw.some(k => txt.includes(k))) {
-          [...rule.p, ...rule.s].forEach(id => {
-            if (!map[id]) map[id] = [];
-            if (!map[id].includes(ex.name)) map[id].push(ex.name);
-          });
-          break;
-        }
-      }
-    }
-  });
-  return map;
-}
-
-function buildRecMuscleMap(recs) {
-  const map = {};
-  (recs || []).forEach(r => {
-    [...(r.primary || []), ...(r.secondary || [])].forEach(id => {
-      if (!map[id]) map[id] = [];
-      if (!map[id].includes(r.name)) map[id].push(r.name);
-    });
-  });
-  return map;
-}
-
-const toBase64 = (file) => new Promise((res, rej) => {
-  const r = new FileReader();
-  r.onload = () => res(r.result.split(",")[1]);
-  r.onerror = rej;
-  r.readAsDataURL(file);
-});
-
-const getMediaType = (file) => {
-  const t = { "image/png": "image/png", "image/gif": "image/gif", "image/webp": "image/webp" };
-  return t[file.type] || "image/jpeg";
 };
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
@@ -127,19 +81,13 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-opus-4-5",
+          model: CLAUDE_MODEL_VISION,
           max_tokens: 1500,
           messages: [{
             role: "user",
             content: [
               ...imageBlocks,
-              { type: "text", text: `Du ser ett eller flere bilder av treningsprogrammer fra norske treningsstudio-tavler (gjerne håndskrevet).
-Identifiser ALLE treningsøvelser fra alle bildene. Ikke dupliser øvelser som finnes i flere bilder.
-For hver øvelse, angi hvilke muskler som er primære og sekundære.
-Bruk KUN disse muscle-ID-ene: chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves, traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back.
-Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
-[{"name":"Nøyaktig navn fra tavlen","standardName":"Standard norsk/engelsk navn","sets":"3","reps":"10","primary":["chest"],"secondary":["shoulders_front","triceps"]}]
-"sets" og "reps" er null om ikke skrevet. Finn du ingen øvelser, returner: []` }
+              { type: "text", text: ANALYZE_PROMPT }
             ]
           }]
         })
@@ -199,16 +147,11 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5",
+          model: CLAUDE_MODEL_TEXT,
           max_tokens: 1000,
           messages: [{
             role: "user",
-            content: `Du er en personlig trener. Brukeren har trent disse musklene i dag: ${trained.join(", ")}.
-Muskelgrupper som IKKE er trent: ${untrained.join(", ")}.
-Foreslå 5 øvelser som dekker de utrente musklene. Gjerne øvelser som er vanlige på norske treningssentre.
-Bruk KUN disse muscle-ID-ene: chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves, traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back.
-Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
-[{"name":"Øvelsesnavn","primary":["muscle_id"],"secondary":["muscle_id"],"tip":"Kort praktisk tips på norsk"}]`
+            content: buildRecommendPrompt(trained, untrained)
           }]
         })
       });
@@ -572,7 +515,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   </div>
                   <div style={{ maxWidth: 240, margin: "0 auto 18px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
                     <BodySVG view={mobileView} primary={muscles.primary} secondary={muscles.secondary}
-                      muscleMap={buildMuscleMap(exercises)} />
+                      muscleMap={buildMuscleMapFromExercises(exercises)} />
                   </div>
                 </>
               ) : (
@@ -580,7 +523,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   {["front", "back"].map(view => (
                     <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
                       <BodySVG view={view} primary={muscles.primary} secondary={muscles.secondary}
-                        muscleMap={buildMuscleMap(exercises)} />
+                        muscleMap={buildMuscleMapFromExercises(exercises)} />
                     </div>
                   ))}
                 </div>
@@ -596,7 +539,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                 ) : (
                   <>
                     {muscles.primary.map(id => {
-                      const exNames = (buildMuscleMap(exercises)[id] || []).join(", ");
+                      const exNames = (buildMuscleMapFromExercises(exercises)[id] || []).join(", ");
                       return (
                         <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
@@ -610,7 +553,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                       );
                     })}
                     {muscles.secondary.map(id => {
-                      const exNames = (buildMuscleMap(exercises)[id] || []).join(", ");
+                      const exNames = (buildMuscleMapFromExercises(exercises)[id] || []).join(", ");
                       return (
                         <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />

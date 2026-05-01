@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { subDays, format } from "date-fns";
 import { fetchSessionsForReport } from "../lib/db";
 import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
+import { buildRecMuscleMap } from "../lib/utils";
+import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
@@ -61,17 +63,6 @@ function StatTile({ label, value }) {
   );
 }
 
-function buildRecMuscleMap(recs) {
-  const map = {};
-  (recs || []).forEach(r => {
-    [...(r.primary || []), ...(r.secondary || [])].forEach(id => {
-      if (!map[id]) map[id] = [];
-      if (!map[id].includes(r.name)) map[id].push(r.name);
-    });
-  });
-  return map;
-}
-
 export default function Report({ onNewSession, onShowHistory }) {
   const { theme, setTheme } = useTheme();
   const isMobile = useIsMobile();
@@ -114,20 +105,14 @@ export default function Report({ onNewSession, onShowHistory }) {
 
     const untrainedLabels = untrainedMuscles.map(id => MUSCLES[id]?.label || id).join(", ");
 
-    const prompt = `Du er en personlig trener som analyserer en klients treningshistorikk fra de siste ${periodDays} dagene (${sessionCount} økter).
-Trent (primær): ${trainedLabels || "ingen"}.
-Ikke trent: ${untrainedLabels || "alle muskelgrupper er dekket"}.
-Foreslå 5 øvelser som prioriterer de utrente musklene. Gjerne øvelser som er vanlige på norske treningssentre.
-Bruk KUN disse muscle-ID-ene: chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves, traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back.
-Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
-[{"name":"Øvelsesnavn","primary":["muscle_id"],"secondary":["muscle_id"],"tip":"Kort praktisk tips på norsk"}]`;
+    const prompt = buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels);
 
     try {
       const res = await fetch("/api/claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: CLAUDE_MODEL_TEXT,
           max_tokens: 1000,
           messages: [{ role: "user", content: prompt }],
         }),

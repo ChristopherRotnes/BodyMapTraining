@@ -128,6 +128,18 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Sporty.no gym calendar sync + session picker | ✅ Done (#12) |
 | Bodymap layout and graphics improvements | ✅ Done (#10) |
 | Shoulder shape separation (correct hover hit targets) | 🔧 In verification (#18) |
-| Period / volume report | 🔧 Planned (#3) |
+| Period / volume report | ✅ Done (#3) |
 | Duplicate session prevention (unique constraint per class) | ✅ Done (#13) |
 | Past-date logging + edit existing sessions | ✅ Done (#19) |
+| Shared lib: utils.js + prompts.js (model constants, prompts, utilities) | ✅ Done (#24 #25 #27) |
+
+## Backlog
+
+| PR group | Issues | Priority |
+|---|---|---|
+| B — Error resilience (JSON.parse + ErrorBoundary) | #23 #29 | High |
+| C — Backend security (sportySync API key) | #26 | High |
+| D — Unit tests | #28 | High |
+| E — History improvements (muscle filter, skeleton loading) | #31 #34 | Low |
+| F — Input & display polish (volume, date format, form validation) | #32 #33 #35 | Low |
+| G — Image storage | #30 | Low |

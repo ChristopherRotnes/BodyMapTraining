@@ -7,7 +7,7 @@
 - **Frontend:** React 19 + Vite (in `app/`)
 - **Design system:** IBM Carbon Design System (`@carbon/react`, `@carbon/icons-react`) — see [Carbon design system](#carbon-design-system) section
 - **Auth + DB:** Supabase (magic-link login, Supabase Auth + PostgreSQL)
-- **AI:** Anthropic Claude API (`claude-sonnet-4-20250514`) — proxied via Azure Function (server-side)
+- **AI:** Anthropic Claude API — proxied via Azure Function (server-side); model IDs managed in `app/src/lib/prompts.js`
 - **Hosting:** Azure Static Web Apps — **live at [white-island-090dfd003.7.azurestaticapps.net](https://white-island-090dfd003.7.azurestaticapps.net)**
 - **CI/CD:** GitHub Actions — push to `master` → auto-deploy to Azure SWA
 - **Language:** Norwegian UI throughout
@@ -97,6 +97,8 @@ The sessions table has `UNIQUE (gym_calendar_id)` — updating to a gym class th
 
 ## Key architecture decisions
 - **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, `BodySVG`, `HeatmapBodySVG`, and `useIsMobile`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
+- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps). Do not redefine these locally in component files.
+- **Shared Claude config:** `app/src/lib/prompts.js` — exports `CLAUDE_MODEL_VISION` (opus, for image analysis), `CLAUDE_MODEL_TEXT` (sonnet, for recommendations), `ANALYZE_PROMPT`, `buildRecommendPrompt(trained, untrained)`, `buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels)`. All model IDs and prompt text live here; update in one place.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
 - SVG body uses `BODY_PATH` (bezier curves, viewBox `0 0 160 360`) — improved silhouette with curved shoulders, arms, waist and hips. Still simplified, not anatomically precise. `SHAPES` entries are either ellipses (`{ cx, cy, rx, ry }`) or SVG paths (`{ d }`); the render loop handles both. Key muscles with path shapes: `traps` (trapezoid with neck notch), `lats` (wing paths). `BodySVG` renders primary muscles as solid green glow, secondary as diagonal blue stripes (`<pattern id="sec-stripe-{view}">`).
 - `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Used in `MuscleMap.jsx` and `History.jsx`.
@@ -106,6 +108,20 @@ The sessions table has `UNIQUE (gym_calendar_id)` — updating to a gym class th
 - **Sporty.no sync:** `app/api/sportySync.js` — timer trigger at 04:00 + 11:00 UTC upserts today's sessions from `https://sporty.no/api/v1/businessunits/8/groupactivities` into `gym_calendar` by `sporty_id`. HTTP trigger `POST /api/sporty-sync` available for manual testing. Requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` as Azure app settings (service role needed because the timer has no auth user).
 - **CI/CD build split:** the frontend is pre-built in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in `env:`), then the Azure SWA action uploads `app/dist/` directly (`app_location: "app/dist"`). This bypasses Oryx for the frontend — Oryx strips `VITE_*` env vars before spawning Vite and they never reach the bundle. Oryx still handles the API (`app/api`). `vite.config.js` has a build-time assertion that fails immediately if the required vars are missing.
 - **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
+
+## Open backlog — issue groupings
+
+Issues are grouped into logical PRs. Recommended order: A → B → C/D (parallel) → E → F → G.
+
+| PR | Issues | Description |
+|---|---|---|
+| A — Shared lib foundation | #24 #25 #27 | Extract duplicate utils/prompts/model constant ✅ Done |
+| B — Error resilience | #23 #29 | JSON.parse try-catch + React ErrorBoundary |
+| C — Backend security | #26 | API key on sportySync HTTP trigger |
+| D — Tests | #28 | Vitest unit tests for lib/ functions (after PR A) |
+| E — History improvements | #31 #34 | Muscle filter + skeleton loading |
+| F — Input & display polish | #32 #33 #35 | Volume in report, Norwegian date format, form validation |
+| G — Image storage | #30 | Supabase Storage for whiteboard photos (low priority) |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses

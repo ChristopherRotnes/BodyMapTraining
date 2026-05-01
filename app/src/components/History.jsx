@@ -5,6 +5,8 @@ import { format, subMonths } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
 import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, useIsMobile } from "../lib/bodymap.jsx";
+import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises } from "../lib/utils";
+import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Tag, InlineLoading, InlineNotification, DefinitionTooltip,
@@ -12,18 +14,6 @@ import {
 } from "@carbon/react";
 import { Camera, Asleep, Light, Analytics, Add, TrashCan, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import { useTheme } from "../theme";
-
-const toBase64 = (file) => new Promise((res, rej) => {
-  const r = new FileReader();
-  r.onload = () => res(r.result.split(",")[1]);
-  r.onerror = rej;
-  r.readAsDataURL(file);
-});
-
-const getMediaType = (file) => {
-  const t = { "image/png": "image/png", "image/gif": "image/gif", "image/webp": "image/webp" };
-  return t[file.type] || "image/jpeg";
-};
 
 function sessionExToEditFormat(exercises) {
   return exercises.map(ex => ({
@@ -49,17 +39,6 @@ function extractMuscles(session) {
   });
   primary.forEach(m => secondary.delete(m));
   return { primary: [...primary], secondary: [...secondary] };
-}
-
-function buildMuscleMap(session) {
-  const map = {};
-  (session.session_exercises || []).forEach(ex => {
-    (ex.muscle_activations || []).forEach(ma => {
-      if (!map[ma.muscle_id]) map[ma.muscle_id] = [];
-      if (!map[ma.muscle_id].includes(ex.name)) map[ma.muscle_id].push(ex.name);
-    });
-  });
-  return map;
 }
 
 export default function History({ onNewSession, onShowReport }) {
@@ -220,19 +199,13 @@ export default function History({ onNewSession, onShowReport }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-opus-4-5",
+          model: CLAUDE_MODEL_VISION,
           max_tokens: 1500,
           messages: [{
             role: "user",
             content: [
               { type: "image", source: { type: "base64", media_type: mt, data: b64 } },
-              { type: "text", text: `Du ser ett eller flere bilder av treningsprogrammer fra norske treningsstudio-tavler (gjerne håndskrevet).
-Identifiser ALLE treningsøvelser fra alle bildene. Ikke dupliser øvelser som finnes i flere bilder.
-For hver øvelse, angi hvilke muskler som er primære og sekundære.
-Bruk KUN disse muscle-ID-ene: chest, shoulders_front, shoulders_side, biceps, forearms, abs, obliques, quads, calves, traps, rear_delts, lats, triceps, lower_back, glutes, hamstrings, calves_back.
-Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
-[{"name":"Nøyaktig navn fra tavlen","standardName":"Standard norsk/engelsk navn","sets":"3","reps":"10","primary":["chest"],"secondary":["shoulders_front","triceps"]}]
-"sets" og "reps" er null om ikke skrevet. Finn du ingen øvelser, returner: []` }
+              { type: "text", text: ANALYZE_PROMPT }
             ]
           }]
         })
@@ -250,16 +223,6 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
   };
 
   const editMuscles = editMode ? calcMuscles(editExercises.filter(e => e.enabled && e.name)) : null;
-  const editMuscleMap = editMode ? (() => {
-    const map = {};
-    editExercises.filter(e => e.enabled && e.name).forEach(ex => {
-      [...(ex.primary || []), ...(ex.secondary || [])].forEach(id => {
-        if (!map[id]) map[id] = [];
-        if (!map[id].includes(ex.name)) map[id].push(ex.name);
-      });
-    });
-    return map;
-  })() : {};
 
   return (
     <>
@@ -322,7 +285,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                 const isEditing = editMode && selectedSession?.id === session.id;
                 const isExpanded = expandedIds.has(session.id);
                 const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
-                const sessionMuscleMap = isEditing ? editMuscleMap : buildMuscleMap(session);
+                const sessionMuscleMap = isEditing ? buildMuscleMapFromExercises(editExercises) : buildMuscleMapFromSession(session);
                 const exCount = (session.session_exercises || []).filter(e => e.name).length;
                 const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => MUSCLES[id]?.label || id);
                 const sessionTime = session.gym_calendar?.start_time
