@@ -79,7 +79,12 @@ export async function saveSession(exercises, { imageUrl = null, notes = null, tr
 export async function fetchSessions() {
   const { data, error } = await supabase
     .from("sessions")
-    .select("id, session_date")
+    .select(`
+      id, session_date,
+      session_exercises(
+        muscle_activations(muscle_id, activation_type)
+      )
+    `)
     .order("session_date", { ascending: false });
   if (error) throw error;
   return data;

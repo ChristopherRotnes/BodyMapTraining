@@ -9,11 +9,13 @@ import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromEx
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Button, Tag, InlineLoading, InlineNotification, DefinitionTooltip,
-  Checkbox, Select, SelectItem,
+  Button, Tag, InlineNotification, DefinitionTooltip,
+  Checkbox, Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
 import { Camera, Asleep, Light, Analytics, Add, TrashCan, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import { useTheme } from "../theme";
+
+const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
 
 function sessionExToEditFormat(exercises) {
   return exercises.map(ex => ({
@@ -63,6 +65,8 @@ export default function History({ onNewSession, onShowReport }) {
     return () => clearTimeout(timer);
   }, [today]);
 
+  const [muscleFilter, setMuscleFilter] = useState([]);
+
   const [editMode, setEditMode] = useState(false);
   const [editExercises, setEditExercises] = useState([]);
   const [editingExId, setEditingExId] = useState(null);
@@ -82,8 +86,16 @@ export default function History({ onNewSession, onShowReport }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const trainedSet = new Set(sessions.map(s => s.session_date));
-  const trainedDates = sessions.map(s => new Date(s.session_date + "T12:00:00"));
+  const filteredSessions = muscleFilter.length === 0 ? sessions : sessions.filter(s => {
+    const muscles = new Set(
+      (s.session_exercises || []).flatMap(ex =>
+        (ex.muscle_activations || []).map(ma => ma.muscle_id)
+      )
+    );
+    return muscleFilter.some(id => muscles.has(id));
+  });
+  const filteredTrainedSet = new Set(filteredSessions.map(s => s.session_date));
+  const filteredTrainedDates = filteredSessions.map(s => new Date(s.session_date + "T12:00:00"));
 
   useEffect(() => {
     if (daySessions.length === 1) {
@@ -128,7 +140,7 @@ export default function History({ onNewSession, onShowReport }) {
   const handleSelect = (date) => {
     if (!date) return;
     const dateStr = format(date, "yyyy-MM-dd");
-    if (!trainedSet.has(dateStr)) return;
+    if (!filteredTrainedSet.has(dateStr)) return;
     setSelectedDate(date);
     setEditMode(false);
     setSelectedSession(null);
@@ -265,8 +277,20 @@ export default function History({ onNewSession, onShowReport }) {
             Treningshistorikk
           </p>
 
+          <MultiSelect
+            id="muscle-filter"
+            titleText="Filtrer etter muskelgruppe"
+            label="Alle muskelgrupper"
+            items={MUSCLE_FILTER_ITEMS}
+            itemToString={item => item?.label ?? ""}
+            onChange={({ selectedItems }) => setMuscleFilter(selectedItems.map(i => i.id))}
+            style={{ marginBottom: 16 }}
+          />
+
           {loading ? (
-            <InlineLoading description="Laster historikk…" status="active" />
+            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24 }}>
+              <SkeletonPlaceholder style={{ width: "100%", height: 280 }} />
+            </div>
           ) : (
             <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24, overflowX: "auto" }}>
               <DayPicker
@@ -277,7 +301,7 @@ export default function History({ onNewSession, onShowReport }) {
                 required
                 selected={selectedDate}
                 onSelect={handleSelect}
-                modifiers={{ trained: trainedDates }}
+                modifiers={{ trained: filteredTrainedDates }}
                 modifiersClassNames={{ trained: "rdp-day-trained" }}
                 disabled={{ after: today }}
               />
@@ -285,7 +309,9 @@ export default function History({ onNewSession, onShowReport }) {
           )}
 
           {loadingSession && (
-            <InlineLoading description="Laster økt…" status="active" style={{ marginBottom: 16 }} />
+            <div style={{ marginBottom: 24 }}>
+              <AccordionSkeleton count={2} />
+            </div>
           )}
 
           {daySessions.length > 0 && (
