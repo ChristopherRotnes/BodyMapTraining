@@ -3,7 +3,17 @@ import { app } from '@azure/functions';
 const SPORTY_URL =
   'https://sporty.no/api/v1/businessunits/8/groupactivities';
 
-async function syncGymCalendar(context) {
+function shiftRow(row, shiftMs) {
+  if (!shiftMs) return row;
+  return {
+    ...row,
+    sporty_id:  `${row.sporty_id}_shifted_${Math.abs(shiftMs / 86400000)}d`,
+    start_time: new Date(new Date(row.start_time).getTime() + shiftMs).toISOString(),
+    end_time:   new Date(new Date(row.end_time).getTime()   + shiftMs).toISOString(),
+  };
+}
+
+async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -24,7 +34,7 @@ async function syncGymCalendar(context) {
     return { ok: false, error: err.message };
   }
 
-  const rows = sportyData.map(item => ({
+  let rows = sportyData.map(item => ({
     sporty_id:  item.id,
     name:       item.name,
     start_time: item.duration?.start ?? null,
@@ -36,6 +46,13 @@ async function syncGymCalendar(context) {
   if (rows.length === 0) {
     context.log('No sessions returned from sporty.no');
     return { ok: true, upserted: 0 };
+  }
+
+  // Backfill: shift timestamps backward by shiftDays (negative = past)
+  if (shiftDays !== 0) {
+    const shiftMs = shiftDays * 24 * 60 * 60 * 1000;
+    rows = rows.map(r => shiftRow(r, shiftMs));
+    context.log(`Shifting ${rows.length} rows by ${shiftDays} days`);
   }
 
   const upsertRes = await fetch(
@@ -70,13 +87,17 @@ app.timer('sportySyncTimer', {
   },
 });
 
-// ── HTTP trigger: manual kick for testing ─────────────────────────────
+// ── HTTP trigger: manual kick + optional backfill ─────────────────────
+// POST /api/sporty-sync                    → sync today
+// POST /api/sporty-sync  {"shiftDays":-7}  → duplicate current data 7 days back
 app.http('sportySyncHttp', {
   methods: ['POST'],
   route: 'sporty-sync',
   authLevel: 'anonymous',
   handler: async (request, context) => {
-    const result = await syncGymCalendar(context);
+    const body = await request.json().catch(() => ({}));
+    const shiftDays = typeof body.shiftDays === 'number' ? body.shiftDays : 0;
+    const result = await syncGymCalendar(context, { shiftDays });
     return new Response(JSON.stringify(result), {
       status: result.ok ? 200 : 500,
       headers: { 'Content-Type': 'application/json' },

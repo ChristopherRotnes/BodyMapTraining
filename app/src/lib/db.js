@@ -16,7 +16,15 @@ export function fetchTodayGymSessions() {
   return fetchGymSessionsByDate(new Date().toISOString().slice(0, 10));
 }
 
-export async function saveSession(exercises, { imageUrl = null, notes = null, trainingGroupId = null, gymCalendarId = null, sessionDate = null } = {}) {
+export async function saveSession(exercises, { imageUrl = null, notes = null, trainingGroupId = null, gymCalendarId = null, sessionDate = null, replace = false } = {}) {
+  if (replace && gymCalendarId) {
+    const { error: replaceErr } = await supabase
+      .from("sessions")
+      .delete()
+      .eq("gym_calendar_id", gymCalendarId);
+    if (replaceErr) throw replaceErr;
+  }
+
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: session, error: sessionError } = await supabase
@@ -112,7 +120,28 @@ export async function fetchSessionsByDate(dateStr) {
   return data;
 }
 
-export async function updateSession(sessionId, exercises, gymCalendarId) {
+export async function checkGymCalendarConflict(gymCalendarId, excludeSessionId = null) {
+  if (!gymCalendarId) return null;
+  let query = supabase
+    .from("sessions")
+    .select("id, session_date, gym_calendar(name)")
+    .eq("gym_calendar_id", gymCalendarId);
+  if (excludeSessionId) query = query.neq("id", excludeSessionId);
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+  return data; // null = no conflict
+}
+
+export async function updateSession(sessionId, exercises, gymCalendarId, { replace = false } = {}) {
+  if (replace && gymCalendarId) {
+    const { error: replaceErr } = await supabase
+      .from("sessions")
+      .delete()
+      .eq("gym_calendar_id", gymCalendarId)
+      .neq("id", sessionId);
+    if (replaceErr) throw replaceErr;
+  }
+
   const { error: delError } = await supabase
     .from("session_exercises")
     .delete()

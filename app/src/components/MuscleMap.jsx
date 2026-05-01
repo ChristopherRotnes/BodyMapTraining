@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { saveSession, fetchGymSessionsByDate } from "../lib/db";
+import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
@@ -77,6 +77,7 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   const [saveError, setSaveError] = useState(false);
   const [gymSessions, setGymSessions] = useState([]);
   const [gymSessionId, setGymSessionId] = useState("");
+  const [gymCalendarConflict, setGymCalendarConflict] = useState(null);
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [mobileView, setMobileView] = useState("front");
   const isMobile = useIsMobile();
@@ -85,9 +86,16 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   useEffect(() => {
     if (step !== "confirm") return;
     fetchGymSessionsByDate(sessionDate)
-      .then(sessions => { setGymSessions(sessions); setGymSessionId(""); })
+      .then(sessions => { setGymSessions(sessions); setGymSessionId(""); setGymCalendarConflict(null); })
       .catch(() => setGymSessions([]));
   }, [step, sessionDate]);
+
+  useEffect(() => {
+    if (!gymSessionId) { setGymCalendarConflict(null); return; }
+    checkGymCalendarConflict(gymSessionId)
+      .then(setGymCalendarConflict)
+      .catch(() => setGymCalendarConflict(null));
+  }, [gymSessionId]);
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
 
@@ -159,7 +167,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setMuscles(calcMuscles(enriched));
     setStep("muscles");
     setSaving(true); setSaved(false); setSaveError(false);
-    saveSession(enriched, { gymCalendarId: gymSessionId || null, sessionDate })
+    saveSession(enriched, { gymCalendarId: gymSessionId || null, sessionDate, replace: !!gymCalendarConflict })
       .then(() => setSaved(true))
       .catch(err => { console.error("Lagring feilet:", err); setSaveError(true); })
       .finally(() => setSaving(false));
@@ -170,7 +178,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
     setExercises([]); setMuscles({ primary: [], secondary: [] });
     setError(null); setRecs(null);
     setSaving(false); setSaved(false); setSaveError(false);
-    setGymSessions([]); setGymSessionId("");
+    setGymSessions([]); setGymSessionId(""); setGymCalendarConflict(null);
     setSessionDate(new Date().toISOString().slice(0, 10));
   };
 
@@ -381,7 +389,7 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                   labelText="Hvilken time var dette?"
                   value={gymSessionId}
                   onChange={(e) => setGymSessionId(e.target.value)}
-                  style={{ marginBottom: 16 }}
+                  style={{ marginBottom: gymCalendarConflict ? 8 : 16 }}
                 >
                   <SelectItem value="" text="Velg gymtime (valgfritt)" />
                   {gymSessions.map(s => {
@@ -390,6 +398,17 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                     return <SelectItem key={s.id} value={s.id} text={label} />;
                   })}
                 </Select>
+              )}
+
+              {gymCalendarConflict && (
+                <InlineNotification
+                  kind="warning"
+                  title="Eksisterende økt:"
+                  subtitle={`Denne gymtimen har allerede en lagret økt (${gymCalendarConflict.session_date}). Lagring erstatter den.`}
+                  hideCloseButton
+                  lowContrast
+                  style={{ marginBottom: 16 }}
+                />
               )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>

@@ -3,7 +3,7 @@ import { DayPicker } from "react-day-picker";
 import { nb } from "date-fns/locale";
 import { format, subMonths } from "date-fns";
 import "react-day-picker/style.css";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession } from "../lib/db";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
 import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
@@ -77,6 +77,7 @@ export default function History({ onNewSession, onShowReport }) {
   const [editingExId, setEditingExId] = useState(null);
   const [editGymSessionId, setEditGymSessionId] = useState("");
   const [editGymSessions, setEditGymSessions] = useState([]);
+  const [editGymCalendarConflict, setEditGymCalendarConflict] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -139,13 +140,24 @@ export default function History({ onNewSession, onShowReport }) {
     setEditingExId(null);
     setEditError(null);
     setAnalyzeError(null);
+    setEditGymCalendarConflict(null);
   };
+
+  useEffect(() => {
+    if (!editMode || !editGymSessionId || editGymSessionId === (selectedSession?.gym_calendar_id || "")) {
+      setEditGymCalendarConflict(null);
+      return;
+    }
+    checkGymCalendarConflict(editGymSessionId, selectedSession?.id)
+      .then(setEditGymCalendarConflict)
+      .catch(() => setEditGymCalendarConflict(null));
+  }, [editGymSessionId, editMode, selectedSession]);
 
   const saveEdit = async () => {
     setEditSaving(true);
     setEditError(null);
     try {
-      await updateSession(selectedSession.id, editExercises, editGymSessionId || null);
+      await updateSession(selectedSession.id, editExercises, editGymSessionId || null, { replace: !!editGymCalendarConflict });
       setEditMode(false);
       await loadSession(selectedSession.session_date);
     } catch (err) {
@@ -272,20 +284,32 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               {/* Gym class tag (read mode) or selector (edit mode) */}
               {editMode ? (
                 editGymSessions.length > 0 && (
-                  <Select
-                    id="edit-gym-session"
-                    labelText="Gymtime"
-                    value={editGymSessionId}
-                    onChange={(e) => setEditGymSessionId(e.target.value)}
-                    style={{ marginBottom: 16 }}
-                  >
-                    <SelectItem value="" text="Ingen time valgt" />
-                    {editGymSessions.map(s => {
-                      const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
-                      const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
-                      return <SelectItem key={s.id} value={s.id} text={label} />;
-                    })}
-                  </Select>
+                  <>
+                    <Select
+                      id="edit-gym-session"
+                      labelText="Gymtime"
+                      value={editGymSessionId}
+                      onChange={(e) => setEditGymSessionId(e.target.value)}
+                      style={{ marginBottom: editGymCalendarConflict ? 8 : 16 }}
+                    >
+                      <SelectItem value="" text="Ingen time valgt" />
+                      {editGymSessions.map(s => {
+                        const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                        const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
+                        return <SelectItem key={s.id} value={s.id} text={label} />;
+                      })}
+                    </Select>
+                    {editGymCalendarConflict && (
+                      <InlineNotification
+                        kind="warning"
+                        title="Eksisterende økt:"
+                        subtitle={`Denne gymtimen har allerede en lagret økt (${editGymCalendarConflict.session_date}). Lagring erstatter den.`}
+                        hideCloseButton
+                        lowContrast
+                        style={{ marginBottom: 16 }}
+                      />
+                    )}
+                  </>
                 )
               ) : (
                 selectedSession.gym_calendar && (
