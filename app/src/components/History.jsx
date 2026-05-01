@@ -123,6 +123,11 @@ export default function History({ onNewSession, onShowReport }) {
           (a, b) => (a.position ?? 0) - (b.position ?? 0)
         );
       });
+      results.sort((a, b) => {
+        const ta = a.gym_calendar?.start_time ?? a.created_at;
+        const tb = b.gym_calendar?.start_time ?? b.created_at;
+        return new Date(ta) - new Date(tb);
+      });
       setDaySessions(results);
     } catch (err) {
       console.error("Kunne ikke laste økt:", err);
