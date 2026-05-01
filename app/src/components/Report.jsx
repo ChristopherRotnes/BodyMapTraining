@@ -155,18 +155,21 @@ export default function Report({ onNewSession, onShowHistory }) {
     });
   }, [sessions, selectedDays, selectedTypes]);
 
-  const { muscleCounts, maxPrimaryCount, muscleExercises } = useMemo(() => {
+  const { muscleCounts, maxPrimaryCount, muscleExercises, muscleVolume } = useMemo(() => {
     const primarySessions = {};
     const secondarySessions = {};
     const exercises = {};
+    const volumeSets = {};
 
     filteredSessions.forEach(s => {
       (s.session_exercises || []).forEach(ex => {
+        const exSets = Math.max(1, parseInt(ex.sets) || 1);
         (ex.muscle_activations || []).forEach(ma => {
           const id = ma.muscle_id;
           if (ma.activation_type === "primary") {
             if (!primarySessions[id]) primarySessions[id] = new Set();
             primarySessions[id].add(s.id);
+            volumeSets[id] = (volumeSets[id] || 0) + exSets;
           } else {
             if (!secondarySessions[id]) secondarySessions[id] = new Set();
             secondarySessions[id].add(s.id);
@@ -178,15 +181,17 @@ export default function Report({ onNewSession, onShowHistory }) {
     });
 
     const counts = {};
+    const volume = {};
     Object.keys(MUSCLES).forEach(id => {
       counts[id] = {
         primary: primarySessions[id]?.size || 0,
         secondary: secondarySessions[id]?.size || 0,
       };
+      volume[id] = volumeSets[id] || 0;
     });
 
     const maxPrimary = Math.max(1, ...Object.values(counts).map(c => c.primary));
-    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises };
+    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises, muscleVolume: volume };
   }, [filteredSessions]);
 
   const toggleDay = (day) => {
@@ -325,7 +330,7 @@ export default function Report({ onNewSession, onShowHistory }) {
               <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
                 {["front", "back"].map(view => (
                   <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} />
+                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} volumeMap={muscleVolume} />
                   </div>
                 ))}
               </div>
@@ -355,7 +360,13 @@ export default function Report({ onNewSession, onShowHistory }) {
               )}
 
               <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14 }}>
-                <p style={{ ...labelStyle, marginBottom: 12 }}>Muskelfrekvens</p>
+                <p style={{ ...labelStyle, marginBottom: 8 }}>Muskelfrekvens</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 6, borderBottom: "1px solid var(--cds-border-strong-01)", marginBottom: 2 }}>
+                  <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", width: 140, flexShrink: 0, fontFamily: "var(--cds-font-mono)", letterSpacing: "1px" }}>MUSKEL</span>
+                  <div style={{ flex: 1 }} />
+                  <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", width: 36, textAlign: "right", flexShrink: 0, letterSpacing: "1px" }}>ØKT</span>
+                  <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", width: 40, textAlign: "right", flexShrink: 0, letterSpacing: "1px" }}>SETT</span>
+                </div>
                 {frequencyTable.map(({ id, primary, secondary }) => {
                   const barWidth = maxPrimaryCount > 0 ? (primary / maxPrimaryCount) * 100 : 0;
                   const countColor = primary > 0
@@ -384,6 +395,9 @@ export default function Report({ onNewSession, onShowHistory }) {
                       </div>
                       <span style={{ fontSize: 11, color: countColor, fontFamily: "var(--cds-font-mono)", width: 36, textAlign: "right", flexShrink: 0 }}>
                         {countLabel}
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", width: 40, textAlign: "right", flexShrink: 0 }}>
+                        {muscleVolume[id] > 0 ? muscleVolume[id] : "—"}
                       </span>
                     </div>
                   );

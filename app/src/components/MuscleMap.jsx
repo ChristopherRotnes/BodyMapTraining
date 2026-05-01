@@ -330,8 +330,9 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
 
               <DatePicker
                 datePickerType="single"
-                value={(() => { const [y, m, d] = sessionDate.split("-"); return `${m}/${d}/${y}`; })()}
-                maxDate={(() => { const [y, m, d] = localDateStr().split("-"); return `${m}/${d}/${y}`; })()}
+                dateFormat="d/m/Y"
+                value={(() => { const [y, m, d] = sessionDate.split("-"); return `${d}/${m}/${y}`; })()}
+                maxDate={(() => { const [y, m, d] = localDateStr().split("-"); return `${d}/${m}/${y}`; })()}
                 onChange={([date]) => {
                   if (!date) return;
                   const y = date.getFullYear();
@@ -341,7 +342,7 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
                 }}
                 style={{ marginBottom: 16 }}
               >
-                <DatePickerInput id="session-date" labelText="Dato" placeholder="mm/dd/åååå" size="md" />
+                <DatePickerInput id="session-date" labelText="Dato" placeholder="dd/mm/åååå" size="md" />
               </DatePicker>
 
               {gymSessions.length > 0 && (

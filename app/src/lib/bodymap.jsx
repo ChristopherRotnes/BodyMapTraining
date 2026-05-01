@@ -121,7 +121,7 @@ function Shape({ sh, i, fill, stroke, style }) {
   return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth="0.8" style={style} />;
 }
 
-export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {} }) {
+export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {} }) {
   const [tooltip, setTooltip] = React.useState(null);
   const wrapRef = React.useRef();
 
@@ -223,6 +223,11 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
                 {secondary > 0 && (
                   <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
                     Sekundær: {secondary} {secondary === 1 ? "økt" : "økter"}
+                  </div>
+                )}
+                {volumeMap[tooltip.id] > 0 && (
+                  <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
+                    Totalt: {volumeMap[tooltip.id]} sett
                   </div>
                 )}
                 {primary === 0 && secondary === 0 && (

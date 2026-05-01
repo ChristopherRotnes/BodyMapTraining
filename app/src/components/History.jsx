@@ -228,6 +228,15 @@ export default function History({ onNewSession, onShowReport }) {
 
   const editMuscles = editMode ? calcMuscles(editExercises.filter(e => e.enabled && e.name)) : null;
 
+  const isInvalidNum = (val) =>
+    val !== null && val !== undefined && val !== "" &&
+    (!/^\d+$/.test(String(val).trim()) || parseInt(val, 10) < 1 || parseInt(val, 10) > 99);
+
+  const hasEditErrors = editMode && (
+    editExercises.some(e => e.enabled && !e.name?.trim()) ||
+    editExercises.some(e => isInvalidNum(e.sets) || isInvalidNum(e.reps))
+  );
+
   return (
     <>
       <Header aria-label="Workout Lens">
@@ -297,7 +306,7 @@ export default function History({ onNewSession, onShowReport }) {
                   : new Date(session.created_at).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
                 const sessionTitle = session.gym_calendar
                   ? `${sessionTime} – ${session.gym_calendar.name}`
-                  : sessionTime;
+                  : `${sessionTime} – Egentrening`;
 
                 return (
                   <div key={session.id} style={{ marginBottom: 4 }}>
@@ -441,7 +450,7 @@ export default function History({ onNewSession, onShowReport }) {
                                         width: "100%",
                                         background: "transparent",
                                         border: "none",
-                                        borderBottom: "2px solid var(--cds-interactive)",
+                                        borderBottom: `2px solid ${ex.enabled && !ex.name?.trim() ? "var(--cds-support-error)" : "var(--cds-interactive)"}`,
                                         color: "var(--cds-text-primary)",
                                         fontFamily: "var(--cds-font-sans)",
                                         fontSize: 14,
@@ -454,7 +463,11 @@ export default function History({ onNewSession, onShowReport }) {
                                       onClick={() => setEditingExId(ex.id)}
                                       style={{ fontSize: 14, fontWeight: 500, cursor: "text", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--cds-text-primary)" }}
                                     >
-                                      {ex.name || <span style={{ color: "var(--cds-text-secondary)" }}>Klikk for å skrive øvelse…</span>}
+                                      {ex.name?.trim()
+                                        ? ex.name
+                                        : ex.enabled
+                                          ? <span style={{ color: "var(--cds-support-error)" }}>Påkrevd</span>
+                                          : <span style={{ color: "var(--cds-text-secondary)" }}>Klikk for å skrive øvelse…</span>}
                                     </div>
                                   )}
                                 </div>
@@ -464,6 +477,7 @@ export default function History({ onNewSession, onShowReport }) {
                                       <input
                                         type="number"
                                         min="1"
+                                        max="99"
                                         placeholder="–"
                                         value={ex[field] || ""}
                                         onChange={e => setEditExercises(p => p.map(x => x.id === ex.id ? { ...x, [field]: e.target.value } : x))}
@@ -472,8 +486,8 @@ export default function History({ onNewSession, onShowReport }) {
                                           height: 28,
                                           padding: "0 4px",
                                           background: "var(--cds-field-01)",
-                                          border: "1px solid var(--cds-border-strong-01)",
-                                          color: "var(--cds-text-primary)",
+                                          border: `1px solid ${isInvalidNum(ex[field]) ? "var(--cds-support-error)" : "var(--cds-border-strong-01)"}`,
+                                          color: isInvalidNum(ex[field]) ? "var(--cds-support-error)" : "var(--cds-text-primary)",
                                           fontFamily: "var(--cds-font-sans)",
                                           fontSize: 12,
                                           outline: "none",
@@ -587,7 +601,7 @@ export default function History({ onNewSession, onShowReport }) {
                           <Button kind="ghost" onClick={cancelEdit}>Avbryt</Button>
                           <Button
                             kind="primary"
-                            disabled={editSaving || !editExercises.some(e => e.enabled && e.name)}
+                            disabled={editSaving || hasEditErrors}
                             onClick={saveEdit}
                             style={{ marginLeft: "auto" }}
                           >
