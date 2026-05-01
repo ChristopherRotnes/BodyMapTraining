@@ -63,7 +63,6 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 
 ## What is NOT yet built
 - **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
-- **Bodymap improvements** — anatomically more accurate SVG paths, better primary/secondary visual differentiation, improved mobile layout (GitHub issue #10)
 - **Favicon** — replace default Vite icon with camera SVG in Carbon style (queued)
 - **Page title** — change from "app" to "Workout Lens" (queued)
 - **Gym calendar manager** — admin UI to manually trigger sporty.no sync and inspect `gym_calendar` rows; when built, the HTTP trigger on `sportySync.js` can be removed from the user-facing API
@@ -83,9 +82,10 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 ```
 
 ## Key architecture decisions
-- **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, and `BodySVG`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
+- **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, `BodySVG`, `HeatmapBodySVG`, and `useIsMobile`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
-- SVG body is simplified geometry (viewBox `0 0 160 360`), not anatomically precise — good enough for PoC, could be replaced with a proper anatomical SVG later.
+- SVG body uses `BODY_PATH` (bezier curves, viewBox `0 0 160 360`) — improved silhouette with curved shoulders, arms, waist and hips. Still simplified, not anatomically precise. `SHAPES` entries are either ellipses (`{ cx, cy, rx, ry }`) or SVG paths (`{ d }`); the render loop handles both. Key muscles with path shapes: `traps` (trapezoid with neck notch), `lats` (wing paths). `BodySVG` renders primary muscles as solid green glow, secondary as diagonal blue stripes (`<pattern id="sec-stripe-{view}">`).
+- `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Used in `MuscleMap.jsx` and `History.jsx`.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
 - **Azure Functions entry point:** `app/api/index.js` imports all function files (`claude.js`, `sportySync.js`). `package.json#main` points to `index.js`. Azure Functions v4 only loads the single file referenced in `main` — add new function files here or they will never be registered.
@@ -94,10 +94,31 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 - **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
 
 ## Known limitations
-- SVG body is geometrically simplified, not anatomically precise
+- SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
 - Volume (sets × reps) is logged but not used in muscle analysis
 - Recommendations are contextual per session, not based on accumulated history (will improve with data)
 - No error handling for API rate limits
+
+## Local development
+
+```powershell
+.\dev.ps1
+```
+
+`dev.ps1` is gitignored. It:
+1. Calls `fnm use 20` — Azure Functions Core Tools v4 requires Node ≤ 20; the system default is v24 which breaks the CLI
+2. Spawns `npm run dev` (Vite on port 5173) in a separate PowerShell window
+3. Waits 3 s for Vite to start, then calls `swa start`
+
+Open **http://localhost:4280** (not 5173). The SWA emulator proxies `/api/*` to the local Azure Functions process; `npm run dev` alone skips the API layer.
+
+### One-time setup
+```bash
+npm install -g @azure/static-web-apps-cli
+cp app/.env.local.example app/.env.local                             # fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+cd app && npm install
+```
 
 ## Azure deploy notes
 - **Resource group:** `rg-muskelkart` (West Europe) — **Azure resource name:** `muskelkart`
@@ -128,6 +149,6 @@ Once the apikey was in requests, saves still failed with `42P17: infinite recurs
 | #6 | Dev/prod pipeline (CI/CD) | Closed — resolved 2026-04-29 |
 | #7 | Move to Azure (replace Netlify) | Closed — done 2026-04-28 |
 | #8 | IBM Carbon Design System | Closed — resolved 2026-04-29 |
-| #10 | Improve bodymap layout and graphics | Open |
+| #10 | Improve bodymap layout and graphics | Closed — resolved 2026-05-01 |
 | #11 | Checkbox/exercise name visual coupling in confirm step | Closed — resolved 2026-04-29 |
 | #12 | Fetch daily gym session calendar from sporty.no | Closed — resolved 2026-05-01 |

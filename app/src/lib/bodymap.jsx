@@ -45,8 +45,9 @@ export const MUSCLES = {
   calves_back:     { label: "Legg (bak)",       view: "back"  },
 };
 
+// shape.d = SVG path string; otherwise ellipse (cx/cy/rx/ry)
 export const SHAPES = {
-  chest:           [{ cx:63, cy:78, rx:16, ry:11 }, { cx:97, cy:78, rx:16, ry:11 }],
+  chest:           [{ cx:62, cy:80, rx:18, ry:13 }, { cx:98, cy:80, rx:18, ry:13 }],
   shoulders_front: [{ cx:35, cy:62, rx:13, ry:10 }, { cx:125, cy:62, rx:13, ry:10 }],
   shoulders_side:  [{ cx:32, cy:67, rx:10, ry:9  }, { cx:128, cy:67, rx:10, ry:9  }],
   biceps:          [{ cx:21, cy:96, rx:9,  ry:15 }, { cx:139, cy:96, rx:9,  ry:15 }],
@@ -55,9 +56,15 @@ export const SHAPES = {
   obliques:        [{ cx:58, cy:110, rx:10, ry:21 }, { cx:102, cy:110, rx:10, ry:21 }],
   quads:           [{ cx:63, cy:212, rx:18, ry:37 }, { cx:97, cy:212, rx:18, ry:37 }],
   calves:          [{ cx:63, cy:292, rx:12, ry:24 }, { cx:97, cy:292, rx:12, ry:24 }],
-  traps:           [{ cx:80, cy:62, rx:26, ry:13 }],
-  rear_delts:      [{ cx:35, cy:65, rx:13, ry:10 }, { cx:125, cy:65, rx:13, ry:10 }],
-  lats:            [{ cx:52, cy:92, rx:19, ry:27 }, { cx:108, cy:92, rx:19, ry:27 }],
+  // traps: trapezoid with neck notch — wider at shoulders, tapers to mid-back
+  traps:           [{ d: "M 42,57 L 68,55 L 72,50 L 88,50 L 92,55 L 118,57 L 102,76 L 58,76 Z" }],
+  // rear_delts: outer shoulder position, distinct from traps
+  rear_delts:      [{ cx:29, cy:68, rx:11, ry:9 }, { cx:131, cy:68, rx:11, ry:9 }],
+  // lats: wing-shaped paths from armpit down to lower back
+  lats:            [
+    { d: "M 33,72 Q 26,96 30,122 Q 36,132 54,130 Q 58,112 55,90 Q 48,74 33,72 Z" },
+    { d: "M 127,72 Q 134,96 130,122 Q 124,132 106,130 Q 102,112 105,90 Q 112,74 127,72 Z" },
+  ],
   triceps:         [{ cx:21, cy:96, rx:9,  ry:15 }, { cx:139, cy:96, rx:9,  ry:15 }],
   lower_back:      [{ cx:80, cy:124, rx:20, ry:13 }],
   glutes:          [{ cx:63, cy:168, rx:18, ry:19 }, { cx:97, cy:168, rx:18, ry:19 }],
@@ -65,7 +72,9 @@ export const SHAPES = {
   calves_back:     [{ cx:63, cy:292, rx:13, ry:24 }, { cx:97, cy:292, rx:13, ry:24 }],
 };
 
-export const BODY_POLY = "30,50 17,52 11,132 17,148 24,152 25,132 30,62 50,57 55,118 51,148 48,162 48,355 78,355 78,162 82,162 82,355 112,355 112,162 109,148 105,118 110,57 130,62 135,132 136,152 143,148 149,132 143,52 130,50";
+// Smooth body silhouette using bezier curves
+export const BODY_PATH = "M 73,50 C 57,50 24,53 18,60 Q 10,82 11,110 Q 10,130 15,144 Q 18,152 24,155 Q 25,143 26,126 Q 28,80 33,64 Q 46,57 56,58 Q 55,80 53,115 Q 50,140 47,155 Q 47,162 48,167 L 48,355 L 76,355 L 76,167 Q 78,174 80,174 Q 82,174 84,167 L 84,355 L 112,355 L 112,167 Q 113,162 113,155 Q 110,140 107,115 Q 105,80 104,58 Q 114,57 127,64 Q 132,80 134,126 Q 135,143 136,155 Q 142,152 145,144 Q 150,130 149,110 Q 150,82 142,60 C 136,53 103,50 87,50 Z";
+export const BODY_POLY = BODY_PATH; // backward compat alias
 
 export const PRIMARY_FILL   = "rgba(36,161,72,0.78)";
 export const PRIMARY_HOVER  = "rgba(36,161,72,1)";
@@ -73,6 +82,16 @@ export const PRIMARY_STROKE = "rgba(36,161,72,0.5)";
 export const SEC_FILL       = "rgba(120,169,255,0.45)";
 export const SEC_HOVER      = "rgba(120,169,255,0.7)";
 export const SEC_STROKE     = "rgba(120,169,255,0.25)";
+
+export function useIsMobile(breakpoint = 500) {
+  const [mobile, setMobile] = React.useState(() => window.innerWidth < breakpoint);
+  React.useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, [breakpoint]);
+  return mobile;
+}
 
 export function calcMuscles(exercises) {
   const p = new Set(), s = new Set();
@@ -93,6 +112,13 @@ export function calcMuscles(exercises) {
   });
   p.forEach(m => s.delete(m));
   return { primary: [...p], secondary: [...s] };
+}
+
+function Shape({ sh, i, fill, stroke, style }) {
+  if (sh.d) {
+    return <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth="0.8" style={style} />;
+  }
+  return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth="0.8" style={style} />;
 }
 
 export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
@@ -120,12 +146,15 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
             <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
+          <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(120,169,255,0.6)" strokeWidth="2.5" />
+          </pattern>
         </defs>
 
         <g style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
           <circle cx="80" cy="21" r="17" />
           <polygon points="74,37 86,37 87,50 73,50" />
-          <polygon points={BODY_POLY} />
+          <path d={BODY_PATH} />
         </g>
 
         {Object.entries(SHAPES)
@@ -139,8 +168,8 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
               stroke = `rgba(36,161,72,${(intensity * 0.6).toFixed(2)})`;
               useGlow = true;
             } else if (secondary > 0) {
-              fill = "rgba(120,169,255,0.35)";
-              stroke = "rgba(120,169,255,0.2)";
+              fill = `url(#sec-stripe-${view})`;
+              stroke = "rgba(120,169,255,0.3)";
               useGlow = false;
             } else {
               fill = "rgba(128,128,128,0.1)";
@@ -155,8 +184,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
                 onMouseMove={e => handleMove(id, e)}
                 onMouseLeave={handleLeave}>
                 {shapes.map((sh, i) => (
-                  <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry}
-                    fill={fill} stroke={stroke} strokeWidth="0.8" />
+                  <Shape key={i} sh={sh} i={i} fill={fill} stroke={stroke} />
                 ))}
               </g>
             );
@@ -239,12 +267,15 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
             <feGaussianBlur stdDeviation="1.5" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
+          <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(120,169,255,0.6)" strokeWidth="2.5" />
+          </pattern>
         </defs>
 
         <g style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
           <circle cx="80" cy="21" r="17" />
           <polygon points="74,37 86,37 87,50 73,50" />
-          <polygon points={BODY_POLY} />
+          <path d={BODY_PATH} />
         </g>
 
         {Object.entries(SHAPES)
@@ -254,6 +285,10 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
             const isSec = sSet.has(id);
             if (!isPrimary && !isSec) return null;
             const isHovered = tooltip?.id === id;
+            const fill = isPrimary
+              ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
+              : (isHovered ? SEC_HOVER : `url(#sec-stripe-${view})`);
+            const stroke = isPrimary ? PRIMARY_STROKE : SEC_STROKE;
             return (
               <g key={id} filter={`url(#${isPrimary ? "glow" : "softglow"}-${view})`}
                 style={{ cursor: muscleMap[id]?.length ? "pointer" : "default" }}
@@ -261,12 +296,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
                 onMouseMove={e => handleMove(id, e)}
                 onMouseLeave={handleLeave}>
                 {shapes.map((sh, i) => (
-                  <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry}
-                    fill={isPrimary
-                      ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
-                      : (isHovered ? SEC_HOVER : SEC_FILL)}
-                    stroke={isPrimary ? PRIMARY_STROKE : SEC_STROKE}
-                    strokeWidth="0.8"
+                  <Shape key={i} sh={sh} i={i} fill={fill} stroke={stroke}
                     style={{ transition: "fill 0.15s" }} />
                 ))}
               </g>

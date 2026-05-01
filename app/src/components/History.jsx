@@ -4,10 +4,10 @@ import { nb } from "date-fns/locale";
 import { format, subMonths } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate } from "../lib/db";
-import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL } from "../lib/bodymap.jsx";
+import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Tag, InlineLoading,
+  Button, Tag, InlineLoading,
 } from "@carbon/react";
 import { Camera, Asleep, Light, Analytics } from "@carbon/icons-react";
 import { useTheme } from "../theme";
@@ -43,6 +43,8 @@ export default function History({ onNewSession, onShowReport }) {
   const [selectedDate, setSelectedDate] = useState(undefined);
   const [selectedSession, setSelectedSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(false);
+  const [mobileView, setMobileView] = useState("front");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchSessions()
@@ -141,13 +143,29 @@ export default function History({ onNewSession, onShowReport }) {
                 {format(new Date(selectedSession.session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
               </p>
 
-              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-                {["front", "back"].map(view => (
-                  <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <BodySVG view={view} primary={muscles.primary} secondary={muscles.secondary} muscleMap={muscleMap} />
+              {isMobile ? (
+                <>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    {["front", "back"].map(v => (
+                      <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
+                        onClick={() => setMobileView(v)}>
+                        {v === "front" ? "Front" : "Bak"}
+                      </Button>
+                    ))}
                   </div>
-                ))}
-              </div>
+                  <div style={{ maxWidth: 240, margin: "0 auto 16px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                    <BodySVG view={mobileView} primary={muscles.primary} secondary={muscles.secondary} muscleMap={muscleMap} />
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                  {["front", "back"].map(view => (
+                    <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                      <BodySVG view={view} primary={muscles.primary} secondary={muscles.secondary} muscleMap={muscleMap} />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
                 <Tag type="green" size="sm">Primær ({muscles.primary.length})</Tag>

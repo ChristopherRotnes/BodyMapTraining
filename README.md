@@ -7,7 +7,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 1. **Upload** one or more photos of a whiteboard workout program
 2. **Claude Vision** reads the handwriting and returns a structured list of exercises with muscle IDs
 3. **Confirm** — toggle, rename, or adjust sets/reps before saving
-4. **Muscle map** — front and back body SVG with glow highlights (green = primary, blue = secondary)
+4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
 7. **History** — two-month calendar view with trained dates highlighted; click a date to see that session's muscle map and exercise list
@@ -44,7 +44,9 @@ Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Au
 .\dev.ps1
 ```
 
-This switches to Node 20 via fnm, opens Vite in a separate window, then starts the SWA emulator. Open **http://localhost:4280** — not 5173. The API routes (`/api/claude`, `/api/sporty-sync`) are only available through the SWA proxy.
+`dev.ps1` is gitignored. It switches to Node 20 via `fnm` (Azure Functions Core Tools v4 requires Node ≤ 20; the system default v24 breaks it), opens Vite in a separate window, waits 3 s, then starts the SWA emulator.
+
+Open **http://localhost:4280** — not 5173. The API routes (`/api/claude`, `/api/sporty-sync`) are only available through the SWA proxy at port 4280.
 
 ## Project structure
 
@@ -61,7 +63,7 @@ app/
     lib/
       supabase.js            # Supabase client
       db.js                  # DB helpers (sessions, exercises, muscle_activations, gym_calendar)
-      bodymap.jsx            # Shared: MUSCLES, SHAPES, BodySVG, calcMuscles
+      bodymap.jsx            # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG, calcMuscles, useIsMobile
     styles/
       carbon-tokens.css      # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
       app.css                # Global resets and Carbon overrides
@@ -123,5 +125,5 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Local dev + branch CI/CD | ✅ Done (#6) |
 | Workout history view | ✅ Done (#2) |
 | Sporty.no gym calendar sync + session picker | ✅ Done (#12) |
+| Bodymap layout and graphics improvements | ✅ Done (#10) |
 | Period / volume report | 🔧 Planned (#3) |
-| Bodymap layout and graphics improvements | 🔧 Planned (#10) |

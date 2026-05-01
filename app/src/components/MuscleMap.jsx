@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { saveSession, fetchTodayGymSessions } from "../lib/db";
-import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG } from "../lib/bodymap.jsx";
+import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Checkbox, Select, SelectItem,
@@ -76,6 +76,8 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
   const [saveError, setSaveError] = useState(false);
   const [gymSessions, setGymSessions] = useState([]);
   const [gymSessionId, setGymSessionId] = useState("");
+  const [mobileView, setMobileView] = useState("front");
+  const isMobile = useIsMobile();
   const fileRef = useRef();
 
   useEffect(() => {
@@ -515,14 +517,31 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
               </div>
 
               {/* Body maps */}
-              <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
-                {["front", "back"].map(view => (
-                  <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <BodySVG view={view} primary={muscles.primary} secondary={muscles.secondary}
+              {isMobile ? (
+                <>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    {["front", "back"].map(v => (
+                      <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
+                        onClick={() => setMobileView(v)}>
+                        {v === "front" ? "Front" : "Bak"}
+                      </Button>
+                    ))}
+                  </div>
+                  <div style={{ maxWidth: 240, margin: "0 auto 18px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                    <BodySVG view={mobileView} primary={muscles.primary} secondary={muscles.secondary}
                       muscleMap={buildMuscleMap(exercises)} />
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
+                  {["front", "back"].map(view => (
+                    <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                      <BodySVG view={view} primary={muscles.primary} secondary={muscles.secondary}
+                        muscleMap={buildMuscleMap(exercises)} />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Trained muscle groups */}
               <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14, marginBottom: 12 }}>
@@ -603,14 +622,31 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                       ))}
                     </div>
 
-                    <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-                      {["front", "back"].map(view => (
-                        <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                          <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
+                    {isMobile ? (
+                      <>
+                        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                          {["front", "back"].map(v => (
+                            <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
+                              onClick={() => setMobileView(v)}>
+                              {v === "front" ? "Front" : "Bak"}
+                            </Button>
+                          ))}
+                        </div>
+                        <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                          <BodySVG view={mobileView} primary={recPrimary} secondary={recSecondary}
                             muscleMap={buildRecMuscleMap(recs)} />
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    ) : (
+                      <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+                        {["front", "back"].map(view => (
+                          <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                            <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
+                              muscleMap={buildRecMuscleMap(recs)} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div style={{ display: "flex", gap: 12, marginBottom: 12, fontSize: 12 }}>
                       <Tag type="green" size="sm">Primær</Tag>
