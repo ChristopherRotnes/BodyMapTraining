@@ -30,6 +30,14 @@ function sessionExToEditFormat(exercises) {
   }));
 }
 
+function sessionMuscleIds(session) {
+  return new Set(
+    (session.session_exercises || []).flatMap(ex =>
+      (ex.muscle_activations || []).map(ma => ma.muscle_id)
+    )
+  );
+}
+
 function extractMuscles(session) {
   const primary = new Set();
   const secondary = new Set();
@@ -320,12 +328,22 @@ export default function History({ onNewSession, onShowReport }) {
                 {format(new Date(daySessions[0].session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
               </p>
 
-              {daySessions.map((session) => {
+              {[...daySessions].sort((a, b) => {
+                if (!muscleFilter.length) return 0;
+                const aMatch = muscleFilter.some(id => sessionMuscleIds(a).has(id));
+                const bMatch = muscleFilter.some(id => sessionMuscleIds(b).has(id));
+                return aMatch === bMatch ? 0 : aMatch ? -1 : 1;
+              }).map((session) => {
                 const isEditing = editMode && selectedSession?.id === session.id;
                 const isExpanded = expandedIds.has(session.id);
                 const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
                 const sessionMuscleMap = isEditing ? buildMuscleMapFromExercises(editExercises) : buildMuscleMapFromSession(session);
                 const exCount = (session.session_exercises || []).filter(e => e.name).length;
+                const musIds = sessionMuscleIds(session);
+                const isFilterMatch = muscleFilter.length > 0 && muscleFilter.some(id => musIds.has(id));
+                const matchedLabels = isFilterMatch
+                  ? muscleFilter.filter(id => musIds.has(id)).map(id => MUSCLES[id]?.label || id)
+                  : [];
                 const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => MUSCLES[id]?.label || id);
                 const sessionTime = session.gym_calendar?.start_time
                   ? new Date(session.gym_calendar.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" })
@@ -335,13 +353,14 @@ export default function History({ onNewSession, onShowReport }) {
                   : `${sessionTime} – Egentrening`;
 
                 return (
-                  <div key={session.id} style={{ marginBottom: 4 }}>
+                  <div key={session.id} style={{ marginBottom: 4, opacity: muscleFilter.length > 0 && !isFilterMatch ? 0.45 : 1 }}>
                     <button
                       onClick={() => toggleExpand(session.id)}
                       style={{
                         width: "100%", display: "flex", alignItems: "center", gap: 8,
                         background: "var(--cds-layer-01)",
                         border: "1px solid var(--cds-border-subtle-01)",
+                        borderLeft: isFilterMatch ? "3px solid var(--cds-support-success)" : "1px solid var(--cds-border-subtle-01)",
                         borderBottom: isExpanded ? "none" : "1px solid var(--cds-border-subtle-01)",
                         padding: "10px 14px", cursor: "pointer", textAlign: "left",
                       }}
@@ -353,9 +372,10 @@ export default function History({ onNewSession, onShowReport }) {
                         <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
                           {exCount} øvelser
                         </span>
-                        {topMuscles.map(label => (
-                          <Tag key={label} type="green" size="sm">{label}</Tag>
-                        ))}
+                        {isFilterMatch
+                          ? matchedLabels.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)
+                          : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)
+                        }
                         <ChevronDown size={16} style={{ color: "var(--cds-text-secondary)", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
                       </div>
                     </button>
