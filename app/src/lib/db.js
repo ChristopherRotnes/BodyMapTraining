@@ -74,6 +74,24 @@ export async function fetchSessions() {
   return data;
 }
 
+export async function fetchSessionsForReport(fromDate, toDate) {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select(`
+      id, session_date, gym_calendar_id,
+      gym_calendar(name, start_time),
+      session_exercises(
+        id, name,
+        muscle_activations(muscle_id, activation_type)
+      )
+    `)
+    .gte("session_date", fromDate)
+    .lte("session_date", toDate)
+    .order("session_date", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchSessionsByDate(dateStr) {
   const { data, error } = await supabase
     .from("sessions")

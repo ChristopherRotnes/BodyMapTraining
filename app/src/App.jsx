@@ -3,6 +3,7 @@ import { supabase } from "./lib/supabase";
 import Login from "./components/Login";
 import MuscleMap from "./components/MuscleMap";
 import History from "./components/History";
+import Report from "./components/Report";
 
 function App() {
   const [session, setSession] = useState(undefined);
@@ -20,9 +21,22 @@ function App() {
 
   if (!session) return <Login />;
 
-  return view === "history"
-    ? <History onNewSession={() => setView("logger")} />
-    : <MuscleMap onShowHistory={() => setView("history")} />;
+  if (view === "history")
+    return <History
+      onNewSession={() => setView("logger")}
+      onShowReport={() => setView("report")}
+    />;
+
+  if (view === "report")
+    return <Report
+      onNewSession={() => setView("logger")}
+      onShowHistory={() => setView("history")}
+    />;
+
+  return <MuscleMap
+    onShowHistory={() => setView("history")}
+    onShowReport={() => setView("report")}
+  />;
 }
 
 export default App;

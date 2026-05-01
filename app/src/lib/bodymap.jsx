@@ -95,6 +95,119 @@ export function calcMuscles(exercises) {
   return { primary: [...p], secondary: [...s] };
 }
 
+export function HeatmapBodySVG({ view, counts = {}, maxCount = 1 }) {
+  const [tooltip, setTooltip] = React.useState(null);
+  const wrapRef = React.useRef();
+
+  const handleEnter = (id, e) => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+  const handleMove = (id, e) => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+  const handleLeave = () => setTooltip(null);
+
+  return (
+    <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
+      <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
+        style={{ width: "100%", height: "auto", display: "block" }}>
+        <defs>
+          <filter id={`heatglow-${view}`} x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        <g style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
+          <circle cx="80" cy="21" r="17" />
+          <polygon points="74,37 86,37 87,50 73,50" />
+          <polygon points={BODY_POLY} />
+        </g>
+
+        {Object.entries(SHAPES)
+          .filter(([id]) => MUSCLES[id]?.view === view)
+          .map(([id, shapes]) => {
+            const { primary = 0, secondary = 0 } = counts[id] || {};
+            let fill, stroke, useGlow;
+            if (primary > 0) {
+              const intensity = 0.2 + (primary / Math.max(1, maxCount)) * 0.7;
+              fill = `rgba(36,161,72,${intensity.toFixed(2)})`;
+              stroke = `rgba(36,161,72,${(intensity * 0.6).toFixed(2)})`;
+              useGlow = true;
+            } else if (secondary > 0) {
+              fill = "rgba(120,169,255,0.35)";
+              stroke = "rgba(120,169,255,0.2)";
+              useGlow = false;
+            } else {
+              fill = "rgba(128,128,128,0.1)";
+              stroke = "rgba(128,128,128,0.08)";
+              useGlow = false;
+            }
+            return (
+              <g key={id}
+                filter={useGlow ? `url(#heatglow-${view})` : undefined}
+                style={{ cursor: "pointer" }}
+                onMouseEnter={e => handleEnter(id, e)}
+                onMouseMove={e => handleMove(id, e)}
+                onMouseLeave={handleLeave}>
+                {shapes.map((sh, i) => (
+                  <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry}
+                    fill={fill} stroke={stroke} strokeWidth="0.8" />
+                ))}
+              </g>
+            );
+          })}
+
+        <text x="80" y="352" textAnchor="middle" fontSize="7.5"
+          fontFamily="var(--cds-font-mono)" letterSpacing="2"
+          style={{ fill: "var(--cds-text-secondary)" }}>
+          {view === "front" ? "FRONT" : "BACK"}
+        </text>
+      </svg>
+
+      {tooltip && (
+        <div style={{
+          position: "absolute",
+          left: Math.min(tooltip.x + 10, (wrapRef.current?.offsetWidth || 200) - 150),
+          top: Math.max(tooltip.y - 10, 4),
+          background: "var(--cds-layer-02)",
+          border: "1px solid var(--cds-border-subtle-01)",
+          padding: "8px 10px",
+          pointerEvents: "none",
+          zIndex: 10,
+          minWidth: 130,
+        }}>
+          <div style={{ fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "1px", marginBottom: 4, fontFamily: "var(--cds-font-mono)" }}>
+            {MUSCLES[tooltip.id]?.label?.toUpperCase()}
+          </div>
+          {(() => {
+            const { primary = 0, secondary = 0 } = counts[tooltip.id] || {};
+            return (
+              <>
+                <div style={{ fontSize: 12, color: "var(--cds-text-primary)" }}>
+                  Primær: {primary} {primary === 1 ? "økt" : "økter"}
+                </div>
+                {secondary > 0 && (
+                  <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
+                    Sekundær: {secondary} {secondary === 1 ? "økt" : "økter"}
+                  </div>
+                )}
+                {primary === 0 && secondary === 0 && (
+                  <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>Ikke trent</div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
   const pSet = new Set(primary);
   const sSet = new Set(secondary);

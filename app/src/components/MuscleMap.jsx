@@ -8,7 +8,7 @@ import {
   InlineNotification, InlineLoading,
   Tag,
 } from "@carbon/react";
-import { Add, TrashCan, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed } from "@carbon/icons-react";
+import { Add, TrashCan, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed, Analytics } from "@carbon/icons-react";
 import { useTheme } from "../theme";
 
 // ── MUSCLE MAP BUILDERS ───────────────────────────────────────────────
@@ -60,7 +60,7 @@ const getMediaType = (file) => {
 };
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
-export default function MuscleMap({ onShowHistory }) {
+export default function MuscleMap({ onShowHistory, onShowReport }) {
   const { theme, setTheme } = useTheme();
   const [step, setStep] = useState("upload");
   const [images, setImages] = useState([]);
@@ -210,6 +210,9 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
         <HeaderGlobalBar>
           <HeaderGlobalAction aria-label="Treningshistorikk" onClick={onShowHistory}>
             <RecentlyViewed size={20} />
+          </HeaderGlobalAction>
+          <HeaderGlobalAction aria-label="Perioderapport" onClick={onShowReport}>
+            <Analytics size={20} />
           </HeaderGlobalAction>
           <HeaderGlobalAction
             aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}

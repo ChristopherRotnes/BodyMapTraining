@@ -9,7 +9,7 @@ import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Tag, InlineLoading,
 } from "@carbon/react";
-import { Camera, Asleep, Light } from "@carbon/icons-react";
+import { Camera, Asleep, Light, Analytics } from "@carbon/icons-react";
 import { useTheme } from "../theme";
 
 function extractMuscles(session) {
@@ -36,7 +36,7 @@ function buildMuscleMap(session) {
   return map;
 }
 
-export default function History({ onNewSession }) {
+export default function History({ onNewSession, onShowReport }) {
   const { theme, setTheme } = useTheme();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +92,9 @@ export default function History({ onNewSession }) {
         <HeaderGlobalBar>
           <HeaderGlobalAction aria-label="Logg ny økt" onClick={onNewSession}>
             <Camera size={20} />
+          </HeaderGlobalAction>
+          <HeaderGlobalAction aria-label="Perioderapport" onClick={onShowReport}>
+            <Analytics size={20} />
           </HeaderGlobalAction>
           <HeaderGlobalAction
             aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
