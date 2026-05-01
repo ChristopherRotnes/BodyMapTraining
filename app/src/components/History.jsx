@@ -10,7 +10,7 @@ import {
   Button, Tag, InlineLoading, InlineNotification, DefinitionTooltip,
   Checkbox, Select, SelectItem,
 } from "@carbon/react";
-import { Camera, Asleep, Light, Analytics, Add, TrashCan, Edit as EditIcon, Renew } from "@carbon/icons-react";
+import { Camera, Asleep, Light, Analytics, Add, TrashCan, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import { useTheme } from "../theme";
 
 const toBase64 = (file) => new Promise((res, rej) => {
@@ -68,6 +68,7 @@ export default function History({ onNewSession, onShowReport }) {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(undefined);
   const [daySessions, setDaySessions] = useState([]);
+  const [expandedIds, setExpandedIds] = useState(new Set());
   const [selectedSession, setSelectedSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(false);
   const [mobileView, setMobileView] = useState("front");
@@ -94,6 +95,22 @@ export default function History({ onNewSession, onShowReport }) {
 
   const trainedSet = new Set(sessions.map(s => s.session_date));
   const trainedDates = sessions.map(s => new Date(s.session_date + "T12:00:00"));
+
+  useEffect(() => {
+    if (daySessions.length > 0) {
+      setExpandedIds(new Set([daySessions[0].id]));
+    } else {
+      setExpandedIds(new Set());
+    }
+  }, [daySessions]);
+
+  const toggleExpand = (id) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const loadSession = async (dateStr) => {
     setLoadingSession(true);
@@ -125,6 +142,7 @@ export default function History({ onNewSession, onShowReport }) {
   };
 
   const enterEditMode = (session) => {
+    setExpandedIds(prev => { const next = new Set(prev); next.add(session.id); return next; });
     setSelectedSession(session);
     const exs = sessionExToEditFormat(session.session_exercises || []);
     setEditExercises(exs);
@@ -285,13 +303,48 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                 {format(new Date(daySessions[0].session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
               </p>
 
-              {daySessions.map((session, idx) => {
+              {daySessions.map((session) => {
                 const isEditing = editMode && selectedSession?.id === session.id;
+                const isExpanded = expandedIds.has(session.id);
                 const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
                 const sessionMuscleMap = isEditing ? editMuscleMap : buildMuscleMap(session);
+                const exCount = (session.session_exercises || []).filter(e => e.name).length;
+                const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => MUSCLES[id]?.label || id);
+                const sessionTime = session.gym_calendar?.start_time
+                  ? new Date(session.gym_calendar.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" })
+                  : new Date(session.created_at).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                const sessionTitle = session.gym_calendar
+                  ? `${sessionTime} – ${session.gym_calendar.name}`
+                  : sessionTime;
 
                 return (
-                  <div key={session.id} style={{ borderTop: idx > 0 ? "1px solid var(--cds-border-subtle-01)" : "none", paddingTop: idx > 0 ? 20 : 0, marginBottom: 20 }}>
+                  <div key={session.id} style={{ marginBottom: 4 }}>
+                    <button
+                      onClick={() => toggleExpand(session.id)}
+                      style={{
+                        width: "100%", display: "flex", alignItems: "center", gap: 8,
+                        background: "var(--cds-layer-01)",
+                        border: "1px solid var(--cds-border-subtle-01)",
+                        borderBottom: isExpanded ? "none" : "1px solid var(--cds-border-subtle-01)",
+                        padding: "10px 14px", cursor: "pointer", textAlign: "left",
+                      }}
+                    >
+                      <span style={{ fontSize: 14, fontWeight: 500, color: "var(--cds-text-primary)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {sessionTitle}
+                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
+                          {exCount} øvelser
+                        </span>
+                        {topMuscles.map(label => (
+                          <Tag key={label} type="green" size="sm">{label}</Tag>
+                        ))}
+                        <ChevronDown size={16} style={{ color: "var(--cds-text-secondary)", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                  <div style={{ border: "1px solid var(--cds-border-subtle-01)", borderTop: "none", padding: "16px 14px", marginBottom: 0 }}>
 
                     {/* Gym class tag (read) or selector (edit) */}
                     {isEditing ? (
@@ -569,6 +622,8 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
                       </Button>
                     )}
                   </div>
+                  )}
+                </div>
                 );
               })}
             </div>
