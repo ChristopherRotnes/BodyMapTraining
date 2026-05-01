@@ -4,8 +4,7 @@ dist/
 files.zip
 .env
 .env.local
-.claude/worktrees/
-.claude/settings.local.json
+.claude/
 
 # Local Netlify folder
 .netlify
