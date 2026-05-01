@@ -7,9 +7,11 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']
-  for (const key of required) {
-    if (!env[key]) throw new Error(`Build aborted: missing required env var ${key}`)
+  if (mode !== 'test') {
+    const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']
+    for (const key of required) {
+      if (!env[key]) throw new Error(`Build aborted: missing required env var ${key}`)
+    }
   }
   return {
     plugins: [react()],
@@ -17,6 +19,9 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@carbon/styles/css/styles.css': resolve(__dirname, 'node_modules/@carbon/styles/css/styles.css'),
       },
+    },
+    test: {
+      environment: 'node',
     },
   }
 })

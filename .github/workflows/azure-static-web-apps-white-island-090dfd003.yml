@@ -30,9 +30,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
+      - name: Test
+        working-directory: app
+        run: npm ci && npm test
       - name: Build app
         working-directory: app
-        run: npm ci && npm run build
+        run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
