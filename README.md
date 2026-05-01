@@ -6,11 +6,11 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 
 1. **Upload** one or more photos of a whiteboard workout program
 2. **Claude Vision** reads the handwriting and returns a structured list of exercises with muscle IDs
-3. **Confirm** — toggle, rename, or adjust sets/reps before saving
+3. **Confirm** — pick the session date (defaults to today), link to a gym class, toggle/rename/adjust exercises before saving
 4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
-7. **History** — two-month calendar view with trained dates highlighted; click a date to see that session's muscle map and exercise list
+7. **History** — two-month calendar view with trained dates highlighted; click a date to see that session's muscle map and exercise list; edit or re-analyse any saved session
 
 ## Tech stack
 
@@ -58,11 +58,12 @@ app/
     theme.jsx                # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
     components/
       Login.jsx              # Magic-link email login
-      MuscleMap.jsx          # Logger — upload, analyse, confirm, visualise
-      History.jsx            # History — two-month calendar + session detail
+      MuscleMap.jsx          # Logger — upload, analyse, confirm (date picker + gym selector), visualise
+      History.jsx            # History — two-month calendar + session detail + edit mode
     lib/
       supabase.js            # Supabase client
-      db.js                  # DB helpers (sessions, exercises, muscle_activations, gym_calendar)
+      db.js                  # DB helpers: sessions, exercises, muscle_activations, gym_calendar;
+                             #   fetchGymSessionsByDate, saveSession, updateSession
       bodymap.jsx            # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG, calcMuscles, useIsMobile
     styles/
       carbon-tokens.css      # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face

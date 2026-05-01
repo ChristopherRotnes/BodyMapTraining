@@ -30,7 +30,8 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
 - `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav + light/dark toggle), `ProgressIndicator`, `Button`, `Checkbox`, `Tag`, `InlineLoading`, `InlineNotification`
-- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`; `react-day-picker` calendar themed to Carbon tokens
+- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Checkbox`, `Select`/`SelectItem`; `react-day-picker` calendar themed to Carbon tokens; edit mode uses `Edit`, `Camera`, `TrashCan`, `Add`, `Renew` icons
+- `MuscleMap.jsx` confirm step → Carbon `DatePicker`/`DatePickerInput` for session date (defaults to today, max = today)
 - `BodySVG` muscle highlights: primary → green-50 `rgba(36,161,72,…)`, secondary → blue-40 `rgba(120,169,255,…)`
 - Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners
 
@@ -67,6 +68,19 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 - **Page title** — change from "app" to "Workout Lens" (queued)
 - **Gym calendar manager** — admin UI to manually trigger sporty.no sync and inspect `gym_calendar` rows; when built, the HTTP trigger on `sportySync.js` can be removed from the user-facing API
 
+## Session data model — edit flow (issue #19)
+
+`updateSession(sessionId, exercises, gymCalendarId)` in `db.js`:
+1. Deletes all `session_exercises` for the session (cascades to `muscle_activations`)
+2. Re-inserts enabled exercises + their `muscle_activations`
+3. Updates `gym_calendar_id` on the `sessions` row
+
+The sessions table has `UNIQUE (gym_calendar_id)` — updating to a gym class that already has a different session raises a Postgres 23505 error, shown to the user as a friendly message.
+
+`saveSession` accepts an optional `sessionDate` param (ISO `yyyy-MM-dd`); defaults to today for backwards compat.
+
+`fetchGymSessionsByDate(dateStr)` generalises `fetchTodayGymSessions` — same query but parameterised. `fetchTodayGymSessions` now delegates to it.
+
 ## Exercise data model
 ```typescript
 {
@@ -99,6 +113,8 @@ Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens
 - Volume (sets × reps) is logged but not used in muscle analysis
 - Recommendations are contextual per session, not based on accumulated history (will improve with data)
 - No error handling for API rate limits
+- History edit mode re-analyse uses a single image only (the new photo replaces the full exercise list); multi-image re-analysis is not supported in edit mode
+- Carbon `DatePicker` uses US date format (`MM/DD/YYYY`) in the confirm step — no Norwegian locale override applied yet
 
 ## Local development
 
