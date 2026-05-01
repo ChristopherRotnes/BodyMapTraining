@@ -269,7 +269,14 @@ Gi en konkret og motiverende anbefaling på norsk om hva treneren bør fokusere 
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <p style={labelStyle}>Dag <span style={{ opacity: 0.5 }}>(tom = alle)</span></p>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+              <p style={{ ...labelStyle, marginBottom: 0 }}>Dag <span style={{ opacity: 0.5 }}>(tom = alle)</span></p>
+              {selectedDays.size > 0 && (
+                <button onClick={() => setSelectedDays(new Set())} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 11, color: "var(--cds-interactive)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textTransform: "uppercase" }}>
+                  Nullstill
+                </button>
+              )}
+            </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {DAYS.map(d => (
                 <FilterChip
@@ -284,7 +291,14 @@ Gi en konkret og motiverende anbefaling på norsk om hva treneren bør fokusere 
 
           {availableTypes.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <p style={labelStyle}>Økttype <span style={{ opacity: 0.5 }}>(tom = alle)</span></p>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+                <p style={{ ...labelStyle, marginBottom: 0 }}>Økttype <span style={{ opacity: 0.5 }}>(tom = alle)</span></p>
+                {selectedTypes.size > 0 && (
+                  <button onClick={() => setSelectedTypes(new Set())} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 11, color: "var(--cds-interactive)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textTransform: "uppercase" }}>
+                    Nullstill
+                  </button>
+                )}
+              </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {availableTypes.map(name => (
                   <FilterChip
