@@ -5,6 +5,3 @@ files.zip
 .env
 .env.local
 .claude/
-
-# Local Netlify folder
-.netlify
