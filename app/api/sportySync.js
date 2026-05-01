@@ -90,11 +90,19 @@ app.timer('sportySyncTimer', {
 // ── HTTP trigger: manual kick + optional backfill ─────────────────────
 // POST /api/sporty-sync                    → sync today
 // POST /api/sporty-sync  {"shiftDays":-7}  → duplicate current data 7 days back
+// Requires header:  x-api-key: <SPORTY_SYNC_API_KEY>
 app.http('sportySyncHttp', {
   methods: ['POST'],
   route: 'sporty-sync',
   authLevel: 'anonymous',
   handler: async (request, context) => {
+    const expectedKey = process.env.SPORTY_SYNC_API_KEY;
+    if (!expectedKey || request.headers.get('x-api-key') !== expectedKey) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     const body = await request.json().catch(() => ({}));
     const shiftDays = typeof body.shiftDays === 'number' ? body.shiftDays : 0;
     const result = await syncGymCalendar(context, { shiftDays });
