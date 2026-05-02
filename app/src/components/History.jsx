@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { DayPicker } from "react-day-picker";
 import { nb } from "date-fns/locale";
-import { format, subMonths } from "date-fns";
+import { format, subMonths, parseISO } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
 import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, useIsMobile } from "../lib/bodymap.jsx";
 import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
-  Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Tag, InlineNotification, DefinitionTooltip,
   Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
-import { Camera, Asleep, Light, Analytics, Add, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
-import { useTheme } from "../theme";
+import { Camera, Add, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
+import PageShell, { PageTitle } from "./PageShell";
 
 const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
 
@@ -52,11 +51,12 @@ function extractMuscles(session) {
   return { primary: [...primary], secondary: [...secondary] };
 }
 
-export default function History({ onNewSession, onShowReport }) {
-  const { theme, setTheme } = useTheme();
+export default function History({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialDate }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(undefined);
+  const [selectedDate, setSelectedDate] = useState(
+    initialDate ? parseISO(initialDate + "T12:00:00") : undefined
+  );
   const [daySessions, setDaySessions] = useState([]);
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [selectedSession, setSelectedSession] = useState(null);
@@ -93,6 +93,10 @@ export default function History({ onNewSession, onShowReport }) {
       .then(setSessions)
       .catch(console.error)
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (initialDate) loadSession(initialDate);
   }, []);
 
   const filteredSessions = muscleFilter.length === 0 ? sessions : sessions.filter(s => {
@@ -256,32 +260,16 @@ export default function History({ onNewSession, onShowReport }) {
   );
 
   return (
-    <>
-      <Header aria-label="Workout Lens">
-        <SkipToContent />
-        <HeaderName href="#" prefix="">Workout Lens</HeaderName>
-        <HeaderGlobalBar>
-          <HeaderGlobalAction aria-label="Logg ny økt" onClick={onNewSession}>
-            <Camera size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction aria-label="Perioderapport" onClick={onShowReport}>
-            <Analytics size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction
-            aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
-            onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}
-          >
-            {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
-      </Header>
-
-      <main style={{ paddingTop: 48, minHeight: "100vh", background: "var(--cds-background)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px" }}>
-
-          <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 20, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-            Treningshistorikk
-          </p>
+    <PageShell
+      onShowHome={onShowHome}
+      onShowLogger={onShowLogger}
+      onShowHistory={onShowHistory}
+      onShowReport={onShowReport}
+      onShowBibliotek={onShowBibliotek}
+      currentView={currentView}
+    >
+      <div style={{ paddingBottom: 32 }}>
+          <PageTitle>Treningshistorikk</PageTitle>
 
           <MultiSelect
             id="muscle-filter"
@@ -301,7 +289,7 @@ export default function History({ onNewSession, onShowReport }) {
             <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24, overflowX: "auto" }}>
               <DayPicker
                 numberOfMonths={2}
-                defaultMonth={subMonths(new Date(), 1)}
+                defaultMonth={initialDate ? subMonths(parseISO(initialDate + "T12:00:00"), 1) : subMonths(new Date(), 1)}
                 locale={nb}
                 mode="single"
                 required
@@ -590,7 +578,6 @@ export default function History({ onNewSession, onShowReport }) {
           )}
 
         </div>
-      </main>
-    </>
+    </PageShell>
   );
 }

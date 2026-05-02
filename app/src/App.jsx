@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 import Login from "./components/Login";
+import Home from "./components/Home";
 import MuscleMap from "./components/MuscleMap";
 import History from "./components/History";
 import Report from "./components/Report";
@@ -10,9 +11,10 @@ import TemplateSessionEditor from "./components/TemplateSessionEditor";
 
 function App() {
   const [session, setSession] = useState(undefined);
-  const [view, setView] = useState("logger");
+  const [view, setView] = useState("home");
   const [templateEditorState, setTemplateEditorState] = useState(null);
   const [pendingTemplateExercises, setPendingTemplateExercises] = useState(null);
+  const [historyInitialDate, setHistoryInitialDate] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -25,21 +27,32 @@ function App() {
   if (session === undefined) return null;
   if (!session) return <Login />;
 
-  if (view === "history")
-    return <History
-      onNewSession={() => setView("logger")}
-      onShowReport={() => setView("report")}
+  const nav = {
+    onShowHome: () => setView("home"),
+    onShowLogger: () => setView("logger"),
+    onShowHistory: () => { setHistoryInitialDate(null); setView("history"); },
+    onShowReport: () => setView("report"),
+    onShowBibliotek: () => setView("bibliotek"),
+  };
+
+  if (view === "home")
+    return <Home
+      {...nav}
+      currentView="home"
+      onShowHistoryWithDate={(dateStr) => { setHistoryInitialDate(dateStr); setView("history"); }}
     />;
 
+  if (view === "history")
+    return <History {...nav} currentView="history" initialDate={historyInitialDate} />;
+
   if (view === "report")
-    return <Report
-      onNewSession={() => setView("logger")}
-      onShowHistory={() => setView("history")}
-    />;
+    return <Report {...nav} currentView="report" />;
 
   if (view === "bibliotek")
     return <Bibliotek
-      onBack={() => setView("logger")}
+      {...nav}
+      currentView="bibliotek"
+      onBack={nav.onShowHome}
       onEditTemplate={(tpl) => {
         setTemplateEditorState({ template: tpl, mode: "edit" });
         setView("template-editor");
@@ -48,16 +61,19 @@ function App() {
 
   if (view === "template-picker")
     return <TemplatePicker
-      onBack={() => setView("logger")}
+      {...nav}
+      currentView="template-picker"
+      onBack={nav.onShowLogger}
       onSelectTemplate={(tpl) => {
         setTemplateEditorState({ template: tpl, mode: "use" });
         setView("template-editor");
       }}
-      onShowBibliotek={() => setView("bibliotek")}
     />;
 
   if (view === "template-editor" && templateEditorState)
     return <TemplateSessionEditor
+      {...nav}
+      currentView="template-editor"
       template={templateEditorState.template}
       mode={templateEditorState.mode}
       onBack={() => {
@@ -72,9 +88,8 @@ function App() {
     />;
 
   return <MuscleMap
-    onShowHistory={() => setView("history")}
-    onShowReport={() => setView("report")}
-    onShowBibliotek={() => setView("bibliotek")}
+    {...nav}
+    currentView="logger"
     onShowTemplatePicker={() => setView("template-picker")}
     templatePreload={pendingTemplateExercises}
     onTemplatePreloadConsumed={() => setPendingTemplateExercises(null)}

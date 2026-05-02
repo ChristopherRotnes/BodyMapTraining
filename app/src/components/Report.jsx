@@ -5,11 +5,10 @@ import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.js
 import { buildRecMuscleMap } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
-  Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
-import { Camera, RecentlyViewed, Asleep, Light, AiGenerate } from "@carbon/icons-react";
-import { useTheme } from "../theme";
+import { AiGenerate } from "@carbon/icons-react";
+import PageShell, { PageTitle } from "./PageShell";
 
 const PERIODS = [
   { label: "7 dager", days: 7 },
@@ -63,8 +62,8 @@ function StatTile({ label, value }) {
   );
 }
 
-export default function Report({ onNewSession, onShowHistory }) {
-  const { theme, setTheme } = useTheme();
+export default function Report({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
+
   const isMobile = useIsMobile();
   const [mobileRecView, setMobileRecView] = useState("front");
   const [periodDays, setPeriodDays] = useState(30);
@@ -232,30 +231,16 @@ export default function Report({ onNewSession, onShowHistory }) {
   };
 
   return (
-    <>
-      <Header aria-label="Workout Lens">
-        <SkipToContent />
-        <HeaderName href="#" prefix="">Workout Lens</HeaderName>
-        <HeaderGlobalBar>
-          <HeaderGlobalAction aria-label="Logg ny økt" onClick={onNewSession}>
-            <Camera size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction aria-label="Treningshistorikk" onClick={onShowHistory}>
-            <RecentlyViewed size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction
-            aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
-            onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}
-          >
-            {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
-      </Header>
-
-      <main style={{ paddingTop: 48, minHeight: "100vh", background: "var(--cds-background)" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px" }}>
-
-          <p style={{ ...labelStyle, marginBottom: 20 }}>Perioderapport</p>
+    <PageShell
+      onShowHome={onShowHome}
+      onShowLogger={onShowLogger}
+      onShowHistory={onShowHistory}
+      onShowReport={onShowReport}
+      onShowBibliotek={onShowBibliotek}
+      currentView={currentView}
+    >
+      <div style={{ paddingBottom: 32 }}>
+          <PageTitle>Perioderapport</PageTitle>
 
           <div style={{ marginBottom: 16 }}>
             <p style={labelStyle}>Periode</p>
@@ -505,7 +490,6 @@ export default function Report({ onNewSession, onShowHistory }) {
             </>
           )}
         </div>
-      </main>
-    </>
+    </PageShell>
   );
 }

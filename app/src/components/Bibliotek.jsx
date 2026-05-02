@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
-  Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Tag, InlineNotification, InlineLoading,
   Tabs, Tab, TabList, TabPanels, TabPanel,
   TextInput,
 } from "@carbon/react";
-import { Add, TrashCan, Edit as EditIcon, ArrowLeft, ChevronRight, Asleep, Light } from "@carbon/icons-react";
+import { Add, TrashCan, Edit as EditIcon, ChevronRight } from "@carbon/icons-react";
+import PageShell, { PageTitle } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
   fetchTemplates, saveTemplate, deleteTemplate,
 } from "../lib/db";
 import { MUSCLES } from "../lib/bodymap.jsx";
 import MusclePicker from "./MusclePicker";
-import { useTheme } from "../theme";
+
 
 function ExerciseForm({ initial, onSave, onCancel, saving }) {
   const [name, setName] = useState(initial?.name || "");
@@ -76,8 +76,8 @@ function ExerciseForm({ initial, onSave, onCancel, saving }) {
   );
 }
 
-export default function Bibliotek({ onBack, onEditTemplate }) {
-  const { theme, setTheme } = useTheme();
+export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
+
   const [tabIndex, setTabIndex] = useState(0);
 
   const [exercises, setExercises] = useState([]);
@@ -166,29 +166,20 @@ export default function Bibliotek({ onBack, onEditTemplate }) {
     ));
 
   return (
-    <div data-theme={theme}>
-      <Header aria-label="Workout Lens">
-        <SkipToContent />
-        <HeaderGlobalAction aria-label="Tilbake" onClick={onBack} style={{ order: -1 }}>
-          <ArrowLeft size={20} />
-        </HeaderGlobalAction>
-        <HeaderName href="#" prefix="">Bibliotek</HeaderName>
-        <HeaderGlobalBar>
-          <HeaderGlobalAction
-            aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
-            onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}
-          >
-            {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
-      </Header>
-
-      <main style={{ paddingTop: 48, minHeight: "100vh", background: "var(--cds-background)" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", padding: "24px 20px" }}>
+    <PageShell
+      onShowHome={onShowHome}
+      onShowLogger={onShowLogger}
+      onShowHistory={onShowHistory}
+      onShowReport={onShowReport}
+      onShowBibliotek={onShowBibliotek}
+      currentView={currentView}
+    >
+      <div style={{ paddingBottom: 32 }}>
+          <PageTitle>Bibliotek</PageTitle>
           <Tabs selectedIndex={tabIndex} onChange={({ selectedIndex }) => setTabIndex(selectedIndex)}>
             <TabList aria-label="Bibliotek-seksjoner">
-              <Tab>Øvelser</Tab>
-              <Tab>Maler</Tab>
+              <Tab>Egne øvelser</Tab>
+              <Tab>Mal for gymtime</Tab>
             </TabList>
             <TabPanels>
 
@@ -351,7 +342,6 @@ export default function Bibliotek({ onBack, onEditTemplate }) {
             </TabPanels>
           </Tabs>
         </div>
-      </main>
-    </div>
+    </PageShell>
   );
 }

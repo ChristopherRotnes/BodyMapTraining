@@ -4,16 +4,15 @@ import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG, useIsMobi
 import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
-  Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Select, SelectItem,
   DatePicker, DatePickerInput,
   ProgressIndicator, ProgressStep,
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed, Analytics, Book } from "@carbon/icons-react";
-import { useTheme } from "../theme";
+import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai, Book } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
+import PageShell, { PageTitle } from "./PageShell";
 
 const localDateStr = () => {
   const d = new Date();
@@ -21,8 +20,7 @@ const localDateStr = () => {
 };
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
-export default function MuscleMap({ onShowHistory, onShowReport, onShowBibliotek, onShowTemplatePicker, templatePreload, onTemplatePreloadConsumed }) {
-  const { theme, setTheme } = useTheme();
+export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowTemplatePicker, templatePreload, onTemplatePreloadConsumed, currentView }) {
   const [step, setStep] = useState("upload");
   const [images, setImages] = useState([]);
   const [exercises, setExercises] = useState([]);
@@ -186,32 +184,16 @@ export default function MuscleMap({ onShowHistory, onShowReport, onShowBibliotek
 
   // ── RENDER ────────────────────────────────────────────────────────
   return (
-    <>
-      <Header aria-label="Workout Lens">
-        <SkipToContent />
-        <HeaderName href="#" prefix="">Workout Lens</HeaderName>
-        <HeaderGlobalBar>
-          <HeaderGlobalAction aria-label="Treningshistorikk" onClick={onShowHistory}>
-            <RecentlyViewed size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction aria-label="Perioderapport" onClick={onShowReport}>
-            <Analytics size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction aria-label="Bibliotek" onClick={onShowBibliotek}>
-            <Book size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction
-            aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
-            onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}
-          >
-            {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
-      </Header>
-
-      <main style={{ paddingTop: 48, minHeight: "100vh", background: "var(--cds-background)" }}>
-        <div style={{ maxWidth: 540, margin: "0 auto", padding: "24px 20px" }}>
-
+    <PageShell
+      onShowHome={onShowHome}
+      onShowLogger={onShowLogger}
+      onShowHistory={onShowHistory}
+      onShowReport={onShowReport}
+      onShowBibliotek={onShowBibliotek}
+      currentView={currentView}
+    >
+      <div style={{ paddingBottom: 32 }}>
+          <PageTitle>Logg økt</PageTitle>
           <ProgressIndicator currentIndex={stepIndex} spaceEqually style={{ marginBottom: 28 }}>
             <ProgressStep label="Last opp bilde" />
             <ProgressStep label="Bekreft øvelser" />
@@ -635,7 +617,6 @@ export default function MuscleMap({ onShowHistory, onShowReport, onShowBibliotek
           )}
 
         </div>
-      </main>
-    </>
+    </PageShell>
   );
 }

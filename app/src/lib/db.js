@@ -208,6 +208,23 @@ export async function fetchSessions() {
   return data;
 }
 
+export async function fetchLastSession() {
+  const { data, error } = await supabase
+    .from("sessions")
+    .select(`
+      id, session_date,
+      gym_calendar(name),
+      session_exercises(
+        muscle_activations(muscle_id, activation_type)
+      )
+    `)
+    .order("session_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchSessionsForReport(fromDate, toDate) {
   const { data, error } = await supabase
     .from("sessions")

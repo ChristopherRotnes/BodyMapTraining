@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Tag, InlineNotification, InlineLoading, TextInput,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Save, Asleep, Light } from "@carbon/icons-react";
+import { Add, ArrowRight, Save } from "@carbon/icons-react";
+import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
 import { calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises } from "../lib/utils";
 import ExerciseRow from "./ExerciseRow";
-import { useTheme } from "../theme";
+
 
 // Convert a template_exercise DB row into the exercise object shape used by ExerciseRow / calcMuscles
 function templateExToEditorShape(te) {
@@ -91,8 +91,7 @@ function LibraryPicker({ libraryExercises, onAdd, onClose }) {
 //                         "edit" → "Lagre mal" button saves to DB and calls onBack
 //   onBack            — navigate back
 //   onUseTemplate(exercises) — called in "use" mode when trainer clicks "Bruk økt"
-export default function TemplateSessionEditor({ template, mode, onBack, onUseTemplate }) {
-  const { theme, setTheme } = useTheme();
+export default function TemplateSessionEditor({ template, mode, onBack, onUseTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState("front");
 
@@ -187,13 +186,20 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
   const canProceed = exercises.some(e => e.enabled && e.name);
 
   return (
-    <div data-theme={theme}>
-      <Header aria-label="Workout Lens">
-        <SkipToContent />
-        <HeaderGlobalAction aria-label="Tilbake" onClick={onBack} style={{ order: -1 }}>
-          <ArrowLeft size={20} />
-        </HeaderGlobalAction>
-        <HeaderName href="#" prefix="">
+    <PageShell
+      onShowHome={onShowHome}
+      onShowLogger={onShowLogger}
+      onShowHistory={onShowHistory}
+      onShowReport={onShowReport}
+      onShowBibliotek={onShowBibliotek}
+      currentView={currentView}
+    >
+      <div style={{ paddingBottom: 32 }}>
+        <BackButton onClick={onBack} />
+        <PageTitle>{mode === "edit" ? "Rediger mal" : "Bruk mal"}</PageTitle>
+
+        {/* Editable template name */}
+        <div style={{ marginBottom: 20 }}>
           {editingTitle ? (
             <input
               autoFocus
@@ -207,35 +213,26 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
                 borderBottom: "2px solid var(--cds-interactive)",
                 color: "var(--cds-text-primary)",
                 fontFamily: "var(--cds-font-sans)",
-                fontSize: 14,
+                fontSize: 18,
                 fontWeight: 600,
                 padding: "2px 0",
                 outline: "none",
-                minWidth: 120,
+                width: "100%",
               }}
             />
           ) : (
             <span
               onClick={() => setEditingTitle(true)}
-              style={{ cursor: "text" }}
+              style={{ cursor: "text", fontSize: 18, fontWeight: 600, color: "var(--cds-text-primary)" }}
               title="Klikk for å endre navn"
             >
               {templateName}
             </span>
           )}
-        </HeaderName>
-        <HeaderGlobalBar>
-          <HeaderGlobalAction
-            aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
-            onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}
-          >
-            {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
-      </Header>
+        </div>
 
-      <main style={{ paddingTop: 48, minHeight: "100vh", background: "var(--cds-background)" }}>
-        <div style={{ maxWidth: 540, margin: "0 auto", padding: "24px 20px" }}>
+        {/* ─── rest of TemplateSessionEditor content ─── */}
+        <div>
 
           {/* Live body map */}
           {isMobile ? (
@@ -354,7 +351,8 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
           </div>
 
         </div>
-      </main>
-    </div>
+
+      </div>
+    </PageShell>
   );
 }
