@@ -64,16 +64,22 @@ app/
       History.jsx                  # History — two-month calendar + session detail + edit mode
       Report.jsx                   # Period report — heatmap body map + muscle coverage stats
       ExerciseRow.jsx              # Shared editable exercise row (checkbox, name, sets, reps, delete)
+      BodyPanel.jsx                # Shared front/back body map with mobile toggle (used in 3 views)
       MusclePicker.jsx             # Click-to-toggle body map for assigning muscles to exercises
+      ExerciseForm.jsx             # Create/edit a library exercise with MusclePicker
+      LibraryPicker.jsx            # Searchable exercise picker for adding library exercises to templates
       Bibliotek.jsx                # Library page — exercise library CRUD + template CRUD (two tabs)
       TemplatePicker.jsx           # Template selection screen (recently used first)
       TemplateSessionEditor.jsx    # Edit/use a template with live body map; save-back or hand off to logger
+      PageShell.jsx                # Shared nav shell (header, nav buttons, theme toggle, logout)
+      Home.jsx                     # Landing page — last session summary + quick-nav
+      ErrorBoundary.jsx            # Catches render errors and shows a reload prompt
     lib/
       supabase.js                  # Supabase client
       db.js                        # DB helpers: sessions, exercises, muscle_activations, gym_calendar,
                                    #   exercise_library, session_templates, session_template_exercises
       bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG, calcMuscles, useIsMobile
-      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum
+      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude
       prompts.js                   # Claude model IDs + prompt builders
     styles/
       carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
@@ -114,7 +120,8 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Setting | Purpose |
 |---|---|
 | `ANTHROPIC_API_KEY` | Used by the Claude proxy function — never exposed to browser |
-| `SUPABASE_URL` | Used by the sporty.no sync function to upsert gym_calendar rows |
+| `SUPABASE_URL` | Used by the Claude proxy (JWT verification) and sporty.no sync function |
+| `VITE_SUPABASE_ANON_KEY` | Used by the Claude proxy to verify Supabase JWTs — same value as the GitHub Actions secret |
 | `SUPABASE_SERVICE_ROLE_KEY` | Used by the sporty.no sync function (bypasses RLS — timer has no auth user) |
 | `SPORTY_SYNC_API_KEY` | Required `x-api-key` header value for `POST /api/sporty-sync` — any secret string; endpoint returns 401 without it |
 
@@ -146,6 +153,8 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Input & display polish (volume, date format, validation) | ✅ Done (#32 #33 #35 #36) |
 | Exercise library + session templates | ✅ Done (#38) |
 | Error resilience (JSON.parse try-catch + ErrorBoundary) | ✅ Done (#23 #29) |
+| API authentication (Supabase JWT on Claude proxy) | ✅ Done |
+| Code refactor (useReducer, shared BodyPanel, batch DB inserts) | ✅ Done |
 
 ## Backlog
 

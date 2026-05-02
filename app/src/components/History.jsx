@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { DayPicker } from "react-day-picker";
 import { nb } from "date-fns/locale";
 import { format, subMonths, parseISO } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
-import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, useIsMobile } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum } from "../lib/utils";
+import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
+import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
@@ -13,6 +13,7 @@ import {
 } from "@carbon/react";
 import { Camera, Add, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
+import BodyPanel from "./BodyPanel";
 import PageShell, { PageTitle } from "./PageShell";
 
 const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
@@ -61,9 +62,6 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [selectedSession, setSelectedSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(false);
-  const [mobileView, setMobileView] = useState("front");
-  const isMobile = useIsMobile();
-
   const [today, setToday] = useState(() => new Date());
 
   useEffect(() => {
@@ -99,14 +97,8 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     if (initialDate) loadSession(initialDate);
   }, []);
 
-  const filteredSessions = muscleFilter.length === 0 ? sessions : sessions.filter(s => {
-    const muscles = new Set(
-      (s.session_exercises || []).flatMap(ex =>
-        (ex.muscle_activations || []).map(ma => ma.muscle_id)
-      )
-    );
-    return muscleFilter.some(id => muscles.has(id));
-  });
+  const filteredSessions = muscleFilter.length === 0 ? sessions
+    : sessions.filter(s => muscleFilter.some(id => sessionMuscleIds(s).has(id)));
   const filteredTrainedSet = new Set(filteredSessions.map(s => s.session_date));
   const filteredTrainedDates = filteredSessions.map(s => new Date(s.session_date + "T12:00:00"));
 
@@ -220,20 +212,16 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     try {
       const mt = getMediaType(file);
       const b64 = await toBase64(file);
-      const res = await fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: CLAUDE_MODEL_VISION,
-          max_tokens: 1500,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: mt, data: b64 } },
-              { type: "text", text: ANALYZE_PROMPT }
-            ]
-          }]
-        })
+      const res = await callClaude({
+        model: CLAUDE_MODEL_VISION,
+        max_tokens: 1500,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mt, data: b64 } },
+            { type: "text", text: ANALYZE_PROMPT }
+          ]
+        }]
       });
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
@@ -251,7 +239,10 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     }
   };
 
-  const editMuscles = editMode ? calcMuscles(editExercises.filter(e => e.enabled && e.name)) : null;
+  const editMuscles = useMemo(
+    () => editMode ? calcMuscles(editExercises.filter(e => e.enabled && e.name)) : null,
+    [editMode, editExercises]
+  );
 
 
   const hasEditErrors = editMode && (
@@ -407,29 +398,11 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                     )}
 
                     {/* Body map */}
-                    {isMobile ? (
-                      <>
-                        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                          {["front", "back"].map(v => (
-                            <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
-                              onClick={() => setMobileView(v)}>
-                              {v === "front" ? "Front" : "Bak"}
-                            </Button>
-                          ))}
-                        </div>
-                        <div style={{ maxWidth: 240, margin: "0 auto 16px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                          <BodySVG view={mobileView} primary={sessionMuscles.primary} secondary={sessionMuscles.secondary} muscleMap={sessionMuscleMap} />
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-                        {["front", "back"].map(view => (
-                          <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                            <BodySVG view={view} primary={sessionMuscles.primary} secondary={sessionMuscles.secondary} muscleMap={sessionMuscleMap} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <BodyPanel
+                      primary={sessionMuscles.primary}
+                      secondary={sessionMuscles.secondary}
+                      muscleMap={sessionMuscleMap}
+                    />
 
                     <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
                       <Tag type="green" size="sm">Primær ({sessionMuscles.primary.length})</Tag>

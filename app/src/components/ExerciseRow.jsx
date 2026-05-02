@@ -19,7 +19,6 @@ export default function ExerciseRow({
 
   return (
     <div
-      onClick={() => onChange({ enabled: !exercise.enabled })}
       style={{
         background: exercise.enabled ? bg : "transparent",
         border: "1px solid var(--cds-border-subtle-01)",
@@ -29,10 +28,9 @@ export default function ExerciseRow({
         gap: 8,
         opacity: exercise.enabled ? 1 : 0.4,
         transition: "opacity 0.15s",
-        cursor: "pointer",
       }}
     >
-      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
         <Checkbox
           id={`ex-row-${exercise.id}`}
           labelText=""
@@ -42,7 +40,7 @@ export default function ExerciseRow({
         />
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         {editingName ? (
           <input
             autoFocus
@@ -78,7 +76,7 @@ export default function ExerciseRow({
         )}
       </div>
 
-      <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
         {["sets", "reps"].map(field => (
           <div key={field} style={{ display: "flex", alignItems: "center", gap: 2 }}>
             <input

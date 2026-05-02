@@ -2,83 +2,20 @@ import React, { useState, useEffect } from "react";
 import {
   Button, Tag, InlineNotification, InlineLoading,
   Tabs, Tab, TabList, TabPanels, TabPanel,
-  TextInput,
+  TextInput, Modal,
 } from "@carbon/react";
 import { Add, TrashCan, Edit as EditIcon, ChevronRight } from "@carbon/icons-react";
 import PageShell, { PageTitle } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
-  fetchTemplates, saveTemplate, deleteTemplate,
+  fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
 } from "../lib/db";
 import { MUSCLES } from "../lib/bodymap.jsx";
-import MusclePicker from "./MusclePicker";
+import ExerciseForm from "./ExerciseForm";
 
+export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialTab = 0 }) {
 
-function ExerciseForm({ initial, onSave, onCancel, saving }) {
-  const [name, setName] = useState(initial?.name || "");
-  const [primary, setPrimary] = useState(initial?.primary_muscles || []);
-  const [secondary, setSecondary] = useState(initial?.secondary_muscles || []);
-  const [defaultSets, setDefaultSets] = useState(initial?.default_sets || "");
-  const [defaultReps, setDefaultReps] = useState(initial?.default_reps || "");
-
-  return (
-    <div style={{ background: "var(--cds-layer-02)", border: "1px solid var(--cds-border-strong-01)", padding: 16, marginBottom: 8 }}>
-      <TextInput
-        id={`ex-form-name-${initial?.id || "new"}`}
-        labelText="Navn"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="f.eks. Knebøy"
-        style={{ marginBottom: 12 }}
-      />
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <TextInput
-          id={`ex-form-sets-${initial?.id || "new"}`}
-          labelText="Standard sett"
-          value={defaultSets}
-          onChange={(e) => setDefaultSets(e.target.value)}
-          placeholder="–"
-          size="sm"
-        />
-        <TextInput
-          id={`ex-form-reps-${initial?.id || "new"}`}
-          labelText="Standard reps"
-          value={defaultReps}
-          onChange={(e) => setDefaultReps(e.target.value)}
-          placeholder="–"
-          size="sm"
-        />
-      </div>
-      <MusclePicker
-        primary={primary}
-        secondary={secondary}
-        onChange={({ primary: p, secondary: s }) => { setPrimary(p); setSecondary(s); }}
-        instanceId={initial?.id || "new"}
-      />
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <Button kind="secondary" size="sm" onClick={onCancel}>Avbryt</Button>
-        <Button
-          kind="primary"
-          size="sm"
-          disabled={!name.trim() || saving}
-          onClick={() => onSave({
-            name: name.trim(),
-            primary_muscles: primary,
-            secondary_muscles: secondary,
-            default_sets: defaultSets || null,
-            default_reps: defaultReps || null,
-          })}
-        >
-          {saving ? "Lagrer…" : "Lagre øvelse"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
-
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(initialTab);
 
   const [exercises, setExercises] = useState([]);
   const [exLoading, setExLoading] = useState(true);
@@ -86,6 +23,8 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
   const [showNewEx, setShowNewEx] = useState(false);
   const [editingEx, setEditingEx] = useState(null);
   const [savingEx, setSavingEx] = useState(false);
+
+  const [confirmDelete, setConfirmDelete] = useState(null); // { type: "exercise"|"template", id, name }
 
   const [templates, setTemplates] = useState([]);
   const [tplLoading, setTplLoading] = useState(true);
@@ -129,11 +68,9 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
   };
 
   const handleDeleteExercise = async (id) => {
-    if (!window.confirm("Slett øvelse?")) return;
-    try {
-      await deleteLibraryExercise(id);
-      setExercises(p => p.filter(e => e.id !== id));
-    } catch (e) { setExError(e.message); }
+    const ex = exercises.find(e => e.id === id);
+    const affectedTemplates = await fetchTemplateNamesUsingExercise(id).catch(() => []);
+    setConfirmDelete({ type: "exercise", id, name: ex?.name || "øvelsen", affectedTemplates });
   };
 
   const handleSaveNewTemplate = async () => {
@@ -150,12 +87,27 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
     finally { setSavingTpl(false); }
   };
 
-  const handleDeleteTemplate = async (id) => {
-    if (!window.confirm("Slett mal?")) return;
+  const handleDeleteTemplate = (id) => {
+    const tpl = templates.find(t => t.id === id);
+    setConfirmDelete({ type: "template", id, name: tpl?.name || "malen" });
+  };
+
+  const executeDelete = async () => {
+    if (!confirmDelete) return;
+    const { type, id } = confirmDelete;
+    setConfirmDelete(null);
     try {
-      await deleteTemplate(id);
-      setTemplates(p => p.filter(t => t.id !== id));
-    } catch (e) { setTplError(e.message); }
+      if (type === "exercise") {
+        await deleteLibraryExercise(id);
+        setExercises(p => p.filter(e => e.id !== id));
+      } else {
+        await deleteTemplate(id);
+        setTemplates(p => p.filter(t => t.id !== id));
+      }
+    } catch (e) {
+      if (type === "exercise") setExError(e.message);
+      else setTplError(e.message);
+    }
   };
 
   const muscleChips = (ids, type) =>
@@ -342,6 +294,25 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
             </TabPanels>
           </Tabs>
         </div>
+
+      <Modal
+        open={!!confirmDelete}
+        size="sm"
+        modalHeading={confirmDelete?.type === "exercise" ? "Slett øvelse" : "Slett mal"}
+        primaryButtonText="Slett"
+        secondaryButtonText="Avbryt"
+        danger
+        onRequestClose={() => setConfirmDelete(null)}
+        onRequestSubmit={executeDelete}
+      >
+        <p>Er du sikker på at du vil slette «{confirmDelete?.name}»? Dette kan ikke angres.</p>
+        {confirmDelete?.affectedTemplates?.length > 0 && (
+          <p style={{ marginTop: 8, color: "var(--cds-support-error)", fontSize: 13 }}>
+            Øvelsen brukes i {confirmDelete.affectedTemplates.length === 1 ? "malen" : "malene"}{" "}
+            <strong>{confirmDelete.affectedTemplates.join(", ")}</strong> og vil bli fjernet derfra.
+          </p>
+        )}
+      </Modal>
     </PageShell>
   );
 }

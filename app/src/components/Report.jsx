@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { subDays, format } from "date-fns";
 import { fetchSessionsForReport } from "../lib/db";
 import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
-import { buildRecMuscleMap } from "../lib/utils";
+import { buildRecMuscleMap, callClaude } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
@@ -107,14 +107,10 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
     const prompt = buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels);
 
     try {
-      const res = await fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: CLAUDE_MODEL_TEXT,
-          max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }],
-        }),
+      const res = await callClaude({
+        model: CLAUDE_MODEL_TEXT,
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }],
       });
       if (!res.ok) throw new Error(`API-feil ${res.status}`);
       const data = await res.json();

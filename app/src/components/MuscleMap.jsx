@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useReducer, useRef, useCallback, useEffect, useMemo } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
-import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap } from "../lib/utils";
+import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
+import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Button, Select, SelectItem,
@@ -12,6 +12,7 @@ import {
 } from "@carbon/react";
 import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai, Book } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
+import BodyPanel from "./BodyPanel";
 import PageShell, { PageTitle } from "./PageShell";
 
 const localDateStr = () => {
@@ -19,59 +20,114 @@ const localDateStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
 
+export const initialState = {
+  step: "upload",
+  images: [],
+  exercises: [],
+  muscles: { primary: [], secondary: [] },
+  error: null,
+  dragging: false,
+  editingId: null,
+  recs: null,
+  loadingRecs: false,
+  recsError: null,
+  saving: false,
+  saved: false,
+  saveError: false,
+  gymSessions: [],
+  gymSessionId: "",
+  gymCalendarConflict: null,
+  sessionDate: localDateStr(),
+};
+
+export function reducer(state, action) {
+  switch (action.type) {
+    case "RESET":
+      return { ...initialState, sessionDate: localDateStr() };
+    case "ADD_IMAGE":
+      return { ...state, images: [...state.images, action.image], error: null };
+    case "REMOVE_IMAGE":
+      return { ...state, images: state.images.filter(i => i.id !== action.id) };
+    case "SET_DRAGGING":
+      return { ...state, dragging: action.dragging };
+    case "ANALYZE_START":
+      return { ...state, step: "analyzing", error: null };
+    case "ANALYZE_SUCCESS":
+      return { ...state, step: "confirm", exercises: action.exercises };
+    case "ANALYZE_ERROR":
+      return { ...state, step: "upload", error: action.error };
+    case "UPDATE_EXERCISE":
+      return { ...state, exercises: state.exercises.map(e => e.id === action.id ? { ...e, ...action.updates } : e) };
+    case "DELETE_EXERCISE":
+      return { ...state, exercises: state.exercises.filter(e => e.id !== action.id) };
+    case "ADD_EXERCISE":
+      return { ...state, exercises: [...state.exercises, action.exercise], editingId: action.exercise.id };
+    case "SET_STEP":
+      return { ...state, step: action.step };
+    case "SET_SESSION_DATE":
+      return { ...state, sessionDate: action.date, gymSessions: [], gymSessionId: "", gymCalendarConflict: null };
+    case "SET_GYM_SESSIONS":
+      return { ...state, gymSessions: action.sessions, gymSessionId: "", gymCalendarConflict: null };
+    case "SET_GYM_SESSION_ID":
+      return { ...state, gymSessionId: action.id };
+    case "SET_GYM_CONFLICT":
+      return { ...state, gymCalendarConflict: action.conflict };
+    case "CONFIRM":
+      return { ...state, step: "muscles", muscles: action.muscles, saving: true, saved: false, saveError: false };
+    case "SAVE_SUCCESS":
+      return { ...state, saving: false, saved: true };
+    case "SAVE_ERROR":
+      return { ...state, saving: false, saveError: true };
+    case "RECS_START":
+      return { ...state, loadingRecs: true, recs: null, recsError: null };
+    case "RECS_SUCCESS":
+      return { ...state, loadingRecs: false, recs: action.recs };
+    case "RECS_ERROR":
+      return { ...state, loadingRecs: false, recsError: action.error };
+    case "LOAD_TEMPLATE":
+      return { ...state, step: "confirm", exercises: action.exercises };
+    default:
+      return state;
+  }
+}
+
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
 export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowTemplatePicker, templatePreload, onTemplatePreloadConsumed, currentView }) {
-  const [step, setStep] = useState("upload");
-  const [images, setImages] = useState([]);
-  const [exercises, setExercises] = useState([]);
-  const [muscles, setMuscles] = useState({ primary: [], secondary: [] });
-  const [error, setError] = useState(null);
-  const [dragging, setDragging] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [recs, setRecs] = useState(null);
-  const [loadingRecs, setLoadingRecs] = useState(false);
-  const [recsError, setRecsError] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState(false);
-  const [gymSessions, setGymSessions] = useState([]);
-  const [gymSessionId, setGymSessionId] = useState("");
-  const [gymCalendarConflict, setGymCalendarConflict] = useState(null);
-  const [sessionDate, setSessionDate] = useState(() => localDateStr());
-  const [mobileView, setMobileView] = useState("front");
-  const isMobile = useIsMobile();
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { step, images, exercises, muscles, error, dragging, editingId,
+          recs, loadingRecs, recsError, saving, saved, saveError,
+          gymSessions, gymSessionId, gymCalendarConflict, sessionDate } = state;
   const fileRef = useRef();
 
   useEffect(() => {
     if (step !== "confirm") return;
     fetchGymSessionsByDate(sessionDate)
-      .then(sessions => { setGymSessions(sessions); setGymSessionId(""); setGymCalendarConflict(null); })
-      .catch(() => setGymSessions([]));
+      .then(sessions => dispatch({ type: "SET_GYM_SESSIONS", sessions }))
+      .catch(() => dispatch({ type: "SET_GYM_SESSIONS", sessions: [] }));
   }, [step, sessionDate]);
 
   useEffect(() => {
-    if (!gymSessionId) { setGymCalendarConflict(null); return; }
+    if (!gymSessionId) { dispatch({ type: "SET_GYM_CONFLICT", conflict: null }); return; }
     checkGymCalendarConflict(gymSessionId)
-      .then(setGymCalendarConflict)
-      .catch(() => setGymCalendarConflict(null));
+      .then(conflict => dispatch({ type: "SET_GYM_CONFLICT", conflict }))
+      .catch(() => dispatch({ type: "SET_GYM_CONFLICT", conflict: null }));
   }, [gymSessionId]);
 
   // Load exercises from a chosen template and skip straight to the confirm step
   useEffect(() => {
     if (!templatePreload) return;
-    setExercises(templatePreload.map((e, i) => ({ ...e, id: e.id || i })));
-    setStep("confirm");
+    dispatch({ type: "LOAD_TEMPLATE", exercises: templatePreload.map((e, i) => ({ ...e, id: e.id || i })) });
     onTemplatePreloadConsumed();
   }, [templatePreload]);
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
+  const exerciseMuscleMap = useMemo(() => buildMuscleMapFromExercises(exercises), [exercises]);
 
   const addImage = useCallback(async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
     const mt = getMediaType(file);
     const b64 = await toBase64(file);
-    setImages(prev => [...prev, { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` }]);
-    setError(null);
+    dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
   }, []);
 
   const handleFiles = useCallback(async (files) => {
@@ -79,27 +135,18 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
   }, [addImage]);
 
   const analyze = async () => {
-    setStep("analyzing"); setError(null);
+    dispatch({ type: "ANALYZE_START" });
     try {
       const imageBlocks = images.map(img => ({
         type: "image",
         source: { type: "base64", media_type: img.mediaType, data: img.base64 },
       }));
-      const res = await fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: CLAUDE_MODEL_VISION,
-          max_tokens: 1500,
-          messages: [{
-            role: "user",
-            content: [
-              ...imageBlocks,
-              { type: "text", text: ANALYZE_PROMPT }
-            ]
-          }]
-        })
+      const res = await callClaude({
+        model: CLAUDE_MODEL_VISION,
+        max_tokens: 1500,
+        messages: [{ role: "user", content: [...imageBlocks, { type: "text", text: ANALYZE_PROMPT }] }]
       });
+      if (!res.ok) throw new Error(res.status === 401 ? "Ikke innlogget. Logg inn på nytt." : `Serverfeil (${res.status})`);
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
@@ -107,15 +154,10 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
-      setExercises(parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })));
-      setStep("confirm");
+      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })) });
     } catch (err) {
       console.error("Analyse feilet:", err);
-      const msg = err?.status === 401
-        ? "API-nøkkel feil. Sjekk ANTHROPIC_API_KEY i Azure-miljøet."
-        : (err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.");
-      setError(msg);
-      setStep("upload");
+      dispatch({ type: "ANALYZE_ERROR", error: err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde." });
     }
   };
 
@@ -129,56 +171,33 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
       }
       return ex;
     });
-    setMuscles(calcMuscles(enriched));
-    setStep("muscles");
-    setSaving(true); setSaved(false); setSaveError(false);
+    dispatch({ type: "CONFIRM", muscles: calcMuscles(enriched) });
     saveSession(enriched, { gymCalendarId: gymSessionId || null, sessionDate, replace: !!gymCalendarConflict })
-      .then(() => setSaved(true))
-      .catch(err => { console.error("Lagring feilet:", err); setSaveError(true); })
-      .finally(() => setSaving(false));
+      .then(() => dispatch({ type: "SAVE_SUCCESS" }))
+      .catch(err => { console.error("Lagring feilet:", err); dispatch({ type: "SAVE_ERROR" }); });
   };
-
-  const reset = () => {
-    setStep("upload"); setImages([]);
-    setExercises([]); setMuscles({ primary: [], secondary: [] });
-    setError(null); setRecs(null); setRecsError(null);
-    setSaving(false); setSaved(false); setSaveError(false);
-    setGymSessions([]); setGymSessionId(""); setGymCalendarConflict(null);
-    setSessionDate(localDateStr());
-  };
-
-  const getUntrainedMuscles = () =>
-    Object.keys(MUSCLES).filter(id => !muscles.primary.includes(id) && !muscles.secondary.includes(id));
 
   const recommend = async () => {
-    setLoadingRecs(true); setRecs(null); setRecsError(null);
-    const untrained = getUntrainedMuscles().map(id => MUSCLES[id].label);
+    dispatch({ type: "RECS_START" });
+    const untrained = Object.keys(MUSCLES).filter(id => !muscles.primary.includes(id) && !muscles.secondary.includes(id)).map(id => MUSCLES[id].label);
     const trained = [...muscles.primary, ...muscles.secondary].map(id => MUSCLES[id]?.label).filter(Boolean);
     try {
-      const res = await fetch("/api/claude", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: CLAUDE_MODEL_TEXT,
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: buildRecommendPrompt(trained, untrained)
-          }]
-        })
+      const res = await callClaude({
+        model: CLAUDE_MODEL_TEXT,
+        max_tokens: 1000,
+        messages: [{ role: "user", content: buildRecommendPrompt(trained, untrained) }]
       });
+      if (!res.ok) throw new Error(`Serverfeil (${res.status})`);
       const data = await res.json();
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
       try { parsed = JSON.parse(text); } catch {
         throw new Error("Svaret fra Claude var ikke gyldig JSON.");
       }
-      setRecs(parsed);
+      dispatch({ type: "RECS_SUCCESS", recs: parsed });
     } catch (err) {
       console.error("Anbefalinger feilet:", err);
-      setRecsError("Kunne ikke hente anbefalinger. Prøv igjen.");
-    } finally {
-      setLoadingRecs(false);
+      dispatch({ type: "RECS_ERROR", error: err.message || "Kunne ikke hente anbefalinger. Prøv igjen." });
     }
   };
 
@@ -209,9 +228,9 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
 
               {images.length === 0 ? (
                 <div
-                  onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                  onDragLeave={() => setDragging(false)}
-                  onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+                  onDragOver={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: true }); }}
+                  onDragLeave={() => dispatch({ type: "SET_DRAGGING", dragging: false })}
+                  onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
                   onClick={() => fileRef.current?.click()}
                   style={{
                     border: `2px dashed ${dragging ? "var(--cds-interactive)" : "var(--cds-border-subtle-01)"}`,
@@ -233,9 +252,9 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                 </div>
               ) : (
                 <div
-                  onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                  onDragLeave={() => setDragging(false)}
-                  onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+                  onDragOver={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: true }); }}
+                  onDragLeave={() => dispatch({ type: "SET_DRAGGING", dragging: false })}
+                  onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
                   style={{ marginBottom: 14 }}
                 >
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
@@ -243,7 +262,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                       <div key={img.id} style={{ position: "relative", overflow: "hidden", aspectRatio: "1", background: "var(--cds-layer-01)" }}>
                         <img src={img.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         <button
-                          onClick={() => setImages(p => p.filter(i => i.id !== img.id))}
+                          onClick={() => dispatch({ type: "REMOVE_IMAGE", id: img.id })}
                           style={{
                             position: "absolute", top: 4, right: 4,
                             background: "rgba(0,0,0,0.75)", border: "none",
@@ -341,7 +360,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                   const y = date.getFullYear();
                   const m = String(date.getMonth() + 1).padStart(2, "0");
                   const d = String(date.getDate()).padStart(2, "0");
-                  setSessionDate(`${y}-${m}-${d}`);
+                  dispatch({ type: "SET_SESSION_DATE", date: `${y}-${m}-${d}` });
                 }}
                 style={{ marginBottom: 16 }}
               >
@@ -353,7 +372,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                   id="gym-session-select"
                   labelText="Hvilken time var dette?"
                   value={gymSessionId}
-                  onChange={(e) => setGymSessionId(e.target.value)}
+                  onChange={(e) => dispatch({ type: "SET_GYM_SESSION_ID", id: e.target.value })}
                   style={{ marginBottom: gymCalendarConflict ? 8 : 16 }}
                 >
                   <SelectItem value="" text="Velg gymtime (valgfritt)" />
@@ -382,8 +401,8 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                     key={ex.id}
                     exercise={ex}
                     autoFocusName={ex.id === editingId}
-                    onChange={(updates) => setExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
-                    onDelete={() => setExercises(p => p.filter(e => e.id !== ex.id))}
+                    onChange={(updates) => dispatch({ type: "UPDATE_EXERCISE", id: ex.id, updates })}
+                    onDelete={() => dispatch({ type: "DELETE_EXERCISE", id: ex.id })}
                   />
                 ))}
               </div>
@@ -391,18 +410,14 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
               <Button
                 kind="ghost"
                 renderIcon={Add}
-                onClick={() => {
-                  const id = Date.now();
-                  setExercises(p => [...p, { id, name: "", standardName: "", sets: null, reps: null, enabled: true }]);
-                  setEditingId(id);
-                }}
+                onClick={() => dispatch({ type: "ADD_EXERCISE", exercise: { id: Date.now(), name: "", standardName: "", sets: null, reps: null, enabled: true } })}
                 style={{ width: "100%", marginBottom: 16 }}
               >
                 Legg til øvelse manuelt
               </Button>
 
               <div style={{ display: "flex", gap: 8 }}>
-                <Button kind="secondary" renderIcon={ArrowLeft} onClick={() => setStep("upload")}>
+                <Button kind="secondary" renderIcon={ArrowLeft} onClick={() => dispatch({ type: "SET_STEP", step: "upload" })}>
                   Tilbake
                 </Button>
                 <Button
@@ -412,7 +427,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                   disabled={!exercises.some(e => e.enabled && e.name)}
                   style={{ flex: 1 }}
                 >
-                  Vis muskelkart
+                  Lagre og vis treningseffekt
                 </Button>
               </div>
             </div>
@@ -434,31 +449,12 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
               </div>
 
               {/* Body maps */}
-              {isMobile ? (
-                <>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                    {["front", "back"].map(v => (
-                      <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
-                        onClick={() => setMobileView(v)}>
-                        {v === "front" ? "Front" : "Bak"}
-                      </Button>
-                    ))}
-                  </div>
-                  <div style={{ maxWidth: 240, margin: "0 auto 18px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <BodySVG view={mobileView} primary={muscles.primary} secondary={muscles.secondary}
-                      muscleMap={buildMuscleMapFromExercises(exercises)} />
-                  </div>
-                </>
-              ) : (
-                <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
-                  {["front", "back"].map(view => (
-                    <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                      <BodySVG view={view} primary={muscles.primary} secondary={muscles.secondary}
-                        muscleMap={buildMuscleMapFromExercises(exercises)} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              <BodyPanel
+                primary={muscles.primary}
+                secondary={muscles.secondary}
+                muscleMap={exerciseMuscleMap}
+                marginBottom={18}
+              />
 
               {/* Trained muscle groups */}
               <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14, marginBottom: 12 }}>
@@ -470,7 +466,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                 ) : (
                   <>
                     {muscles.primary.map(id => {
-                      const exNames = (buildMuscleMapFromExercises(exercises)[id] || []).join(", ");
+                      const exNames = (exerciseMuscleMap[id] || []).join(", ");
                       return (
                         <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
@@ -484,7 +480,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                       );
                     })}
                     {muscles.secondary.map(id => {
-                      const exNames = (buildMuscleMapFromExercises(exercises)[id] || []).join(", ");
+                      const exNames = (exerciseMuscleMap[id] || []).join(", ");
                       return (
                         <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
                           <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
@@ -570,31 +566,12 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                       ))}
                     </div>
 
-                    {isMobile ? (
-                      <>
-                        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                          {["front", "back"].map(v => (
-                            <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
-                              onClick={() => setMobileView(v)}>
-                              {v === "front" ? "Front" : "Bak"}
-                            </Button>
-                          ))}
-                        </div>
-                        <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                          <BodySVG view={mobileView} primary={recPrimary} secondary={recSecondary}
-                            muscleMap={buildRecMuscleMap(recs)} />
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
-                        {["front", "back"].map(view => (
-                          <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                            <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
-                              muscleMap={buildRecMuscleMap(recs)} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <BodyPanel
+                      primary={recPrimary}
+                      secondary={recSecondary}
+                      muscleMap={buildRecMuscleMap(recs)}
+                      marginBottom={10}
+                    />
 
                     <div style={{ display: "flex", gap: 12, marginBottom: 12, fontSize: 12 }}>
                       <Tag type="green" size="sm">Primær</Tag>
@@ -610,7 +587,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                 </p>
               )}
 
-              <Button kind="ghost" renderIcon={Renew} onClick={reset} style={{ width: "100%", maxWidth: "100%" }}>
+              <Button kind="ghost" renderIcon={Renew} onClick={() => dispatch({ type: "RESET" })} style={{ width: "100%", maxWidth: "100%" }}>
                 Logg ny økt
               </Button>
             </div>

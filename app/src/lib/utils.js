@@ -1,4 +1,19 @@
 import { EX_DB } from "./bodymap.jsx";
+import { supabase } from "./supabase";
+
+// Calls /api/claude with the current user's Supabase JWT in the Authorization
+// header so the backend can reject unauthenticated requests.
+export async function callClaude(body) {
+  const { data: { session } } = await supabase.auth.getSession();
+  return fetch("/api/claude", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
 
 // Returns true when val is non-empty but not a valid integer in [1, 99].
 export const isInvalidNum = (val) =>

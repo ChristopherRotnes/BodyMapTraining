@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Button, Tag, InlineNotification, InlineLoading, TextInput,
+  Button, Tag, InlineNotification, InlineLoading,
 } from "@carbon/react";
-import { Add, ArrowRight, Save } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Save } from "@carbon/icons-react";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
-import { calcMuscles, BodySVG, useIsMobile } from "../lib/bodymap.jsx";
+import { calcMuscles } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises } from "../lib/utils";
 import ExerciseRow from "./ExerciseRow";
+import BodyPanel from "./BodyPanel";
+import LibraryPicker from "./LibraryPicker";
 
 
 // Convert a template_exercise DB row into the exercise object shape used by ExerciseRow / calcMuscles
@@ -25,65 +27,6 @@ function templateExToEditorShape(te) {
   };
 }
 
-// Searchable picker that shows library exercises and lets user add one to the list
-function LibraryPicker({ libraryExercises, onAdd, onClose }) {
-  const [query, setQuery] = useState("");
-  const filtered = query.trim()
-    ? libraryExercises.filter(e => e.name.toLowerCase().includes(query.toLowerCase()))
-    : libraryExercises;
-
-  return (
-    <div style={{
-      background: "var(--cds-layer-02)",
-      border: "1px solid var(--cds-border-strong-01)",
-      padding: 16,
-      marginTop: 8,
-    }}>
-      <TextInput
-        id="library-picker-search"
-        labelText="Søk i øvelsesbiblioteket"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        placeholder="Skriv for å filtrere…"
-        style={{ marginBottom: 8 }}
-        autoFocus
-      />
-      <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2, marginBottom: 12 }}>
-        {filtered.length === 0 ? (
-          <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", padding: "8px 0" }}>Ingen treff.</p>
-        ) : (
-          filtered.map(ex => (
-            <button
-              key={ex.id}
-              onClick={() => onAdd(ex)}
-              style={{
-                background: "var(--cds-layer-01)",
-                border: "1px solid var(--cds-border-subtle-01)",
-                padding: "8px 12px",
-                textAlign: "left",
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--cds-layer-hover-01)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--cds-layer-01)"}
-            >
-              <span style={{ fontSize: 13, fontWeight: 500, color: "var(--cds-text-primary)" }}>{ex.name}</span>
-              {(ex.default_sets || ex.default_reps) && (
-                <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                  {ex.default_sets || "–"}×{ex.default_reps || "–"}
-                </span>
-              )}
-            </button>
-          ))
-        )}
-      </div>
-      <Button kind="secondary" size="sm" onClick={onClose}>Lukk</Button>
-    </div>
-  );
-}
-
 // Props:
 //   template          — the full template object (with session_template_exercises)
 //   mode              — "use" | "edit"
@@ -92,9 +35,6 @@ function LibraryPicker({ libraryExercises, onAdd, onClose }) {
 //   onBack            — navigate back
 //   onUseTemplate(exercises) — called in "use" mode when trainer clicks "Bruk økt"
 export default function TemplateSessionEditor({ template, mode, onBack, onUseTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
-  const isMobile = useIsMobile();
-  const [mobileView, setMobileView] = useState("front");
-
   const [exercises, setExercises] = useState(() =>
     (template.session_template_exercises || []).map(templateExToEditorShape)
   );
@@ -179,7 +119,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
   const handleUseSession = async () => {
     const enabled = exercises.filter(e => e.enabled && e.name);
     // Fire-and-forget: update used_at so template rises to top on next open
-    touchTemplate(template.id).catch(() => {});
+    touchTemplate(template.id).catch(console.warn);
     onUseTemplate(enabled);
   };
 
@@ -235,29 +175,11 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
         <div>
 
           {/* Live body map */}
-          {isMobile ? (
-            <div>
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                {["front", "back"].map(v => (
-                  <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
-                    onClick={() => setMobileView(v)}>
-                    {v === "front" ? "Forside" : "Bakside"}
-                  </Button>
-                ))}
-              </div>
-              <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "8px 4px", marginBottom: 16 }}>
-                <BodySVG view={mobileView} primary={muscles.primary} secondary={muscles.secondary} muscleMap={muscleMap} />
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              {["front", "back"].map(v => (
-                <div key={v} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "8px 4px" }}>
-                  <BodySVG view={v} primary={muscles.primary} secondary={muscles.secondary} muscleMap={muscleMap} />
-                </div>
-              ))}
-            </div>
-          )}
+          <BodyPanel
+            primary={muscles.primary}
+            secondary={muscles.secondary}
+            muscleMap={muscleMap}
+          />
 
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
             <Tag type="green" size="sm">Primær ({muscles.primary.length})</Tag>

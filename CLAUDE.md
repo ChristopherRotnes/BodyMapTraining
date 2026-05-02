@@ -31,9 +31,9 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
 - `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav, `Book` library nav, light/dark toggle), `ProgressIndicator`, `Button`, `Tag`, `InlineLoading`, `InlineNotification`; exercise rows delegated to `ExerciseRow`
 - `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Select`/`SelectItem`; `react-day-picker` calendar themed to Carbon tokens; edit mode uses `Edit`, `Camera`, `Add`, `Renew` icons; exercise rows delegated to `ExerciseRow`
-- `Bibliotek.jsx` → Carbon `Header`, `Tabs`/`Tab`/`TabList`/`TabPanels`/`TabPanel`, `TextInput`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`; muscle selection via `MusclePicker`
-- `TemplatePicker.jsx` → Carbon `Header`, `Button`, `InlineLoading`, `InlineNotification`
-- `TemplateSessionEditor.jsx` → Carbon `Header`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`, `TextInput`; body map via `BodySVG`; exercise rows via `ExerciseRow`; library search via inline `LibraryPicker` sub-component
+- `Bibliotek.jsx` → Carbon `Tabs`/`Tab`/`TabList`/`TabPanels`/`TabPanel`, `TextInput`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`, `Modal`; exercise form via `ExerciseForm`
+- `TemplatePicker.jsx` → Carbon `Button`, `InlineLoading`, `InlineNotification`
+- `TemplateSessionEditor.jsx` → Carbon `Button`, `Tag`, `InlineNotification`, `InlineLoading`; body map via `BodyPanel`; exercise rows via `ExerciseRow`; library search via `LibraryPicker`
 - `MuscleMap.jsx` confirm step → Carbon `DatePicker`/`DatePickerInput` for session date (defaults to today, max = today)
 - `BodySVG` muscle highlights: primary → green-50 `rgba(36,161,72,…)`, secondary → blue-40 `rgba(120,169,255,…)`
 - Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners
@@ -123,14 +123,18 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 
 ## Key architecture decisions
 - **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, `BodySVG`, `HeatmapBodySVG`, and `useIsMobile`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
-- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps), `isInvalidNum` (validates sets/reps as integers 1–99). Do not redefine these locally in component files.
+- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps), `isInvalidNum` (validates sets/reps as integers 1–99), `callClaude(body)` (authenticated fetch to `/api/claude` — injects Supabase JWT automatically). Do not redefine these locally in component files.
 - **Shared Claude config:** `app/src/lib/prompts.js` — exports `CLAUDE_MODEL_VISION` (opus, for image analysis), `CLAUDE_MODEL_TEXT` (sonnet, for recommendations), `ANALYZE_PROMPT`, `buildRecommendPrompt(trained, untrained)`, `buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels)`. All model IDs and prompt text live here; update in one place.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
 - SVG body uses `BODY_PATH` (bezier curves, viewBox `0 0 160 360`) — improved silhouette with curved shoulders, arms, waist and hips. Still simplified, not anatomically precise. `SHAPES` entries are either ellipses (`{ cx, cy, rx, ry }`) or SVG paths (`{ d }`); the render loop handles both. Key muscles with path shapes: `traps` (trapezoid with neck notch), `lats` (wing paths). `BodySVG` renders primary muscles as solid green glow, secondary as diagonal blue stripes (`<pattern id="sec-stripe-{view}">`).
-- `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Used in `MuscleMap.jsx`, `History.jsx`, and `TemplateSessionEditor.jsx`.
-- **Shared exercise row:** `app/src/components/ExerciseRow.jsx` — renders one editable exercise row (checkbox, inline name edit, sets/reps inputs, delete). Props: `exercise`, `onChange(updates)`, `onDelete()`, `layer` ("layer-01"/"layer-02"), `validateNumbers`, `autoFocusName`. Used by `MuscleMap.jsx`, `History.jsx`, and `TemplateSessionEditor.jsx`.
-- **MusclePicker:** `app/src/components/MusclePicker.jsx` — interactive body map where clicking a muscle cycles off → primary → secondary → off. Props: `primary[]`, `secondary[]`, `onChange({ primary, secondary })`, `instanceId` (unique suffix to avoid SVG filter ID collisions). Used in `Bibliotek.jsx` for library exercise editing.
-- **Template navigation:** `App.jsx` manages views `"bibliotek"`, `"template-picker"`, `"template-editor"` alongside existing views. When a template is selected in `TemplateSessionEditor` (mode="use") and "Bruk økt" is pressed, exercises are passed to `MuscleMap` via the `templatePreload` prop, which triggers a `useEffect` that pre-fills the exercise list and jumps to the confirm step.
+- `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Consumed via `BodyPanel` — do not use directly in page components.
+- **Shared exercise row:** `app/src/components/ExerciseRow.jsx` — renders one editable exercise row (checkbox, inline name edit, sets/reps inputs, delete). Props: `exercise`, `onChange(updates)`, `onDelete()`, `layer` ("layer-01"/"layer-02"), `validateNumbers`, `autoFocusName`. The outer row div has no click handler — only the Checkbox toggles `enabled` (prevents accidental untick when editing fields). Used by `MuscleMap.jsx`, `History.jsx`, and `TemplateSessionEditor.jsx`.
+- **BodyPanel:** `app/src/components/BodyPanel.jsx` — shared front/back body map. Manages its own `mobileView` toggle state internally. Props: `primary[]`, `secondary[]`, `muscleMap`, `marginBottom`. Replaces the duplicated mobile/desktop render pattern that previously existed in `MuscleMap`, `History`, and `TemplateSessionEditor`.
+- **MusclePicker:** `app/src/components/MusclePicker.jsx` — interactive body map where clicking a muscle cycles off → primary → secondary → off. Props: `primary[]`, `secondary[]`, `onChange({ primary, secondary })`, `instanceId` (unique suffix to avoid SVG filter ID collisions). Used inside `ExerciseForm.jsx`.
+- **ExerciseForm:** `app/src/components/ExerciseForm.jsx` — form for creating/editing a library exercise (name, default sets/reps, MusclePicker). Props: `initial`, `onSave(fields)`, `onCancel()`, `saving`. Extracted from inline definition in `Bibliotek.jsx`.
+- **LibraryPicker:** `app/src/components/LibraryPicker.jsx` — searchable list of library exercises for adding to a template. Props: `libraryExercises[]`, `onAdd(exercise)`, `onClose()`. Extracted from inline definition in `TemplateSessionEditor.jsx`.
+- **API security:** `app/api/claude.js` requires a valid Supabase JWT on every request (`Authorization: Bearer <token>`). Verifies via `GET /auth/v1/user`. Also enforces a model allowlist (`claude-opus-4-5`, `claude-sonnet-4-6`) and caps `max_tokens` at 2000. The `callClaude(body)` helper in `utils.js` injects the token automatically — all Claude calls must go through it.
+- **Template navigation:** `App.jsx` manages views `"bibliotek"`, `"template-picker"`, `"template-editor"` alongside existing views. `bibliotekInitialTab` state ensures returning from template edit lands on the "Mal for gymtime" tab. When "Bruk økt" is pressed in `TemplateSessionEditor` (mode="use"), exercises pass to `MuscleMap` via `templatePreload` prop, triggering a `useEffect` that pre-fills the list and jumps to the confirm step.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
 - **Azure Functions entry point:** `app/api/index.js` imports all function files (`claude.js`, `sportySync.js`). `package.json#main` points to `index.js`. Azure Functions v4 only loads the single file referenced in `main` — add new function files here or they will never be registered.
@@ -150,6 +154,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 | F — Input & display polish | #32 #33 #35 #36 | Volume in report, Norwegian date format, form validation ✅ Done |
 | G — Image storage | #30 | Supabase Storage for whiteboard photos (low priority) |
 | H — Templates + library | #38 | Exercise library, session templates, TemplatePicker, TemplateSessionEditor ✅ Done |
+| I — Security + refactor | — | API JWT auth, callClaude helper, useReducer in MuscleMap, BodyPanel/ExerciseForm/LibraryPicker extraction, batch inserts, Carbon Modal ✅ Done |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
@@ -177,7 +182,7 @@ Open **http://localhost:4280** (not 5173). The SWA emulator proxies `/api/*` to 
 ```bash
 npm install -g @azure/static-web-apps-cli
 cp app/.env.local.example app/.env.local                             # fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY
 cd app && npm install
 ```
 

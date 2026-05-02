@@ -15,6 +15,7 @@ function App() {
   const [templateEditorState, setTemplateEditorState] = useState(null);
   const [pendingTemplateExercises, setPendingTemplateExercises] = useState(null);
   const [historyInitialDate, setHistoryInitialDate] = useState(null);
+  const [bibliotekInitialTab, setBibliotekInitialTab] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -32,7 +33,7 @@ function App() {
     onShowLogger: () => setView("logger"),
     onShowHistory: () => { setHistoryInitialDate(null); setView("history"); },
     onShowReport: () => setView("report"),
-    onShowBibliotek: () => setView("bibliotek"),
+    onShowBibliotek: () => { setBibliotekInitialTab(0); setView("bibliotek"); },
   };
 
   if (view === "home")
@@ -52,6 +53,7 @@ function App() {
     return <Bibliotek
       {...nav}
       currentView="bibliotek"
+      initialTab={bibliotekInitialTab}
       onBack={nav.onShowHome}
       onEditTemplate={(tpl) => {
         setTemplateEditorState({ template: tpl, mode: "edit" });
@@ -77,7 +79,12 @@ function App() {
       template={templateEditorState.template}
       mode={templateEditorState.mode}
       onBack={() => {
-        setView(templateEditorState.mode === "edit" ? "bibliotek" : "template-picker");
+        if (templateEditorState.mode === "edit") {
+          setBibliotekInitialTab(1);
+          setView("bibliotek");
+        } else {
+          setView("template-picker");
+        }
         setTemplateEditorState(null);
       }}
       onUseTemplate={(exercises) => {

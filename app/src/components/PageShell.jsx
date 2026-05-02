@@ -1,7 +1,8 @@
 import React from "react";
-import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft } from "@carbon/icons-react";
+import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { useTheme } from "../theme";
+import { supabase } from "../lib/supabase";
 
 function NavBtn({ onClick, ariaLabel, active, children }) {
   return (
@@ -103,6 +104,9 @@ export default function PageShell({ onShowHome, onShowLogger, onShowHistory, onS
             </NavBtn>
             <NavBtn ariaLabel="Bytt tema" onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}>
               {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
+            </NavBtn>
+            <NavBtn ariaLabel="Logg ut" onClick={() => supabase.auth.signOut()}>
+              <Logout size={20} />
             </NavBtn>
           </div>
         </div>
