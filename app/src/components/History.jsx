@@ -10,7 +10,7 @@ import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Tag, InlineNotification, DefinitionTooltip,
-  Checkbox, Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
+  Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
 import { Camera, Asleep, Light, Analytics, Add, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import { useTheme } from "../theme";

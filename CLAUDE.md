@@ -29,8 +29,11 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `app/src/styles/carbon-tokens.css` — all Carbon CSS variables for g10 (light) and g100 (dark) themes, plus `@font-face` declarations; font URLs use `/fonts/...` (Vite public-dir absolute paths)
 - `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
-- `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav + light/dark toggle), `ProgressIndicator`, `Button`, `Checkbox`, `Tag`, `InlineLoading`, `InlineNotification`
-- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Checkbox`, `Select`/`SelectItem`; `react-day-picker` calendar themed to Carbon tokens; edit mode uses `Edit`, `Camera`, `TrashCan`, `Add`, `Renew` icons
+- `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav, `Book` library nav, light/dark toggle), `ProgressIndicator`, `Button`, `Tag`, `InlineLoading`, `InlineNotification`; exercise rows delegated to `ExerciseRow`
+- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Select`/`SelectItem`; `react-day-picker` calendar themed to Carbon tokens; edit mode uses `Edit`, `Camera`, `Add`, `Renew` icons; exercise rows delegated to `ExerciseRow`
+- `Bibliotek.jsx` → Carbon `Header`, `Tabs`/`Tab`/`TabList`/`TabPanels`/`TabPanel`, `TextInput`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`; muscle selection via `MusclePicker`
+- `TemplatePicker.jsx` → Carbon `Header`, `Button`, `InlineLoading`, `InlineNotification`
+- `TemplateSessionEditor.jsx` → Carbon `Header`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`, `TextInput`; body map via `BodySVG`; exercise rows via `ExerciseRow`; library search via inline `LibraryPicker` sub-component
 - `MuscleMap.jsx` confirm step → Carbon `DatePicker`/`DatePickerInput` for session date (defaults to today, max = today)
 - `BodySVG` muscle highlights: primary → green-50 `rgba(36,161,72,…)`, secondary → blue-40 `rgba(120,169,255,…)`
 - Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners
@@ -63,7 +66,6 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens.css` for available tokens. The `@carbon/react` package ships full TypeScript types — use them as the component API reference.
 
 ## What is NOT yet built
-- **Period/volume report** — aggregate muscle coverage + undertrained muscles (GitHub issue #3)
 - **Favicon** — replace default Vite icon with camera SVG in Carbon style (queued)
 - **Page title** — change from "app" to "Workout Lens" (queued)
 - **Gym calendar manager** — admin UI to manually trigger sporty.no sync and inspect `gym_calendar` rows; when built, the HTTP trigger on `sportySync.js` can be removed from the user-facing API
@@ -84,24 +86,51 @@ The sessions table has `UNIQUE (gym_calendar_id)` — updating to a gym class th
 ## Exercise data model
 ```typescript
 {
-  id: number,
+  id: number | string,   // number from Claude parse; string (Date.now()) for manually added rows
   name: string,          // exact name from whiteboard / user-edited
   standardName: string,  // normalised name
   sets: string | null,   // defaults to "1" if not written on board
   reps: string | null,
-  primary: string[],     // muscle IDs returned by Claude
-  secondary: string[],   // muscle IDs returned by Claude
-  enabled: boolean       // toggled in confirm step
+  primary: string[],     // muscle IDs returned by Claude (or from library)
+  secondary: string[],   // muscle IDs returned by Claude (or from library)
+  enabled: boolean       // toggled in confirm/template step
 }
 ```
 
+## Exercise library + session templates data model (issue #38)
+
+Three new Supabase tables:
+
+```sql
+exercise_library          -- named exercises with muscle maps
+  id, user_id, name, primary_muscles text[], secondary_muscles text[],
+  default_sets text, default_reps text, created_at
+
+session_templates         -- named session skeletons
+  id, user_id, name, sort_order int, used_at timestamptz, created_at
+
+session_template_exercises -- ordered exercises within a template
+  id, template_id → session_templates, library_exercise_id → exercise_library (nullable),
+  name text (denormalised snapshot), primary_muscles text[], secondary_muscles text[],
+  sets text, reps text, sort_order int
+```
+
+Name + muscles are denormalised into `session_template_exercises` so renaming a library exercise doesn't silently change existing templates.
+
+`replaceTemplateExercises(templateId, exercises)` in `db.js` does a full delete-and-reinsert — the canonical update path for template exercise lists.
+
+`touchTemplate(id)` updates `used_at` to now — called on "Bruk økt" so templates sort by recency in TemplatePicker.
+
 ## Key architecture decisions
 - **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, `BodySVG`, `HeatmapBodySVG`, and `useIsMobile`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
-- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps). Do not redefine these locally in component files.
+- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps), `isInvalidNum` (validates sets/reps as integers 1–99). Do not redefine these locally in component files.
 - **Shared Claude config:** `app/src/lib/prompts.js` — exports `CLAUDE_MODEL_VISION` (opus, for image analysis), `CLAUDE_MODEL_TEXT` (sonnet, for recommendations), `ANALYZE_PROMPT`, `buildRecommendPrompt(trained, untrained)`, `buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels)`. All model IDs and prompt text live here; update in one place.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
 - SVG body uses `BODY_PATH` (bezier curves, viewBox `0 0 160 360`) — improved silhouette with curved shoulders, arms, waist and hips. Still simplified, not anatomically precise. `SHAPES` entries are either ellipses (`{ cx, cy, rx, ry }`) or SVG paths (`{ d }`); the render loop handles both. Key muscles with path shapes: `traps` (trapezoid with neck notch), `lats` (wing paths). `BodySVG` renders primary muscles as solid green glow, secondary as diagonal blue stripes (`<pattern id="sec-stripe-{view}">`).
-- `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Used in `MuscleMap.jsx` and `History.jsx`.
+- `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Used in `MuscleMap.jsx`, `History.jsx`, and `TemplateSessionEditor.jsx`.
+- **Shared exercise row:** `app/src/components/ExerciseRow.jsx` — renders one editable exercise row (checkbox, inline name edit, sets/reps inputs, delete). Props: `exercise`, `onChange(updates)`, `onDelete()`, `layer` ("layer-01"/"layer-02"), `validateNumbers`, `autoFocusName`. Used by `MuscleMap.jsx`, `History.jsx`, and `TemplateSessionEditor.jsx`.
+- **MusclePicker:** `app/src/components/MusclePicker.jsx` — interactive body map where clicking a muscle cycles off → primary → secondary → off. Props: `primary[]`, `secondary[]`, `onChange({ primary, secondary })`, `instanceId` (unique suffix to avoid SVG filter ID collisions). Used in `Bibliotek.jsx` for library exercise editing.
+- **Template navigation:** `App.jsx` manages views `"bibliotek"`, `"template-picker"`, `"template-editor"` alongside existing views. When a template is selected in `TemplateSessionEditor` (mode="use") and "Bruk økt" is pressed, exercises are passed to `MuscleMap` via the `templatePreload` prop, which triggers a `useEffect` that pre-fills the exercise list and jumps to the confirm step.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
 - **Azure Functions entry point:** `app/api/index.js` imports all function files (`claude.js`, `sportySync.js`). `package.json#main` points to `index.js`. Azure Functions v4 only loads the single file referenced in `main` — add new function files here or they will never be registered.
@@ -111,17 +140,16 @@ The sessions table has `UNIQUE (gym_calendar_id)` — updating to a gym class th
 
 ## Open backlog — issue groupings
 
-Issues are grouped into logical PRs. Recommended order: A → B → C/D (parallel) → E → F → G.
-
 | PR | Issues | Description |
 |---|---|---|
 | A — Shared lib foundation | #24 #25 #27 | Extract duplicate utils/prompts/model constant ✅ Done |
 | B — Error resilience | #23 #29 | JSON.parse try-catch + React ErrorBoundary |
-| C — Backend security | #26 | API key on sportySync HTTP trigger |
-| D — Tests | #28 | Vitest unit tests for lib/ functions (after PR A) |
-| E — History improvements | #31 #34 | Muscle filter + skeleton loading |
-| F — Input & display polish | #32 #33 #35 | Volume in report, Norwegian date format, form validation |
+| C — Backend security | #26 | API key on sportySync HTTP trigger ✅ Done |
+| D — Tests | #28 | Vitest unit tests for lib/ functions ✅ Done |
+| E — History improvements | #31 #34 | Muscle filter + skeleton loading ✅ Done |
+| F — Input & display polish | #32 #33 #35 #36 | Volume in report, Norwegian date format, form validation ✅ Done |
 | G — Image storage | #30 | Supabase Storage for whiteboard photos (low priority) |
+| H — Templates + library | #38 | Exercise library, session templates, TemplatePicker, TemplateSessionEditor ✅ Done |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses

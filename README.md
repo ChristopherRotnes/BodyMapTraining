@@ -4,13 +4,14 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 
 ## How it works
 
-1. **Upload** one or more photos of a whiteboard workout program
+1. **Upload** one or more photos of a whiteboard workout program — or **pick a template** from the library
 2. **Claude Vision** reads the handwriting and returns a structured list of exercises with muscle IDs
 3. **Confirm** — pick the session date (defaults to today), link to a gym class, toggle/rename/adjust exercises before saving
 4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
 7. **History** — two-month calendar view with trained dates highlighted; click a date to see that session's muscle map and exercise list; edit or re-analyse any saved session
+8. **Library** — build a named exercise library with click-to-toggle muscle selection; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
 
 ## Tech stack
 
@@ -53,28 +54,37 @@ Open **http://localhost:4280** — not 5173. The API routes (`/api/claude`, `/ap
 ```
 app/
   src/
-    main.jsx                 # Entry — imports Carbon + app CSS, wraps with ThemeProvider
-    App.jsx                  # Auth gate → Login, MuscleMap, or History
-    theme.jsx                # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
+    main.jsx                       # Entry — imports Carbon + app CSS, wraps with ThemeProvider
+    App.jsx                        # Auth gate + view router (logger, history, report, bibliotek,
+                                   #   template-picker, template-editor)
+    theme.jsx                      # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
     components/
-      Login.jsx              # Magic-link email login
-      MuscleMap.jsx          # Logger — upload, analyse, confirm (date picker + gym selector), visualise
-      History.jsx            # History — two-month calendar + session detail + edit mode
+      Login.jsx                    # Magic-link email login
+      MuscleMap.jsx                # Logger — upload/template-preload, analyse, confirm, visualise
+      History.jsx                  # History — two-month calendar + session detail + edit mode
+      Report.jsx                   # Period report — heatmap body map + muscle coverage stats
+      ExerciseRow.jsx              # Shared editable exercise row (checkbox, name, sets, reps, delete)
+      MusclePicker.jsx             # Click-to-toggle body map for assigning muscles to exercises
+      Bibliotek.jsx                # Library page — exercise library CRUD + template CRUD (two tabs)
+      TemplatePicker.jsx           # Template selection screen (recently used first)
+      TemplateSessionEditor.jsx    # Edit/use a template with live body map; save-back or hand off to logger
     lib/
-      supabase.js            # Supabase client
-      db.js                  # DB helpers: sessions, exercises, muscle_activations, gym_calendar;
-                             #   fetchGymSessionsByDate, saveSession, updateSession
-      bodymap.jsx            # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG, calcMuscles, useIsMobile
+      supabase.js                  # Supabase client
+      db.js                        # DB helpers: sessions, exercises, muscle_activations, gym_calendar,
+                                   #   exercise_library, session_templates, session_template_exercises
+      bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG, calcMuscles, useIsMobile
+      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum
+      prompts.js                   # Claude model IDs + prompt builders
     styles/
-      carbon-tokens.css      # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
-      app.css                # Global resets and Carbon overrides
+      carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
+      app.css                      # Global resets and Carbon overrides
   api/
-    index.js                 # Entry point — imports all Azure Functions
-    claude.js                # Azure Function — proxies requests to Anthropic API
-    sportySync.js            # Azure Function — timer (04:00+11:00 UTC) + HTTP trigger for sporty.no sync
-    host.json                # Azure Functions runtime config
-    package.json             # API dependencies
-  staticwebapp.config.json   # Azure SWA routing config
+    index.js                       # Entry point — imports all Azure Functions
+    claude.js                      # Azure Function — proxies requests to Anthropic API
+    sportySync.js                  # Azure Function — timer (04:00+11:00 UTC) + HTTP trigger for sporty.no sync
+    host.json                      # Azure Functions runtime config
+    package.json                   # API dependencies
+  staticwebapp.config.json         # Azure SWA routing config
 ```
 
 ## Branch strategy
@@ -117,30 +127,28 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Image upload (drag & drop, multi-image, camera) | ✅ |
 | Claude Vision analysis | ✅ |
 | Exercise confirm + edit step | ✅ |
-| Checkbox/exercise inline layout in confirm step | ✅ Fixed (#11) |
 | Muscle map SVG with tooltips | ✅ |
 | Magic link login | ✅ |
 | Next-session recommendations | ✅ |
 | Session persistence (Supabase) | ✅ |
-| Session save end-to-end | ✅ Fixed (#9) |
 | IBM Carbon Design System | ✅ Done (#8) |
 | Local dev + branch CI/CD | ✅ Done (#6) |
 | Workout history view | ✅ Done (#2) |
 | Sporty.no gym calendar sync + session picker | ✅ Done (#12) |
 | Bodymap layout and graphics improvements | ✅ Done (#10) |
-| Shoulder shape separation (correct hover hit targets) | 🔧 In verification (#18) |
 | Period / volume report | ✅ Done (#3) |
-| Duplicate session prevention (unique constraint per class) | ✅ Done (#13) |
+| Duplicate session prevention | ✅ Done (#13) |
 | Past-date logging + edit existing sessions | ✅ Done (#19) |
-| Shared lib: utils.js + prompts.js (model constants, prompts, utilities) | ✅ Done (#24 #25 #27) |
+| Shared lib (utils, prompts, model constants) | ✅ Done (#24 #25 #27) |
+| Backend security (sportySync API key) | ✅ Done (#26) |
+| Unit tests (Vitest) | ✅ Done (#28) |
+| History muscle filter + skeleton loading | ✅ Done (#31 #34) |
+| Input & display polish (volume, date format, validation) | ✅ Done (#32 #33 #35 #36) |
+| Exercise library + session templates | ✅ Done (#38) |
 
 ## Backlog
 
-| PR group | Issues | Priority |
+| Issue(s) | Description | Priority |
 |---|---|---|
-| B — Error resilience (JSON.parse + ErrorBoundary) | #23 #29 | High |
-| C — Backend security (sportySync API key) | #26 | High |
-| D — Unit tests | #28 | High |
-| E — History improvements (muscle filter, skeleton loading) | #31 #34 | Low |
-| F — Input & display polish (volume, date format, form validation) | #32 #33 #35 | Low |
-| G — Image storage | #30 | Low |
+| #23 #29 | Error resilience — JSON.parse try-catch + React ErrorBoundary | Medium |
+| #30 | Image storage — Supabase Storage for whiteboard photos | Low |
