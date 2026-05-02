@@ -32,10 +32,12 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 ```bash
 npm install -g @azure/static-web-apps-cli
 cp app/.env.local.example app/.env.local                             # fill in Supabase credentials
-cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY
+cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY, SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 cd app && npm install
 cd api && npm install
 ```
+
+`app/.env.test` is committed with placeholder values — no setup needed. It lets the Vitest test runner import `supabase.js` without crashing (unit tests make no real Supabase calls).
 
 Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Authentication → URL Configuration).
 

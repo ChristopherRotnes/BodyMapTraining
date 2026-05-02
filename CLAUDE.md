@@ -186,6 +186,8 @@ cp app/api/local.settings.json.example app/api/local.settings.json  # fill in AN
 cd app && npm install
 ```
 
+`app/.env.test` is committed with placeholder values and requires no setup — it exists solely so the Vitest test runner can import `supabase.js` without crashing in CI (no real Supabase calls are made during unit tests).
+
 ## Azure deploy notes
 - **Resource group:** `rg-muskelkart` (West Europe) — **Azure resource name:** `muskelkart`
 - Supabase Auth redirect URLs: localhost + Azure domain both registered
