@@ -5,15 +5,16 @@ import { format, subMonths } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
 import { BodySVG, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles, useIsMobile } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises } from "../lib/utils";
+import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
   Button, Tag, InlineNotification, DefinitionTooltip,
   Checkbox, Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
-import { Camera, Asleep, Light, Analytics, Add, TrashCan, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
+import { Camera, Asleep, Light, Analytics, Add, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
 import { useTheme } from "../theme";
+import ExerciseRow from "./ExerciseRow";
 
 const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
 
@@ -248,9 +249,6 @@ export default function History({ onNewSession, onShowReport }) {
 
   const editMuscles = editMode ? calcMuscles(editExercises.filter(e => e.enabled && e.name)) : null;
 
-  const isInvalidNum = (val) =>
-    val !== null && val !== undefined && val !== "" &&
-    (!/^\d+$/.test(String(val).trim()) || parseInt(val, 10) < 1 || parseInt(val, 10) > 99);
 
   const hasEditErrors = editMode && (
     editExercises.some(e => e.enabled && !e.name?.trim()) ||
@@ -460,101 +458,15 @@ export default function History({ onNewSession, onShowReport }) {
                         <>
                           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
                             {editExercises.map((ex) => (
-                              <div
+                              <ExerciseRow
                                 key={ex.id}
-                                onClick={() => setEditExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
-                                style={{
-                                  background: ex.enabled ? "var(--cds-layer-02)" : "transparent",
-                                  border: "1px solid var(--cds-border-subtle-01)",
-                                  padding: "6px 8px 6px 12px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                  opacity: ex.enabled ? 1 : 0.4,
-                                  transition: "opacity 0.15s",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-                                  <Checkbox
-                                    id={`edit-ex-${ex.id}`}
-                                    labelText=""
-                                    hideLabel
-                                    checked={ex.enabled}
-                                    onChange={() => setEditExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
-                                  />
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }} onClick={(e) => e.stopPropagation()}>
-                                  {editingExId === ex.id ? (
-                                    <input
-                                      autoFocus
-                                      value={ex.name}
-                                      onChange={(e) => setEditExercises(p => p.map(x => x.id === ex.id ? { ...x, name: e.target.value, standardName: e.target.value } : x))}
-                                      onBlur={() => setEditingExId(null)}
-                                      onKeyDown={(e) => e.key === "Enter" && setEditingExId(null)}
-                                      style={{
-                                        width: "100%",
-                                        background: "transparent",
-                                        border: "none",
-                                        borderBottom: `2px solid ${ex.enabled && !ex.name?.trim() ? "var(--cds-support-error)" : "var(--cds-interactive)"}`,
-                                        color: "var(--cds-text-primary)",
-                                        fontFamily: "var(--cds-font-sans)",
-                                        fontSize: 14,
-                                        padding: "2px 0",
-                                        outline: "none",
-                                      }}
-                                    />
-                                  ) : (
-                                    <div
-                                      onClick={() => setEditingExId(ex.id)}
-                                      style={{ fontSize: 14, fontWeight: 500, cursor: "text", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--cds-text-primary)" }}
-                                    >
-                                      {ex.name?.trim()
-                                        ? ex.name
-                                        : ex.enabled
-                                          ? <span style={{ color: "var(--cds-support-error)" }}>Påkrevd</span>
-                                          : <span style={{ color: "var(--cds-text-secondary)" }}>Klikk for å skrive øvelse…</span>}
-                                    </div>
-                                  )}
-                                </div>
-                                <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                                  {["sets", "reps"].map(field => (
-                                    <div key={field} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        max="99"
-                                        placeholder="–"
-                                        value={ex[field] || ""}
-                                        onChange={e => setEditExercises(p => p.map(x => x.id === ex.id ? { ...x, [field]: e.target.value } : x))}
-                                        style={{
-                                          width: 40,
-                                          height: 28,
-                                          padding: "0 4px",
-                                          background: "var(--cds-field-01)",
-                                          border: `1px solid ${isInvalidNum(ex[field]) ? "var(--cds-support-error)" : "var(--cds-border-strong-01)"}`,
-                                          color: isInvalidNum(ex[field]) ? "var(--cds-support-error)" : "var(--cds-text-primary)",
-                                          fontFamily: "var(--cds-font-sans)",
-                                          fontSize: 12,
-                                          outline: "none",
-                                          textAlign: "center",
-                                        }}
-                                      />
-                                      <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                                        {field === "sets" ? "sett" : "reps"}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                                <Button
-                                  kind="ghost"
-                                  hasIconOnly
-                                  renderIcon={TrashCan}
-                                  iconDescription="Slett øvelse"
-                                  size="sm"
-                                  onClick={(e) => { e.stopPropagation(); setEditExercises(p => p.filter(e => e.id !== ex.id)); }}
-                                />
-                              </div>
+                                exercise={ex}
+                                autoFocusName={ex.id === editingExId}
+                                onChange={(updates) => setEditExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
+                                onDelete={() => setEditExercises(p => p.filter(e => e.id !== ex.id))}
+                                layer="layer-02"
+                                validateNumbers
+                              />
                             ))}
                           </div>
                           <Button

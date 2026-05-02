@@ -1,5 +1,123 @@
 import { supabase } from "./supabase";
 
+// ── EXERCISE LIBRARY ──────────────────────────────────────────────────
+
+export async function fetchLibraryExercises() {
+  const { data, error } = await supabase
+    .from("exercise_library")
+    .select("*")
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function saveLibraryExercise({ name, primary_muscles, secondary_muscles, default_sets, default_reps }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from("exercise_library")
+    .insert({ user_id: user.id, name, primary_muscles, secondary_muscles, default_sets, default_reps })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateLibraryExercise(id, { name, primary_muscles, secondary_muscles, default_sets, default_reps }) {
+  const { data, error } = await supabase
+    .from("exercise_library")
+    .update({ name, primary_muscles, secondary_muscles, default_sets, default_reps })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteLibraryExercise(id) {
+  const { error } = await supabase.from("exercise_library").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// ── SESSION TEMPLATES ─────────────────────────────────────────────────
+
+export async function fetchTemplates() {
+  const { data, error } = await supabase
+    .from("session_templates")
+    .select(`
+      id, name, sort_order, used_at, created_at,
+      session_template_exercises(
+        id, library_exercise_id, name, primary_muscles, secondary_muscles, sets, reps, sort_order
+      )
+    `)
+    .order("used_at", { ascending: false, nullsFirst: false });
+  if (error) throw error;
+  // Sort exercises within each template
+  return (data || []).map(t => ({
+    ...t,
+    session_template_exercises: (t.session_template_exercises || [])
+      .sort((a, b) => a.sort_order - b.sort_order),
+  }));
+}
+
+export async function saveTemplate(name) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from("session_templates")
+    .insert({ user_id: user.id, name })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTemplateName(id, name) {
+  const { data, error } = await supabase
+    .from("session_templates")
+    .update({ name })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteTemplate(id) {
+  const { error } = await supabase.from("session_templates").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function touchTemplate(id) {
+  const { error } = await supabase
+    .from("session_templates")
+    .update({ used_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function replaceTemplateExercises(templateId, exercises) {
+  const { error: delErr } = await supabase
+    .from("session_template_exercises")
+    .delete()
+    .eq("template_id", templateId);
+  if (delErr) throw delErr;
+
+  if (exercises.length === 0) return;
+
+  const rows = exercises.map((e, i) => ({
+    template_id: templateId,
+    library_exercise_id: e.library_exercise_id || null,
+    name: e.name,
+    primary_muscles: e.primary_muscles || e.primary || [],
+    secondary_muscles: e.secondary_muscles || e.secondary || [],
+    sets: e.sets || null,
+    reps: e.reps || null,
+    sort_order: i,
+  }));
+
+  const { error } = await supabase.from("session_template_exercises").insert(rows);
+  if (error) throw error;
+}
+
 export async function fetchGymSessionsByDate(dateStr) {
   const { data, error } = await supabase
     .from("gym_calendar")

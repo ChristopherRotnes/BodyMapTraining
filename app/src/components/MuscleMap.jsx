@@ -5,14 +5,15 @@ import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap 
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Header, HeaderName, HeaderGlobalBar, HeaderGlobalAction, SkipToContent,
-  Button, Checkbox, Select, SelectItem,
+  Button, Select, SelectItem,
   DatePicker, DatePickerInput,
   ProgressIndicator, ProgressStep,
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
-import { Add, TrashCan, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed, Analytics } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Renew, Camera, Asleep, Light, Ai, RecentlyViewed, Analytics, Book } from "@carbon/icons-react";
 import { useTheme } from "../theme";
+import ExerciseRow from "./ExerciseRow";
 
 const localDateStr = () => {
   const d = new Date();
@@ -20,7 +21,7 @@ const localDateStr = () => {
 };
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
-export default function MuscleMap({ onShowHistory, onShowReport }) {
+export default function MuscleMap({ onShowHistory, onShowReport, onShowBibliotek, onShowTemplatePicker, templatePreload, onTemplatePreloadConsumed }) {
   const { theme, setTheme } = useTheme();
   const [step, setStep] = useState("upload");
   const [images, setImages] = useState([]);
@@ -56,6 +57,14 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
       .then(setGymCalendarConflict)
       .catch(() => setGymCalendarConflict(null));
   }, [gymSessionId]);
+
+  // Load exercises from a chosen template and skip straight to the confirm step
+  useEffect(() => {
+    if (!templatePreload) return;
+    setExercises(templatePreload.map((e, i) => ({ ...e, id: e.id || i })));
+    setStep("confirm");
+    onTemplatePreloadConsumed();
+  }, [templatePreload]);
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
 
@@ -188,6 +197,9 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
           <HeaderGlobalAction aria-label="Perioderapport" onClick={onShowReport}>
             <Analytics size={20} />
           </HeaderGlobalAction>
+          <HeaderGlobalAction aria-label="Bibliotek" onClick={onShowBibliotek}>
+            <Book size={20} />
+          </HeaderGlobalAction>
           <HeaderGlobalAction
             aria-label={theme === "g10" ? "Bytt til mørkt tema" : "Bytt til lyst tema"}
             onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}
@@ -297,13 +309,22 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
                 kind="primary"
                 renderIcon={images.length > 0 ? ArrowRight : Camera}
                 onClick={images.length > 0 ? analyze : () => fileRef.current?.click()}
-                style={{ width: "100%", maxWidth: "100%" }}
+                style={{ width: "100%", maxWidth: "100%", marginBottom: 8 }}
               >
                 {images.length > 1
                   ? `Analyser ${images.length} bilder`
                   : images.length === 1
                     ? "Analyser program"
                     : "Velg bilde"}
+              </Button>
+
+              <Button
+                kind="secondary"
+                renderIcon={Book}
+                onClick={onShowTemplatePicker}
+                style={{ width: "100%", maxWidth: "100%" }}
+              >
+                Velg fra bibliotek
               </Button>
             </div>
           )}
@@ -375,99 +396,13 @@ export default function MuscleMap({ onShowHistory, onShowReport }) {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
                 {exercises.map((ex) => (
-                  <div
+                  <ExerciseRow
                     key={ex.id}
-                    onClick={() => setExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
-                    style={{
-                      background: ex.enabled ? "var(--cds-layer-01)" : "transparent",
-                      border: `1px solid var(--cds-border-subtle-01)`,
-                      padding: "6px 8px 6px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      opacity: ex.enabled ? 1 : 0.4,
-                      transition: "opacity 0.15s",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-                      <Checkbox
-                        id={`ex-${ex.id}`}
-                        labelText=""
-                        hideLabel
-                        checked={ex.enabled}
-                        onChange={() => setExercises(p => p.map(e => e.id === ex.id ? { ...e, enabled: !e.enabled } : e))}
-                      />
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }} onClick={(e) => e.stopPropagation()}>
-                      {editingId === ex.id ? (
-                        <input
-                          autoFocus
-                          value={ex.name}
-                          onChange={(e) => setExercises(p => p.map(x => x.id === ex.id ? { ...x, name: e.target.value, standardName: e.target.value } : x))}
-                          onBlur={() => setEditingId(null)}
-                          onKeyDown={(e) => e.key === "Enter" && setEditingId(null)}
-                          style={{
-                            width: "100%",
-                            background: "transparent",
-                            border: "none",
-                            borderBottom: "2px solid var(--cds-interactive)",
-                            color: "var(--cds-text-primary)",
-                            fontFamily: "var(--cds-font-sans)",
-                            fontSize: 14,
-                            padding: "2px 0",
-                            outline: "none",
-                          }}
-                        />
-                      ) : (
-                        <div
-                          onClick={() => setEditingId(ex.id)}
-                          style={{ fontSize: 14, fontWeight: 500, cursor: "text", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--cds-text-primary)" }}
-                        >
-                          {ex.name || <span style={{ color: "var(--cds-text-secondary)" }}>Klikk for å skrive øvelse…</span>}
-                        </div>
-                      )}
-                    </div>
-
-                    <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                      {["sets", "reps"].map(field => (
-                        <div key={field} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          <input
-                            type="number"
-                            min="1"
-                            placeholder="–"
-                            value={ex[field] || ""}
-                            onChange={e => setExercises(p => p.map(x => x.id === ex.id ? { ...x, [field]: e.target.value } : x))}
-                            style={{
-                              width: 40,
-                              height: 28,
-                              padding: "0 4px",
-                              background: "var(--cds-field-01)",
-                              border: "1px solid var(--cds-border-strong-01)",
-                              color: "var(--cds-text-primary)",
-                              fontFamily: "var(--cds-font-sans)",
-                              fontSize: 12,
-                              outline: "none",
-                              textAlign: "center",
-                            }}
-                          />
-                          <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                            {field === "sets" ? "sett" : "reps"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Button
-                      kind="ghost"
-                      hasIconOnly
-                      renderIcon={TrashCan}
-                      iconDescription="Slett øvelse"
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); setExercises(p => p.filter(e => e.id !== ex.id)); }}
-                    />
-                  </div>
+                    exercise={ex}
+                    autoFocusName={ex.id === editingId}
+                    onChange={(updates) => setExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
+                    onDelete={() => setExercises(p => p.filter(e => e.id !== ex.id))}
+                  />
                 ))}
               </div>
 

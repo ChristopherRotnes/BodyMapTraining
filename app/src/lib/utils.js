@@ -1,5 +1,10 @@
 import { EX_DB } from "./bodymap.jsx";
 
+// Returns true when val is non-empty but not a valid integer in [1, 99].
+export const isInvalidNum = (val) =>
+  val != null && val !== "" &&
+  (!/^\d+$/.test(String(val).trim()) || parseInt(val, 10) < 1 || parseInt(val, 10) > 99);
+
 export const toBase64 = (file) => new Promise((res, rej) => {
   const r = new FileReader();
   r.onload = () => res(r.result.split(",")[1]);
