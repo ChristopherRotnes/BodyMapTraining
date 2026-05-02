@@ -10,15 +10,18 @@ function NavBtn({ onClick, ariaLabel, active, children }) {
       aria-label={ariaLabel}
       onClick={onClick}
       style={{
-        background: "none",
+        background: active ? "var(--cds-layer-01)" : "none",
         border: "none",
+        borderBottom: active ? "2px solid #0f62fe" : "2px solid transparent",
         cursor: "pointer",
-        color: active ? "var(--cds-interactive)" : "var(--cds-icon-primary)",
+        color: active ? "var(--cds-text-primary)" : "var(--cds-icon-primary)",
         padding: "0 10px",
+        width: 48,
         height: 48,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        flexShrink: 0,
       }}
     >
       {children}
@@ -26,18 +29,40 @@ function NavBtn({ onClick, ariaLabel, active, children }) {
   );
 }
 
-export function PageTitle({ children }) {
+export function SectionLabel({ children }) {
   return (
     <p style={{
       fontFamily: "var(--cds-font-mono)",
-      fontSize: 11,
-      fontWeight: 700,
+      fontSize: 12,
+      fontWeight: 400,
       textTransform: "uppercase",
-      letterSpacing: "2px",
+      letterSpacing: "0.16em",
+      color: "var(--cds-text-secondary)",
+      borderLeft: "3px solid #0f62fe",
+      padding: "8px 0 8px 13px",
+      margin: "16px 16px 12px",
+      width: "fit-content",
+    }}>
+      {children}
+    </p>
+  );
+}
+
+export function PageTitle({ children }) {
+  return <SectionLabel>{children}</SectionLabel>;
+}
+
+export function PageHeading({ children, style }) {
+  return (
+    <p style={{
+      fontFamily: "var(--cds-font-sans)",
+      fontSize: 28,
+      fontWeight: 300,
       color: "var(--cds-text-primary)",
-      borderLeft: "2px solid var(--cds-interactive)",
-      paddingLeft: 8,
-      margin: "0 0 24px 0",
+      padding: "4px 16px 16px",
+      margin: 0,
+      lineHeight: 1.28,
+      ...style,
     }}>
       {children}
     </p>
@@ -89,7 +114,7 @@ export default function PageShell({ onShowHome, onShowLogger, onShowHistory, onS
             Workout Lens
           </button>
 
-          <div style={{ display: "flex", alignItems: "center", marginRight: -10 }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
             <NavBtn ariaLabel="Logg økt" onClick={onShowLogger} active={currentView === "logger"}>
               <Camera size={20} />
             </NavBtn>
