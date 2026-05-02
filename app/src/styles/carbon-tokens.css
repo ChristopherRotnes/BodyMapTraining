@@ -348,6 +348,15 @@
   .cds-type-display-04 { font-size: 6.375rem; line-height: 1.07; }
 }
 
+/* ============ HEAT SCALE (body-map + calendar volume) ============ */
+:root {
+  --heat-1: #044317;
+  --heat-2: #0e6027;
+  --heat-3: #198038;
+  --heat-4: #24a148;
+  --heat-5: #42be65;
+}
+
 /* Element defaults — semantic tags, productive sizing */
 body { color: var(--cds-text-primary); background: var(--cds-background); font-family: var(--cds-font-sans); font-weight: 400; }
 h1 { font-size: 2.625rem; line-height: 1.199; font-weight: 300; letter-spacing: 0; }
