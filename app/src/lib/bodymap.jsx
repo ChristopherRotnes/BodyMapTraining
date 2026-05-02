@@ -76,12 +76,12 @@ export const SHAPES = {
 export const BODY_PATH = "M 73,50 C 57,50 24,53 18,60 Q 10,82 11,110 Q 10,130 15,144 Q 18,152 24,155 Q 25,143 26,126 Q 28,80 33,64 Q 46,57 56,58 Q 55,80 53,115 Q 50,140 47,155 Q 47,162 48,167 L 48,355 L 76,355 L 76,167 Q 78,174 80,174 Q 82,174 84,167 L 84,355 L 112,355 L 112,167 Q 113,162 113,155 Q 110,140 107,115 Q 105,80 104,58 Q 114,57 127,64 Q 132,80 134,126 Q 135,143 136,155 Q 142,152 145,144 Q 150,130 149,110 Q 150,82 142,60 C 136,53 103,50 87,50 Z";
 export const BODY_POLY = BODY_PATH; // backward compat alias
 
-export const PRIMARY_FILL   = "rgba(36,161,72,0.78)";
-export const PRIMARY_HOVER  = "rgba(36,161,72,1)";
-export const PRIMARY_STROKE = "rgba(36,161,72,0.5)";
-export const SEC_FILL       = "rgba(120,169,255,0.45)";
-export const SEC_HOVER      = "rgba(120,169,255,0.7)";
-export const SEC_STROKE     = "rgba(120,169,255,0.25)";
+export const PRIMARY_FILL   = "var(--heat-4, #24a148)";
+export const PRIMARY_HOVER  = "var(--heat-5, #42be65)";
+export const PRIMARY_STROKE = "#198038";
+export const SEC_FILL       = "none";
+export const SEC_HOVER      = "none";
+export const SEC_STROKE     = "none";
 
 export function useIsMobile(breakpoint = 500) {
   const [mobile, setMobile] = React.useState(() => window.innerWidth < breakpoint);
@@ -114,11 +114,11 @@ export function calcMuscles(exercises) {
   return { primary: [...p], secondary: [...s] };
 }
 
-function Shape({ sh, i, fill, stroke, style }) {
+function Shape({ sh, i, fill, stroke, strokeWidth = "0.8" }) {
   if (sh.d) {
-    return <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth="0.8" style={style} />;
+    return <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
   }
-  return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth="0.8" style={style} />;
+  return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
 }
 
 export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {} }) {
@@ -142,12 +142,9 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
       <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
-          <filter id={`heatglow-${view}`} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
-            <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(120,169,255,0.6)" strokeWidth="2.5" />
+            <rect width="6" height="6" fill="#001d6c" />
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#4589ff" strokeWidth="3" opacity="0.55" />
           </pattern>
         </defs>
 
@@ -161,24 +158,20 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
           .filter(([id]) => MUSCLES[id]?.view === view)
           .map(([id, shapes]) => {
             const { primary = 0, secondary = 0 } = counts[id] || {};
-            let fill, stroke, useGlow;
+            let fill, stroke;
             if (primary > 0) {
-              const intensity = 0.2 + (primary / Math.max(1, maxCount)) * 0.7;
-              fill = `rgba(36,161,72,${intensity.toFixed(2)})`;
-              stroke = `rgba(36,161,72,${(intensity * 0.6).toFixed(2)})`;
-              useGlow = true;
+              const ratio = primary / Math.max(1, maxCount);
+              fill = ratio < 0.2 ? "var(--heat-1)" : ratio < 0.4 ? "var(--heat-2)" : ratio < 0.6 ? "var(--heat-3)" : ratio < 0.8 ? "var(--heat-4)" : "var(--heat-5)";
+              stroke = PRIMARY_STROKE;
             } else if (secondary > 0) {
               fill = `url(#sec-stripe-${view})`;
-              stroke = "rgba(120,169,255,0.3)";
-              useGlow = false;
+              stroke = "none";
             } else {
               fill = "rgba(128,128,128,0.1)";
               stroke = "rgba(128,128,128,0.08)";
-              useGlow = false;
             }
             return (
               <g key={id}
-                filter={useGlow ? `url(#heatglow-${view})` : undefined}
                 style={{ cursor: "pointer" }}
                 onMouseEnter={e => handleEnter(id, e)}
                 onMouseMove={e => handleMove(id, e)}
@@ -272,16 +265,9 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
       <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
-          <filter id={`glow-${view}`} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-          <filter id={`softglow-${view}`} x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
-            <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(120,169,255,0.6)" strokeWidth="2.5" />
+            <rect width="6" height="6" fill="#001d6c" />
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#4589ff" strokeWidth="3" opacity="0.55" />
           </pattern>
         </defs>
 
@@ -300,17 +286,17 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
             const isHovered = tooltip?.id === id;
             const fill = isPrimary
               ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
-              : (isHovered ? SEC_HOVER : `url(#sec-stripe-${view})`);
-            const stroke = isPrimary ? PRIMARY_STROKE : SEC_STROKE;
+              : `url(#sec-stripe-${view})`;
+            const stroke = isHovered ? "#fff" : isPrimary ? PRIMARY_STROKE : "none";
+            const strokeWidth = isHovered ? "1.5" : "0.8";
             return (
-              <g key={id} filter={`url(#${isPrimary ? "glow" : "softglow"}-${view})`}
+              <g key={id}
                 style={{ cursor: muscleMap[id]?.length ? "pointer" : "default" }}
                 onMouseEnter={e => handleEnter(id, e)}
                 onMouseMove={e => handleMove(id, e)}
                 onMouseLeave={handleLeave}>
                 {shapes.map((sh, i) => (
-                  <Shape key={i} sh={sh} i={i} fill={fill} stroke={stroke}
-                    style={{ transition: "fill 0.15s" }} />
+                  <Shape key={i} sh={sh} i={i} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
                 ))}
               </g>
             );
