@@ -47,7 +47,7 @@ Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Au
 
 `dev.ps1` is gitignored. It switches to Node 20 via `fnm` (Azure Functions Core Tools v4 requires Node ≤ 20; the system default v24 breaks it), opens Vite in a separate window, waits 3 s, then starts the SWA emulator.
 
-Open **http://localhost:4280** — not 5173. The API routes (`/api/claude`, `/api/sporty-sync`) are only available through the SWA proxy at port 4280.
+Open **http://localhost:4280** —  The API routes (`/api/claude`, `/api/sporty-sync`) are only available through the SWA proxy at port 4280.
 
 ## Project structure
 
@@ -145,10 +145,10 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | History muscle filter + skeleton loading | ✅ Done (#31 #34) |
 | Input & display polish (volume, date format, validation) | ✅ Done (#32 #33 #35 #36) |
 | Exercise library + session templates | ✅ Done (#38) |
+| Error resilience (JSON.parse try-catch + ErrorBoundary) | ✅ Done (#23 #29) |
 
 ## Backlog
 
 | Issue(s) | Description | Priority |
 |---|---|---|
-| #23 #29 | Error resilience — JSON.parse try-catch + React ErrorBoundary | Medium |
 | #30 | Image storage — Supabase Storage for whiteboard photos | Low |

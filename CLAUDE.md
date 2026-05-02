@@ -143,7 +143,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 | PR | Issues | Description |
 |---|---|---|
 | A — Shared lib foundation | #24 #25 #27 | Extract duplicate utils/prompts/model constant ✅ Done |
-| B — Error resilience | #23 #29 | JSON.parse try-catch + React ErrorBoundary |
+| B — Error resilience | #23 #29 | JSON.parse try-catch + React ErrorBoundary ✅ Done |
 | C — Backend security | #26 | API key on sportySync HTTP trigger ✅ Done |
 | D — Tests | #28 | Vitest unit tests for lib/ functions ✅ Done |
 | E — History improvements | #31 #34 | Muscle filter + skeleton loading ✅ Done |
