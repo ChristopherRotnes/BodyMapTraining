@@ -7,12 +7,19 @@ const ALLOWED_MODELS = new Set([
 ]);
 const MAX_TOKENS_LIMIT = 2000;
 
-async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey, context) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    context.warn('verifySupabaseJwt: missing or malformed Authorization header');
+    return false;
+  }
   const token = authHeader.slice(7);
   const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
     headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
   });
+  if (!res.ok) {
+    const body = await res.text();
+    context.warn(`verifySupabaseJwt: Supabase returned ${res.status} — ${body}`);
+  }
   return res.ok;
 }
 
@@ -36,7 +43,8 @@ app.http('claude', {
     const authed = await verifySupabaseJwt(
       request.headers.get('Authorization'),
       supabaseUrl,
-      supabaseAnonKey
+      supabaseAnonKey,
+      context
     );
     if (!authed) {
       return new Response(
