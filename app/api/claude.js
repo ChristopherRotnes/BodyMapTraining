@@ -17,7 +17,11 @@ async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey) {
       headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
     });
     const detail = await res.text();
-    return { ok: res.ok, status: res.status, detail, tokenLen: token.length, tokenTail: token.slice(-20) };
+    let tokenPayload = null;
+    try {
+      tokenPayload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    } catch {}
+    return { ok: res.ok, status: res.status, detail, tokenLen: token.length, tokenRole: tokenPayload?.role, tokenIss: tokenPayload?.iss, tokenExp: tokenPayload?.exp };
   } catch (e) {
     return { ok: false, status: 0, detail: `fetch-error: ${e.message}` };
   }
