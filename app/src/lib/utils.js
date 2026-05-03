@@ -1,8 +1,8 @@
 import { EX_DB } from "./bodymap.jsx";
 import { supabase } from "./supabase";
 
-// Calls /api/claude with the current user's Supabase JWT in the Authorization
-// header so the backend can reject unauthenticated requests.
+// Calls /api/claude with the Supabase JWT in X-Supabase-Token (not Authorization —
+// Azure SWA replaces the Authorization header with its own managed identity token).
 // Retries once after a forced token refresh on 401 to recover from expired tokens.
 export async function callClaude(body) {
   const makeRequest = async () => {
@@ -11,7 +11,7 @@ export async function callClaude(body) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        ...(session?.access_token ? { "X-Supabase-Token": session.access_token } : {}),
       },
       body: JSON.stringify(body),
     });

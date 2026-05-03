@@ -7,24 +7,12 @@ const ALLOWED_MODELS = new Set([
 ]);
 const MAX_TOKENS_LIMIT = 2000;
 
-async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { ok: false, status: 0, detail: 'missing-auth-header' };
-  }
-  const token = authHeader.slice(7);
-  try {
-    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
-    });
-    const detail = await res.text();
-    let tokenPayload = null;
-    try {
-      tokenPayload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
-    } catch {}
-    return { ok: res.ok, status: res.status, detail, tokenLen: token.length, tokenRole: tokenPayload?.role, tokenIss: tokenPayload?.iss, tokenExp: tokenPayload?.exp };
-  } catch (e) {
-    return { ok: false, status: 0, detail: `fetch-error: ${e.message}` };
-  }
+async function verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey) {
+  if (!token) return false;
+  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
+  });
+  return res.ok;
 }
 
 app.http('claude', {
@@ -43,15 +31,13 @@ app.http('claude', {
       );
     }
 
-    // Require a valid Supabase session — prevents unauthenticated API abuse.
-    const authed = await verifySupabaseJwt(
-      request.headers.get('Authorization'),
-      supabaseUrl,
-      supabaseAnonKey
-    );
-    if (!authed.ok) {
+    // Azure SWA replaces the Authorization header with its own managed identity
+    // token, so the Supabase JWT is passed in X-Supabase-Token instead.
+    const token = request.headers.get('X-Supabase-Token');
+    const authed = await verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey);
+    if (!authed) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', debug: authed }),
+        JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
