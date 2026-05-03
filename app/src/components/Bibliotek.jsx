@@ -172,7 +172,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                         ) : (
                           <div style={{
                             background: "var(--cds-layer-01)",
-                            border: "1px solid var(--cds-border-subtle-01)",
+                            border: "1px solid var(--cds-border-strong-01)",
                             padding: "10px 12px",
                             display: "flex", alignItems: "center", gap: 8,
                           }}>
@@ -261,7 +261,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                       return (
                         <div key={tpl.id} style={{
                           background: "var(--cds-layer-01)",
-                          border: "1px solid var(--cds-border-subtle-01)",
+                          border: "1px solid var(--cds-border-strong-01)",
                           padding: "10px 12px",
                           display: "flex", alignItems: "center", gap: 8,
                         }}>

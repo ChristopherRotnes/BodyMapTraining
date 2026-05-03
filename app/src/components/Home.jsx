@@ -133,7 +133,7 @@ export default function Home({ onShowHistoryWithDate }) {
           <div style={{
             margin: "0 16px",
             background: "var(--cds-layer-01)",
-            border: "1px solid var(--cds-border-subtle-01)",
+            border: "1px solid var(--cds-border-strong-01)",
             padding: 24, textAlign: "center",
             color: "var(--cds-text-secondary)", fontSize: 14,
           }}>
@@ -142,7 +142,7 @@ export default function Home({ onShowHistoryWithDate }) {
         )}
 
         {lastSession && muscles && (
-          <div style={{ margin: "0 16px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)" }}>
+          <div style={{ margin: "0 16px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)" }}>
             {/* Header: date + session identity */}
             <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
               <div style={{

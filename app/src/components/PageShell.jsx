@@ -100,7 +100,7 @@ export default function PageShell({ children }) {
           alignItems: "center",
           justifyContent: "space-between",
           height: 48,
-          borderBottom: "1px solid var(--cds-border-subtle-01)",
+          borderBottom: "1px solid var(--cds-border-strong-01)",
           marginBottom: 24,
         }}>
           <button

@@ -62,8 +62,8 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
           const cellStyle = {
             height: 40,
             background: calHeatColor(count),
-            border: "1px solid var(--cds-border-subtle-01)",
-            outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid #fff" : undefined,
+            border: "1px solid var(--cds-border-strong-01)",
+            outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid var(--cds-text-primary)" : undefined,
             outlineOffset: "-2px",
             display: "flex", alignItems: "center", justifyContent: "center",
           };
@@ -376,11 +376,11 @@ export default function History({ initialDate }) {
           />
 
           {loading ? (
-            <div aria-live="polite" aria-busy="true" style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24 }}>
+            <div aria-live="polite" aria-busy="true" style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "16px 12px", marginBottom: 24 }}>
               <SkeletonPlaceholder style={{ width: "100%", height: 280 }} />
             </div>
           ) : (
-            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "12px", marginBottom: 24 }}>
+            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "12px", marginBottom: 24 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription="Forrige måned" onClick={goPrevMonth} />
                 <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
@@ -451,9 +451,9 @@ export default function History({ initialDate }) {
                       style={{
                         width: "100%", display: "flex", alignItems: "center", gap: 8,
                         background: "var(--cds-layer-01)",
-                        border: "1px solid var(--cds-border-subtle-01)",
-                        borderLeft: isFilterMatch ? "3px solid var(--cds-support-success)" : "1px solid var(--cds-border-subtle-01)",
-                        borderBottom: isExpanded ? "none" : "1px solid var(--cds-border-subtle-01)",
+                        border: "1px solid var(--cds-border-strong-01)",
+                        borderLeft: isFilterMatch ? "3px solid var(--cds-support-success)" : "1px solid var(--cds-border-strong-01)",
+                        borderBottom: isExpanded ? "none" : "1px solid var(--cds-border-strong-01)",
                         padding: "10px 14px", cursor: "pointer", textAlign: "left",
                       }}
                     >
@@ -473,7 +473,7 @@ export default function History({ initialDate }) {
                     </button>
 
                     {isExpanded && (
-                  <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--cds-border-subtle-01)", borderTop: "none", padding: "16px 14px", marginBottom: 0 }}>
+                  <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--cds-border-strong-01)", borderTop: "none", padding: "16px 14px", marginBottom: 0 }}>
 
                     {/* Gym class tag (read) or selector (edit) */}
                     {isEditing ? (

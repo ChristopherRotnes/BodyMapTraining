@@ -52,7 +52,7 @@ function FilterChip({ label, active, onClick }) {
 
 function KpiTile({ label, value }) {
   return (
-    <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px" }}>
+    <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "16px 12px" }}>
       <div style={{ fontSize: 42, fontWeight: 300, color: "var(--cds-text-primary)", fontFamily: "var(--cds-font-sans)", lineHeight: 1, marginBottom: 8 }}>
         {value}
       </div>
@@ -319,7 +319,7 @@ export default function Report() {
 
               <div style={{ display: "flex", gap: 12, marginBottom: 0 }}>
                 {["front", "back"].map(view => (
-                  <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                  <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "10px 6px" }}>
                     <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} volumeMap={muscleVolume} onHover={setHoveredMuscle} hovered={hoveredMuscle} />
                   </div>
                 ))}
@@ -390,7 +390,7 @@ export default function Report() {
                 </div>
               )}
 
-              <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14 }}>
+              <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: 14 }}>
                 <p style={{ ...labelStyle, marginBottom: 8 }} id="freq-table-label">Muskelfrekvens</p>
                 <table aria-labelledby="freq-table-label" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                   <thead>
@@ -478,7 +478,7 @@ export default function Report() {
                     const recSecondary = recSecAll.filter(id => !recPrimary.includes(id));
                     return (
                       <div className="fade-in" style={{ marginTop: 12 }}>
-                        <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14, marginBottom: 10 }}>
+                        <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: 14, marginBottom: 10 }}>
                           <p style={{ ...labelStyle, marginBottom: 10 }}>Anbefalte øvelser</p>
                           {recs.map((r, i) => (
                             <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
@@ -506,7 +506,7 @@ export default function Report() {
                                 </Button>
                               ))}
                             </div>
-                            <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                            <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "10px 6px" }}>
                               <BodySVG view={mobileRecView} primary={recPrimary} secondary={recSecondary}
                                 muscleMap={buildRecMuscleMap(recs)} />
                             </div>
@@ -514,7 +514,7 @@ export default function Report() {
                         ) : (
                           <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
                             {["front", "back"].map(view => (
-                              <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                              <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "10px 6px" }}>
                                 <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
                                   muscleMap={buildRecMuscleMap(recs)} />
                               </div>
