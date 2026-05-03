@@ -121,21 +121,26 @@ function Shape({ sh, i, fill, stroke, strokeWidth = "0.8" }) {
   return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
 }
 
-export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {} }) {
+export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {}, onHover, hovered }) {
   const [tooltip, setTooltip] = React.useState(null);
   const wrapRef = React.useRef();
 
   const handleEnter = (id, e) => {
+    if (onHover) { onHover(id); return; }
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
   const handleMove = (id, e) => {
+    if (onHover) return;
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
-  const handleLeave = () => setTooltip(null);
+  const handleLeave = () => {
+    if (onHover) { onHover(null); return; }
+    setTooltip(null);
+  };
 
   return (
     <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
@@ -157,6 +162,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
         {Object.entries(SHAPES)
           .filter(([id]) => MUSCLES[id]?.view === view)
           .map(([id, shapes]) => {
+            const isHovered = id === hovered;
             const { primary = 0, secondary = 0 } = counts[id] || {};
             let fill, stroke;
             if (primary > 0) {
@@ -170,6 +176,8 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
               fill = "rgba(128,128,128,0.1)";
               stroke = "rgba(128,128,128,0.08)";
             }
+            const finalStroke = isHovered ? "#fff" : stroke;
+            const finalStrokeWidth = isHovered ? "1.5" : undefined;
             return (
               <g key={id}
                 style={{ cursor: "pointer" }}
@@ -177,7 +185,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
                 onMouseMove={e => handleMove(id, e)}
                 onMouseLeave={handleLeave}>
                 {shapes.map((sh, i) => (
-                  <Shape key={i} sh={sh} i={i} fill={fill} stroke={stroke} />
+                  <Shape key={i} sh={sh} i={i} fill={fill} stroke={finalStroke} strokeWidth={finalStrokeWidth} />
                 ))}
               </g>
             );
@@ -190,7 +198,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
         </text>
       </svg>
 
-      {tooltip && (
+      {!onHover && tooltip && (
         <div style={{
           position: "absolute",
           left: Math.min(tooltip.x + 10, (wrapRef.current?.offsetWidth || 200) - 150),

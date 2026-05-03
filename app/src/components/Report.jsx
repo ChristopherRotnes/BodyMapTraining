@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { subDays, format } from "date-fns";
+import { nb } from "date-fns/locale";
 import { fetchSessionsForReport } from "../lib/db";
 import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
 import { buildRecMuscleMap, callClaude } from "../lib/utils";
@@ -8,7 +9,7 @@ import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
 import { AiGenerate } from "@carbon/icons-react";
-import PageShell, { PageTitle } from "./PageShell";
+import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 
 const PERIODS = [
   { label: "7 dager", days: 7 },
@@ -49,13 +50,13 @@ function FilterChip({ label, active, onClick }) {
   );
 }
 
-function StatTile({ label, value }) {
+function KpiTile({ label, value }) {
   return (
-    <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "14px 12px" }}>
-      <div style={{ fontSize: 24, fontWeight: 600, color: "var(--cds-text-primary)", fontFamily: "var(--cds-font-mono)", marginBottom: 4 }}>
+    <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px" }}>
+      <div style={{ fontSize: 42, fontWeight: 300, color: "var(--cds-text-primary)", fontFamily: "var(--cds-font-sans)", lineHeight: 1, marginBottom: 8 }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "1px", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>
+      <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>
         {label}
       </div>
     </div>
@@ -75,6 +76,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
   const [recs, setRecs] = useState(null);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [recsError, setRecsError] = useState(null);
+  const [hoveredMuscle, setHoveredMuscle] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -150,11 +152,12 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
     });
   }, [sessions, selectedDays, selectedTypes]);
 
-  const { muscleCounts, maxPrimaryCount, muscleExercises, muscleVolume } = useMemo(() => {
+  const { muscleCounts, maxPrimaryCount, muscleExercises, muscleVolume, muscleLastDate } = useMemo(() => {
     const primarySessions = {};
     const secondarySessions = {};
     const exercises = {};
     const volumeSets = {};
+    const lastDates = {};
 
     filteredSessions.forEach(s => {
       (s.session_exercises || []).forEach(ex => {
@@ -171,6 +174,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
           }
           if (!exercises[id]) exercises[id] = new Set();
           exercises[id].add(ex.name);
+          if (!lastDates[id] || s.session_date > lastDates[id]) lastDates[id] = s.session_date;
         });
       });
     });
@@ -186,7 +190,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
     });
 
     const maxPrimary = Math.max(1, ...Object.values(counts).map(c => c.primary));
-    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises, muscleVolume: volume };
+    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises, muscleVolume: volume, muscleLastDate: lastDates };
   }, [filteredSessions]);
 
   const toggleDay = (day) => {
@@ -236,7 +240,8 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
       currentView={currentView}
     >
       <div style={{ paddingBottom: 32 }}>
-          <PageTitle>Perioderapport</PageTitle>
+          <SectionLabel>RAPPORT</SectionLabel>
+          <PageHeading>Perioderapport</PageHeading>
 
           <div style={{ marginBottom: 16 }}>
             <p style={labelStyle}>Periode</p>
@@ -302,27 +307,68 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
             <p style={{ color: "var(--cds-support-error)", fontSize: 14 }}>{error}</p>
           ) : (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 20 }}>
-                <StatTile label="Økter" value={sessionCount} />
-                <StatTile label="Muskelgrupper" value={`${musclesCovered}/17`} />
-                <StatTile label="Snitt / uke" value={avgPerWeek} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, marginBottom: 20 }}>
+                <KpiTile label="Økter" value={sessionCount} />
+                <KpiTile label="Muskelgrupper" value={`${musclesCovered}/17`} />
+                <KpiTile label="Snitt/uke" value={avgPerWeek} />
               </div>
 
-              <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 0 }}>
                 {["front", "back"].map(view => (
                   <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} volumeMap={muscleVolume} />
+                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} volumeMap={muscleVolume} onHover={setHoveredMuscle} hovered={hoveredMuscle} />
                   </div>
                 ))}
               </div>
 
+              <div style={{ minHeight: 68, marginBottom: 12 }}>
+                {hoveredMuscle ? (
+                  <div style={{ borderLeft: "3px solid #0f62fe", background: "var(--cds-layer-01)", padding: "10px 14px" }}>
+                    <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+                      {MUSCLES[hoveredMuscle]?.label}
+                    </div>
+                    <div style={{ display: "flex", gap: 24, alignItems: "baseline" }}>
+                      <div>
+                        <span style={{ fontSize: 28, fontWeight: 300, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
+                          {muscleCounts[hoveredMuscle]?.primary || 0}
+                        </span>
+                        <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                          PRIMÆRØKTER
+                        </span>
+                      </div>
+                      {muscleLastDate[hoveredMuscle] && (
+                        <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                          SIST {format(new Date(muscleLastDate[hoveredMuscle] + "T12:00:00"), "d. MMM", { locale: nb })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
+                    Hold musepeker over kroppen for detaljer
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: "flex", gap: 16, marginBottom: 20, alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 12, height: 12, background: "rgba(36,161,72,0.9)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)" }}>Primær (mørkere = flere økter)</span>
+                  <div style={{ display: "flex" }}>
+                    {["--heat-1","--heat-2","--heat-3","--heat-4","--heat-5"].map(v => (
+                      <div key={v} style={{ width: 10, height: 12, background: `var(${v})` }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)" }}>Primær</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 12, height: 12, background: "rgba(120,169,255,0.5)", flexShrink: 0 }} />
+                  <svg width="12" height="12" style={{ flexShrink: 0 }}>
+                    <defs>
+                      <pattern id="legend-sec" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
+                        <rect width="6" height="6" fill="#001d6c" />
+                        <line x1="0" y1="0" x2="0" y2="6" stroke="#4589ff" strokeWidth="3" opacity="0.55" />
+                      </pattern>
+                    </defs>
+                    <rect width="12" height="12" fill="url(#legend-sec)" />
+                  </svg>
                   <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)" }}>Sekundær</span>
                 </div>
               </div>
@@ -353,7 +399,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
                   const countColor = primary > 0
                     ? "var(--cds-text-primary)"
                     : secondary > 0
-                    ? "rgba(120,169,255,0.8)"
+                    ? "#4589ff"
                     : "var(--cds-text-disabled)";
                   const countLabel = primary > 0
                     ? String(primary)
@@ -371,7 +417,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
                       </span>
                       <div style={{ flex: 1, height: 6, background: "var(--cds-layer-02)" }}>
                         {primary > 0 && (
-                          <div style={{ height: "100%", width: `${barWidth}%`, background: "rgba(36,161,72,0.8)" }} />
+                          <div style={{ height: "100%", width: `${barWidth}%`, background: "var(--heat-4)" }} />
                         )}
                       </div>
                       <span style={{ fontSize: 11, color: countColor, fontFamily: "var(--cds-font-mono)", width: 36, textAlign: "right", flexShrink: 0 }}>
