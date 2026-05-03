@@ -7,6 +7,10 @@
 
 .fade-in { animation: fadeIn 0.25s var(--cds-motion-standard-productive) forwards; }
 
+@media (prefers-reduced-motion: reduce) {
+  .fade-in { animation: none; opacity: 1; transform: none; }
+}
+
 /* Carbon button full-width override */
 .cds--btn { max-inline-size: none; }
 

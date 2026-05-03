@@ -153,7 +153,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
           </pattern>
         </defs>
 
-        <g style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
+        <g aria-hidden="true" style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
           <circle cx="80" cy="21" r="17" />
           <polygon points="74,37 86,37 87,50 73,50" />
           <path d={BODY_PATH} />
@@ -191,7 +191,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
             );
           })}
 
-        <text x="80" y="352" textAnchor="middle" fontSize="7.5"
+        <text aria-hidden="true" x="80" y="352" textAnchor="middle" fontSize="7.5"
           fontFamily="var(--cds-font-mono)" letterSpacing="2"
           style={{ fill: "var(--cds-text-secondary)" }}>
           {view === "front" ? "FRONT" : "BACK"}
@@ -279,7 +279,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
           </pattern>
         </defs>
 
-        <g style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
+        <g aria-hidden="true" style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
           <circle cx="80" cy="21" r="17" />
           <polygon points="74,37 86,37 87,50 73,50" />
           <path d={BODY_PATH} />
@@ -310,7 +310,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
             );
           })}
 
-        <text x="80" y="352" textAnchor="middle" fontSize="7.5"
+        <text aria-hidden="true" x="80" y="352" textAnchor="middle" fontSize="7.5"
           fontFamily="var(--cds-font-mono)" letterSpacing="2"
           style={{ fill: "var(--cds-text-secondary)" }}>
           {view === "front" ? "FRONT" : "BACK"}
