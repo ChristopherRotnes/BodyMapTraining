@@ -34,7 +34,7 @@ function templateExToEditorShape(te) {
 //                         "edit" → "Lagre mal" button saves to DB and calls onBack
 //   onBack            — navigate back
 //   onUseTemplate(exercises) — called in "use" mode when trainer clicks "Bruk økt"
-export default function TemplateSessionEditor({ template, mode, onBack, onUseTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
+export default function TemplateSessionEditor({ template, mode, onBack, onUseTemplate }) {
   const [exercises, setExercises] = useState(() =>
     (template.session_template_exercises || []).map(templateExToEditorShape)
   );
@@ -127,14 +127,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
   const canProceed = exercises.some(e => e.enabled && e.name);
 
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <BackButton onClick={onBack} />
         <PageTitle>{mode === "edit" ? "Rediger mal" : "Bruk mal"}</PageTitle>

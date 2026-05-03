@@ -2,6 +2,7 @@ import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logo
 import { Button } from "@carbon/react";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
+import { useNav } from "../lib/NavContext";
 
 function NavBtn({ onClick, ariaLabel, active, children }) {
   return (
@@ -82,8 +83,9 @@ export function BackButton({ onClick }) {
   );
 }
 
-export default function PageShell({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, children }) {
+export default function PageShell({ children }) {
   const { theme, setTheme } = useTheme();
+  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek } = useNav();
 
   return (
     <div style={{ background: "var(--cds-background)", minHeight: "100vh" }}>

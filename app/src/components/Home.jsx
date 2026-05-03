@@ -7,6 +7,7 @@ import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
 import { extractMuscles, logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
+import { useNav } from "../lib/NavContext";
 
 const DAY_LABELS = ["M", "T", "O", "T", "F", "L", "S"];
 
@@ -39,10 +40,8 @@ function countUniqueMuscles(sessions) {
   return seen.size;
 }
 
-export default function Home({
-  onShowHome, onShowLogger, onShowHistory, onShowReport,
-  onShowBibliotek, currentView, onShowHistoryWithDate,
-}) {
+export default function Home({ onShowHistoryWithDate }) {
+  const { onShowLogger } = useNav();
   const [lastSession, setLastSession] = useState(undefined);
   const [weekSessions, setWeekSessions] = useState(undefined);
   const [tooltip, setTooltip] = useState(null);
@@ -97,14 +96,7 @@ export default function Home({
   const weekMuscleCount = countUniqueMuscles(weekSessions);
 
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 40 }}>
 
         {/* Today header + CTA */}

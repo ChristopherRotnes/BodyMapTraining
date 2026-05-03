@@ -126,7 +126,7 @@ function sessionMuscleIds(session) {
 }
 
 
-export default function History({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialDate }) {
+export default function History({ initialDate }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(
@@ -360,14 +360,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   );
 
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 32 }}>
           <SectionLabel>HISTORIKK</SectionLabel>
           <PageHeading>Treningshistorikk</PageHeading>

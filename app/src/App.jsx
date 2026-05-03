@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
+import { NavContext } from "./lib/NavContext";
 import Login from "./components/Login";
 import Home from "./components/Home";
 import MuscleMap from "./components/MuscleMap";
@@ -28,54 +29,43 @@ function App() {
   if (session === undefined) return null;
   if (!session) return <Login />;
 
-  const nav = {
+  const navValue = {
+    currentView: view,
     onShowHome: () => setView("home"),
     onShowLogger: () => setView("logger"),
     onShowHistory: () => { setHistoryInitialDate(null); setView("history"); },
     onShowReport: () => setView("report"),
     onShowBibliotek: () => { setBibliotekInitialTab(0); setView("bibliotek"); },
+    onShowHistoryWithDate: (dateStr) => { setHistoryInitialDate(dateStr); setView("history"); },
+    onShowTemplatePicker: () => setView("template-picker"),
   };
 
+  let content;
+
   if (view === "home")
-    return <Home
-      {...nav}
-      currentView="home"
-      onShowHistoryWithDate={(dateStr) => { setHistoryInitialDate(dateStr); setView("history"); }}
-    />;
-
-  if (view === "history")
-    return <History {...nav} currentView="history" initialDate={historyInitialDate} />;
-
-  if (view === "report")
-    return <Report {...nav} currentView="report" />;
-
-  if (view === "bibliotek")
-    return <Bibliotek
-      {...nav}
-      currentView="bibliotek"
+    content = <Home onShowHistoryWithDate={navValue.onShowHistoryWithDate} />;
+  else if (view === "history")
+    content = <History initialDate={historyInitialDate} />;
+  else if (view === "report")
+    content = <Report />;
+  else if (view === "bibliotek")
+    content = <Bibliotek
       initialTab={bibliotekInitialTab}
-      onBack={nav.onShowHome}
       onEditTemplate={(tpl) => {
         setTemplateEditorState({ template: tpl, mode: "edit" });
         setView("template-editor");
       }}
     />;
-
-  if (view === "template-picker")
-    return <TemplatePicker
-      {...nav}
-      currentView="template-picker"
-      onBack={nav.onShowLogger}
+  else if (view === "template-picker")
+    content = <TemplatePicker
+      onBack={navValue.onShowLogger}
       onSelectTemplate={(tpl) => {
         setTemplateEditorState({ template: tpl, mode: "use" });
         setView("template-editor");
       }}
     />;
-
-  if (view === "template-editor" && templateEditorState)
-    return <TemplateSessionEditor
-      {...nav}
-      currentView="template-editor"
+  else if (view === "template-editor" && templateEditorState)
+    content = <TemplateSessionEditor
       template={templateEditorState.template}
       mode={templateEditorState.mode}
       onBack={() => {
@@ -93,14 +83,17 @@ function App() {
         setView("logger");
       }}
     />;
+  else
+    content = <MuscleMap
+      templatePreload={pendingTemplateExercises}
+      onTemplatePreloadConsumed={() => setPendingTemplateExercises(null)}
+    />;
 
-  return <MuscleMap
-    {...nav}
-    currentView="logger"
-    onShowTemplatePicker={() => setView("template-picker")}
-    templatePreload={pendingTemplateExercises}
-    onTemplatePreloadConsumed={() => setPendingTemplateExercises(null)}
-  />;
+  return (
+    <NavContext.Provider value={navValue}>
+      {content}
+    </NavContext.Provider>
+  );
 }
 
 export default App;

@@ -4,8 +4,10 @@ import { Book } from "@carbon/icons-react";
 import { fetchTemplates } from "../lib/db";
 import { logDevError } from "../lib/utils";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
+import { useNav } from "../lib/NavContext";
 
-export default function TemplatePicker({ onBack, onSelectTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
+export default function TemplatePicker({ onBack, onSelectTemplate }) {
+  const { onShowBibliotek } = useNav();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,14 +20,7 @@ export default function TemplatePicker({ onBack, onSelectTemplate, onShowHome, o
   }, []);
 
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <BackButton onClick={onBack} />
         <PageTitle>Velg mal</PageTitle>

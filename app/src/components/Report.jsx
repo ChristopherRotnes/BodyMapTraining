@@ -63,7 +63,7 @@ function KpiTile({ label, value }) {
   );
 }
 
-export default function Report({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
+export default function Report() {
 
   const isMobile = useIsMobile();
   const [mobileRecView, setMobileRecView] = useState("front");
@@ -241,14 +241,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
   };
 
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 32 }}>
           <SectionLabel>RAPPORT</SectionLabel>
           <PageHeading>Perioderapport</PageHeading>

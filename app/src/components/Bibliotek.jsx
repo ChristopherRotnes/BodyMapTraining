@@ -14,7 +14,7 @@ import { MUSCLES, BodySVG } from "../lib/bodymap.jsx";
 import { logDevError } from "../lib/utils";
 import ExerciseForm from "./ExerciseForm";
 
-export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialTab = 0 }) {
+export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
 
   const [tabIndex, setTabIndex] = useState(initialTab);
 
@@ -120,14 +120,7 @@ export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, on
     ));
 
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 32 }}>
           <PageTitle>Bibliotek</PageTitle>
           <Tabs selectedIndex={tabIndex} onChange={({ selectedIndex }) => setTabIndex(selectedIndex)}>

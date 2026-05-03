@@ -13,6 +13,7 @@ import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai, Book } from "@carbon/ico
 import ExerciseRow from "./ExerciseRow";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
+import { useNav } from "../lib/NavContext";
 
 const localDateStr = () => {
   const d = new Date();
@@ -97,7 +98,8 @@ export function reducer(state, action) {
 }
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
-export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowTemplatePicker, templatePreload, onTemplatePreloadConsumed, currentView }) {
+export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }) {
+  const { onShowHome, onShowTemplatePicker } = useNav();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { step, images, exercises, muscles, error, dragging, editingId,
           recs, loadingRecs, recsError, saving, saved, saveError,
@@ -222,14 +224,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
 
   // ── RENDER ────────────────────────────────────────────────────────
   return (
-    <PageShell
-      onShowHome={onShowHome}
-      onShowLogger={onShowLogger}
-      onShowHistory={onShowHistory}
-      onShowReport={onShowReport}
-      onShowBibliotek={onShowBibliotek}
-      currentView={currentView}
-    >
+    <PageShell>
       <div style={{ paddingBottom: 32 }}>
           <div ref={headingRef} tabIndex={-1} style={{ outline: "none" }}>
             <SectionLabel>LOGG ØKT</SectionLabel>
