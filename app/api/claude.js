@@ -7,11 +7,11 @@ const ALLOWED_MODELS = new Set([
 ]);
 const MAX_TOKENS_LIMIT = 2000;
 
-async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey) {
+async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseServiceKey) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
   const token = authHeader.slice(7);
   const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
+    headers: { Authorization: `Bearer ${token}`, apikey: supabaseServiceKey },
   });
   return res.ok;
 }
@@ -22,9 +22,9 @@ app.http('claude', {
   handler: async (request, context) => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!apiKey || !supabaseUrl || !supabaseAnonKey) {
+    if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
       context.error('Missing required environment variables');
       return new Response(
         JSON.stringify({ error: 'Server misconfiguration' }),
@@ -36,7 +36,7 @@ app.http('claude', {
     const authed = await verifySupabaseJwt(
       request.headers.get('Authorization'),
       supabaseUrl,
-      supabaseAnonKey
+      supabaseServiceKey
     );
     if (!authed) {
       return new Response(
