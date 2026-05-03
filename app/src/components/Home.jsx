@@ -246,8 +246,7 @@ export default function Home({
           )}
         </div>
 
-        {/* DEV: sporty.no sync — remove before release */}
-        <div style={{ margin: "32px 16px 0" }}>
+        {import.meta.env.DEV && <div style={{ margin: "32px 16px 0" }}>
           <SectionLabel>DEV</SectionLabel>
           <button
             onClick={triggerSportySync}
@@ -273,7 +272,7 @@ export default function Home({
               {syncMsg}
             </div>
           )}
-        </div>
+        </div>}
 
       </div>
     </PageShell>
