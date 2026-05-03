@@ -54,6 +54,7 @@ export default function Home({
   }, []);
 
   const muscles = lastSession ? extractMuscles(lastSession) : null;
+  const isToday = lastSession?.session_date === format(new Date(), "yyyy-MM-dd");
 
   // Build muscleMap for body figure hover tooltips: muscle_id → [Norwegian label]
   const muscleMap = muscles
@@ -114,7 +115,7 @@ export default function Home({
         </div>
 
         {/* Last session */}
-        <SectionLabel>SISTE ØKT</SectionLabel>
+        <SectionLabel>{isToday ? "DAGENS ØKT" : "SISTE ØKT"}</SectionLabel>
 
         {lastSession === undefined && (
           <div style={{ display: "flex", justifyContent: "center", padding: "16px 0 32px" }}>
