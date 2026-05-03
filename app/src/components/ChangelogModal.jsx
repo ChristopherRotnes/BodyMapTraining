@@ -1,4 +1,5 @@
-import { Modal, Accordion, AccordionItem } from "@carbon/react";
+import { Modal, Accordion, AccordionItem, Theme } from "@carbon/react";
+import { useTheme } from "../theme";
 import { CHANGELOG } from "../lib/changelog";
 
 const MONTHS = [
@@ -12,8 +13,10 @@ function formatDate(iso) {
 }
 
 export default function ChangelogModal({ open, onClose }) {
+  const { theme } = useTheme();
   const entries = CHANGELOG.slice(0, 15);
   return (
+    <Theme theme={theme === "g100" ? "g100" : "g10"}>
     <Modal
       open={open}
       onRequestClose={onClose}
@@ -44,5 +47,6 @@ export default function ChangelogModal({ open, onClose }) {
         ))}
       </Accordion>
     </Modal>
+    </Theme>
   );
 }
