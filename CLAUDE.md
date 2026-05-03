@@ -86,8 +86,6 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens.css` for available tokens. The `@carbon/react` package ships full TypeScript types — use them as the component API reference.
 
 ## What is NOT yet built
-- **Favicon** — replace default Vite icon with camera SVG in Carbon style (queued)
-- **Page title** — change from "app" to "Workout Lens" (queued)
 - **Gym calendar manager** — admin UI to manually trigger sporty.no sync and inspect `gym_calendar` rows; when built, the HTTP trigger on `sportySync.js` can be removed from the user-facing API
 
 ## Session data model — edit flow (issue #19)
