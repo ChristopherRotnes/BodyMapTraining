@@ -8,7 +8,7 @@
 - **Design system:** IBM Carbon Design System (`@carbon/react`, `@carbon/icons-react`) — see [Carbon design system](#carbon-design-system) section
 - **Auth + DB:** Supabase (magic-link login, Supabase Auth + PostgreSQL)
 - **AI:** Anthropic Claude API — proxied via Azure Function (server-side); model IDs managed in `app/src/lib/prompts.js`
-- **Hosting:** Azure Static Web Apps — **live at [white-island-090dfd003.7.azurestaticapps.net](https://white-island-090dfd003.7.azurestaticapps.net)**
+- **Hosting:** Azure Static Web Apps — **live at [workout.umulig.org](https://workout.umulig.org)**
 - **CI/CD:** GitHub Actions — push to `master` → auto-deploy to Azure SWA
 - **Language:** Norwegian UI throughout
 
@@ -165,6 +165,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 | J — Carbon g100 redesign | #40 epic | PageShell (#42) ✅, body figure (#43) ✅, Home (#44) ✅, Rapport (#45) ✅, Historikk (#46) ✅, Logg økt (#47) ✅, Bibliotek (#48) ✅ — ✅ Done |
 | K — UX polish | #51 #53 | Library autocomplete in History edit mode, weekly strip navigation Home→History ✅ Done |
 | L — Auth + sync fixes | #56 #57 | Upload 401 fix: Azure SWA replaces `Authorization` header — use `X-Supabase-Token` instead; sportySync upsert conflict key ✅ Done |
+| M — Tech stack + URL | #41 #54 | Node 20 → 22 LTS; @azure/functions → 4.14.0; custom domain workout.umulig.org ✅ Done |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
@@ -182,7 +183,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 ```
 
 `dev.ps1` is gitignored. It:
-1. Calls `fnm use 20` — Azure Functions Core Tools v4 requires Node ≤ 20; the system default is v24 which breaks the CLI
+1. Calls `fnm use 22` — pins to Node 22 LTS (Node 20 reached EOL April 2026)
 2. Spawns `npm run dev` (Vite on port 5173) in a separate PowerShell window
 3. Waits 3 s for Vite to start, then calls `swa start`
 

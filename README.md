@@ -47,7 +47,7 @@ Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Au
 .\dev.ps1
 ```
 
-`dev.ps1` is gitignored. It switches to Node 20 via `fnm` (Azure Functions Core Tools v4 requires Node ≤ 20; the system default v24 breaks it), opens Vite in a separate window, waits 3 s, then starts the SWA emulator.
+`dev.ps1` is gitignored. It pins to Node 22 via `fnm`, opens Vite in a separate window, waits 3 s, then starts the SWA emulator.
 
 Open **http://localhost:4280** —  The API routes (`/api/claude`, `/api/sporty-sync`) are only available through the SWA proxy at port 4280.
 
@@ -108,7 +108,7 @@ app/
 
 Hosted on **Azure Static Web Apps** — every push to `master` triggers a build and deploy via GitHub Actions.
 
-Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
+Live URL: `https://workout.umulig.org`
 
 ### Required secrets (GitHub Actions)
 
@@ -161,10 +161,11 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Carbon g100 redesign — all views (#40–#48) | ✅ Done (#40) |
 | Library autocomplete in History edit mode | ✅ Done (#51) |
 | Weekly strip navigation (Home → History) | ✅ Done (#53) |
+| Node 20 → 22 LTS; @azure/functions 4.14.0 | ✅ Done (#41) |
+| Custom domain (workout.umulig.org) | ✅ Done (#54) |
 
 ## Backlog
 
 | Issue(s) | Description | Priority |
 |---|---|---|
-| #41 | Keep app on latest tech stack | High |
 | #30 | Image storage — Supabase Storage for whiteboard photos | Low |
