@@ -7,20 +7,20 @@ const ALLOWED_MODELS = new Set([
 ]);
 const MAX_TOKENS_LIMIT = 2000;
 
-async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey, context) {
+async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey) {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    context.warn('verifySupabaseJwt: missing or malformed Authorization header');
-    return false;
+    return { ok: false, status: 0, detail: 'missing-auth-header' };
   }
   const token = authHeader.slice(7);
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    context.warn(`verifySupabaseJwt: Supabase returned ${res.status} — ${body}`);
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
+    });
+    const detail = await res.text();
+    return { ok: res.ok, status: res.status, detail };
+  } catch (e) {
+    return { ok: false, status: 0, detail: `fetch-error: ${e.message}` };
   }
-  return res.ok;
 }
 
 app.http('claude', {
@@ -43,12 +43,11 @@ app.http('claude', {
     const authed = await verifySupabaseJwt(
       request.headers.get('Authorization'),
       supabaseUrl,
-      supabaseAnonKey,
-      context
+      supabaseAnonKey
     );
-    if (!authed) {
+    if (!authed.ok) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', debug: { status: authed.status, detail: authed.detail } }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
