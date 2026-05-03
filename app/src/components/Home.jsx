@@ -226,7 +226,11 @@ export default function Home({
                     {label}
                   </div>
                   <div
+                    tabIndex={count > 0 ? 0 : -1}
+                    role={count > 0 ? "button" : undefined}
+                    aria-label={count > 0 ? `${label}: ${count} ${count === 1 ? "økt" : "økter"}` : undefined}
                     onClick={count > 0 ? () => onShowHistoryWithDate(date) : undefined}
+                    onKeyDown={count > 0 ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onShowHistoryWithDate(date); } } : undefined}
                     onMouseEnter={count > 0 ? (e) => {
                       const rect = weekStripRef.current?.getBoundingClientRect();
                       if (!rect) return;

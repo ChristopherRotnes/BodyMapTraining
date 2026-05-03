@@ -14,6 +14,20 @@
 /* Carbon button full-width override */
 .cds--btn { max-inline-size: none; }
 
+/* Focus rings — Carbon spec: 2px solid #0f62fe, outline-offset 2px.
+   Exclude .cds--btn so Carbon's own box-shadow focus ring is not doubled. */
+button:not(.cds--btn):focus-visible,
+[tabIndex="0"]:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 2px;
+}
+
+/* Custom number inputs suppress outline inline; restore it here */
+input[type=number]:focus-visible {
+  outline: 2px solid #0f62fe;
+  outline-offset: 0;
+}
+
 /* Number inputs: remove browser spinner arrows for cleaner look */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }

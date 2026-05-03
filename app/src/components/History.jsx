@@ -61,12 +61,17 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
           return (
             <div
               key={dateStr}
+              tabIndex={!isFuture && count > 0 ? 0 : -1}
+              role={!isFuture && count > 0 ? "button" : undefined}
+              aria-label={!isFuture && count > 0 ? `${dateStr}: ${count} ${count === 1 ? "økt" : "økter"}` : undefined}
+              aria-pressed={isSelected || undefined}
               onClick={() => !isFuture && count > 0 && onDayClick(dateStr)}
+              onKeyDown={!isFuture && count > 0 ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDayClick(dateStr); } } : undefined}
               style={{
                 height: 40,
                 background: calHeatColor(count),
                 border: "1px solid var(--cds-border-subtle-01)",
-                outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid #fff" : "none",
+                outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid #fff" : undefined,
                 outlineOffset: "-2px",
                 cursor: !isFuture && count > 0 ? "pointer" : "default",
                 display: "flex", alignItems: "center", justifyContent: "center",

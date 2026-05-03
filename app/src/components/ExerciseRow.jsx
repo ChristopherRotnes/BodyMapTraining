@@ -102,7 +102,6 @@ export default function ExerciseRow({
                   color: isFieldInvalid ? "var(--cds-support-error)" : "var(--cds-text-primary)",
                   fontFamily: "var(--cds-font-sans)",
                   fontSize: 12,
-                  outline: "none",
                   textAlign: "center",
                 }}
               />
