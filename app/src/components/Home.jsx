@@ -130,7 +130,7 @@ export default function Home({
         <SectionLabel>{isToday ? "DAGENS ØKT" : "SISTE ØKT"}</SectionLabel>
 
         {lastSession === undefined && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "16px 0 32px" }}>
+          <div aria-live="polite" aria-busy="true" style={{ display: "flex", justifyContent: "center", padding: "16px 0 32px" }}>
             <InlineLoading description="Laster siste økt…" />
           </div>
         )}

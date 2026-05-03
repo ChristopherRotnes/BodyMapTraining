@@ -301,10 +301,11 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
             </div>
           )}
 
+          <div aria-live="polite" aria-atomic="true">
           {loading ? (
             <InlineLoading description="Laster rapport…" status="active" style={{ marginTop: 24 }} />
           ) : error ? (
-            <p style={{ color: "var(--cds-support-error)", fontSize: 14 }}>{error}</p>
+            <p role="alert" style={{ color: "var(--cds-support-error)", fontSize: 14 }}>{error}</p>
           ) : (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, marginBottom: 20 }}>
@@ -451,6 +452,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
                     {loadingRecs ? "Henter anbefalinger…" : "Få anbefaling"}
                   </Button>
 
+                  <div aria-live="polite" aria-atomic="true">
                   {loadingRecs && (
                     <InlineLoading description="Analyserer treningsdata…" status="active" style={{ marginTop: 12 }} />
                   )}
@@ -461,10 +463,11 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
                       title="Feil:"
                       subtitle={recsError}
                       hideCloseButton
-                     
+
                       style={{ marginTop: 12 }}
                     />
                   )}
+                  </div>
 
                   {recs && recs.length > 0 && (() => {
                     const recPrimary = [...new Set(recs.flatMap(r => r.primary || []))];
@@ -539,6 +542,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
               )}
             </>
           )}
+          </div>
         </div>
     </PageShell>
   );
