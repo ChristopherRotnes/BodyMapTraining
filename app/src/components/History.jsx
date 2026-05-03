@@ -428,6 +428,8 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                   <div key={session.id} style={{ marginBottom: 4, opacity: muscleFilter.length > 0 && !isFilterMatch ? 0.45 : 1 }}>
                     <button
                       onClick={() => toggleExpand(session.id)}
+                      aria-expanded={isExpanded}
+                      aria-controls={`session-content-${session.id}`}
                       style={{
                         width: "100%", display: "flex", alignItems: "center", gap: 8,
                         background: "var(--cds-layer-01)",
@@ -453,7 +455,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                     </button>
 
                     {isExpanded && (
-                  <div style={{ border: "1px solid var(--cds-border-subtle-01)", borderTop: "none", padding: "16px 14px", marginBottom: 0 }}>
+                  <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--cds-border-subtle-01)", borderTop: "none", padding: "16px 14px", marginBottom: 0 }}>
 
                     {/* Gym class tag (read) or selector (edit) */}
                     {isEditing ? (
