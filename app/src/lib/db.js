@@ -246,6 +246,7 @@ export async function fetchLastSession() {
       id, session_date,
       gym_calendar(name),
       session_exercises(
+        id, name, sets, reps,
         muscle_activations(muscle_id, activation_type)
       )
     `)

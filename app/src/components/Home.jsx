@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { format, parseISO, startOfISOWeek, addDays } from "date-fns";
 import { nb } from "date-fns/locale";
-import { Tag, InlineLoading } from "@carbon/react";
+import { InlineLoading } from "@carbon/react";
 import { Camera } from "@carbon/icons-react";
 import { BodySVG, MUSCLES } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
@@ -43,7 +43,7 @@ function formatToday() {
 
 export default function Home({
   onShowHome, onShowLogger, onShowHistory, onShowReport,
-  onShowBibliotek, onShowBibliotekMaler, currentView, onShowHistoryWithDate,
+  onShowBibliotek, currentView, onShowHistoryWithDate,
 }) {
   const [lastSession, setLastSession] = useState(undefined);
   const [weekSessions, setWeekSessions] = useState(undefined);
@@ -54,6 +54,13 @@ export default function Home({
   }, []);
 
   const muscles = lastSession ? extractMuscles(lastSession) : null;
+
+  // Build muscleMap for body figure hover tooltips: muscle_id → [Norwegian label]
+  const muscleMap = muscles
+    ? Object.fromEntries(
+        [...muscles.primary, ...muscles.secondary].map(id => [id, [MUSCLES[id]?.label ?? id]])
+      )
+    : {};
 
   const weekStart = startOfISOWeek(new Date());
   const weekDays = DAY_LABELS.map((label, i) => {
@@ -129,14 +136,14 @@ export default function Home({
 
         {lastSession && muscles && (
           <div style={{ margin: "0 16px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)" }}>
+            {/* Header: date + class name */}
             <div style={{ padding: "16px 16px 0" }}>
               <div style={{
                 fontFamily: "var(--cds-font-mono)", fontSize: 11,
                 letterSpacing: "0.12em", color: "var(--cds-text-secondary)",
-                textTransform: "uppercase", marginBottom: 6,
+                textTransform: "uppercase", marginBottom: 4,
               }}>
                 {formatSessionDate(lastSession.session_date)}
-                {lastSession.session_exercises?.length > 0 && ` · ${lastSession.session_exercises.length} øvelser`}
               </div>
               {lastSession.gym_calendar?.name && (
                 <div style={{ fontSize: 18, fontWeight: 600, color: "var(--cds-text-primary)", lineHeight: 1.25 }}>
@@ -145,63 +152,52 @@ export default function Home({
               )}
             </div>
 
-            <div style={{ display: "flex", padding: "14px 12px 0", gap: 6 }}>
-              <div style={{ width: 90, flexShrink: 0 }}>
-                <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="front" />
+            {/* Body figures + exercise list side by side */}
+            <div style={{ display: "flex", gap: 16, padding: "14px 16px 0", alignItems: "flex-start" }}>
+              {/* Body figures — hover shows muscle name */}
+              <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                <div style={{ width: 72 }}>
+                  <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="front" muscleMap={muscleMap} />
+                </div>
+                <div style={{ width: 72 }}>
+                  <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="back" muscleMap={muscleMap} />
+                </div>
               </div>
-              <div style={{ width: 90, flexShrink: 0 }}>
-                <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="back" />
+
+              {/* Exercise list */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {(lastSession.session_exercises || []).map((ex, i) => (
+                  <div key={ex.id ?? i} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "baseline",
+                    padding: "5px 0",
+                    borderBottom: i < lastSession.session_exercises.length - 1
+                      ? "1px solid var(--cds-border-subtle-01)" : "none",
+                    gap: 8,
+                  }}>
+                    <span style={{ fontSize: 13, color: "var(--cds-text-primary)", lineHeight: 1.3 }}>
+                      {ex.name}
+                    </span>
+                    {(ex.sets || ex.reps) && (
+                      <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", whiteSpace: "nowrap", letterSpacing: "0.06em" }}>
+                        {ex.sets && ex.reps ? `${ex.sets}×${ex.reps}` : ex.sets ?? ex.reps}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div style={{ padding: "8px 16px 16px" }}>
-              {muscles.primary.length > 0 && (
-                <>
-                  <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.12em", color: "var(--cds-text-secondary)", textTransform: "uppercase", marginBottom: 6 }}>
-                    PRIMÆR ({muscles.primary.length})
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 4px", marginBottom: 10 }}>
-                    {muscles.primary.map(m => (
-                      <Tag key={m} type="green" size="sm">{MUSCLES[m]?.label ?? m}</Tag>
-                    ))}
-                  </div>
-                </>
-              )}
-              {muscles.secondary.length > 0 && (
-                <>
-                  <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.12em", color: "var(--cds-text-secondary)", textTransform: "uppercase", marginBottom: 6 }}>
-                    SEKUNDÆR ({muscles.secondary.length})
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 4px" }}>
-                    {muscles.secondary.map(m => (
-                      <Tag key={m} type="blue" size="sm">{MUSCLES[m]?.label ?? m}</Tag>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div style={{ borderTop: "1px solid var(--cds-border-subtle-01)", display: "flex" }}>
+            {/* Footer */}
+            <div style={{ borderTop: "1px solid var(--cds-border-subtle-01)", marginTop: 14 }}>
               <button
                 onClick={() => onShowHistoryWithDate(lastSession.session_date)}
                 style={{
-                  flex: 1, height: 48, background: "transparent", border: "none",
-                  borderRight: "1px solid var(--cds-border-subtle-01)",
+                  width: "100%", height: 48, background: "transparent", border: "none",
                   color: "var(--cds-text-primary)", fontFamily: "var(--cds-font-sans)",
                   fontSize: 14, cursor: "pointer",
                 }}
               >
                 Se detaljer
-              </button>
-              <button
-                onClick={onShowBibliotekMaler}
-                style={{
-                  flex: 1, height: 48, background: "transparent", border: "none",
-                  color: "var(--cds-text-primary)", fontFamily: "var(--cds-font-sans)",
-                  fontSize: 14, cursor: "pointer",
-                }}
-              >
-                Bruk som mal
               </button>
             </div>
           </div>

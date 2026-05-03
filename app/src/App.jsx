@@ -41,7 +41,6 @@ function App() {
       {...nav}
       currentView="home"
       onShowHistoryWithDate={(dateStr) => { setHistoryInitialDate(dateStr); setView("history"); }}
-      onShowBibliotekMaler={() => { setBibliotekInitialTab(1); setView("bibliotek"); }}
     />;
 
   if (view === "history")
