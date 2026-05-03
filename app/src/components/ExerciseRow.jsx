@@ -44,6 +44,7 @@ export default function ExerciseRow({
         {editingName ? (
           <input
             autoFocus
+            aria-label="Øvelsenavn"
             value={exercise.name}
             onChange={(e) => onChange({ name: e.target.value, standardName: e.target.value })}
             onBlur={() => setEditingName(false)}
@@ -77,33 +78,48 @@ export default function ExerciseRow({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-        {["sets", "reps"].map(field => (
-          <div key={field} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <input
-              type="number"
-              min="1"
-              max="99"
-              placeholder="–"
-              value={exercise[field] || ""}
-              onChange={e => onChange({ [field]: e.target.value })}
-              style={{
-                width: 40,
-                height: 28,
-                padding: "0 4px",
-                background: "var(--cds-field-01)",
-                border: `1px solid ${validateNumbers && isInvalidNum(exercise[field]) ? "var(--cds-support-error)" : "var(--cds-border-strong-01)"}`,
-                color: validateNumbers && isInvalidNum(exercise[field]) ? "var(--cds-support-error)" : "var(--cds-text-primary)",
-                fontFamily: "var(--cds-font-sans)",
-                fontSize: 12,
-                outline: "none",
-                textAlign: "center",
-              }}
-            />
-            <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-              {field === "sets" ? "sett" : "reps"}
-            </span>
-          </div>
-        ))}
+        {["sets", "reps"].map(field => {
+          const isFieldInvalid = validateNumbers && isInvalidNum(exercise[field]);
+          const errorId = `err-${exercise.id}-${field}`;
+          return (
+            <div key={field} style={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
+              <input
+                type="number"
+                min="1"
+                max="99"
+                placeholder="–"
+                aria-label={field === "sets" ? `Sett for ${exercise.name || "øvelse"}` : `Reps for ${exercise.name || "øvelse"}`}
+                aria-invalid={isFieldInvalid || undefined}
+                aria-describedby={isFieldInvalid ? errorId : undefined}
+                value={exercise[field] || ""}
+                onChange={e => onChange({ [field]: e.target.value })}
+                style={{
+                  width: 40,
+                  height: 28,
+                  padding: "0 4px",
+                  background: "var(--cds-field-01)",
+                  border: `1px solid ${isFieldInvalid ? "var(--cds-support-error)" : "var(--cds-border-strong-01)"}`,
+                  color: isFieldInvalid ? "var(--cds-support-error)" : "var(--cds-text-primary)",
+                  fontFamily: "var(--cds-font-sans)",
+                  fontSize: 12,
+                  outline: "none",
+                  textAlign: "center",
+                }}
+              />
+              <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
+                {field === "sets" ? "sett" : "reps"}
+              </span>
+              {isFieldInvalid && (
+                <span
+                  id={errorId}
+                  style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+                >
+                  Ugyldig antall – skriv inn 1 til 99
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <Button
