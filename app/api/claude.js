@@ -17,7 +17,7 @@ async function verifySupabaseJwt(authHeader, supabaseUrl, supabaseAnonKey) {
       headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
     });
     const detail = await res.text();
-    return { ok: res.ok, status: res.status, detail };
+    return { ok: res.ok, status: res.status, detail, tokenLen: token.length, tokenTail: token.slice(-20) };
   } catch (e) {
     return { ok: false, status: 0, detail: `fetch-error: ${e.message}` };
   }
@@ -47,7 +47,7 @@ app.http('claude', {
     );
     if (!authed.ok) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', debug: { status: authed.status, detail: authed.detail } }),
+        JSON.stringify({ error: 'Unauthorized', debug: authed }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
