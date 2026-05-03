@@ -147,42 +147,6 @@ Live URL: `https://workout.umulig.org`
 
 > **Note:** The frontend is built in the GitHub Actions runner (not by Oryx inside Azure SWA's Docker container). Oryx strips `VITE_*` env vars before spawning Vite, so they would never reach the bundle if built there. The workflow pre-builds `app/dist/` and the Azure SWA action uploads it directly via `app_location: "app/dist"`. Do not revert this.
 
-## Status
-
-| Feature | Status |
-|---|---|
-| Image upload (drag & drop, multi-image, camera) | ✅ |
-| Claude Vision analysis | ✅ |
-| Exercise confirm + edit step | ✅ |
-| Muscle map SVG with tooltips | ✅ |
-| Magic link login | ✅ |
-| Next-session recommendations | ✅ |
-| Session persistence (Supabase) | ✅ |
-| IBM Carbon Design System | ✅ Done (#8) |
-| Local dev + branch CI/CD | ✅ Done (#6) |
-| Workout history view | ✅ Done (#2) |
-| Sporty.no gym calendar sync + session picker | ✅ Done (#12) |
-| Bodymap layout and graphics improvements | ✅ Done (#10) |
-| Period / volume report | ✅ Done (#3) |
-| Duplicate session prevention | ✅ Done (#13) |
-| Past-date logging + edit existing sessions | ✅ Done (#19) |
-| Shared lib (utils, prompts, model constants) | ✅ Done (#24 #25 #27) |
-| Backend security (sportySync API key) | ✅ Done (#26) |
-| Unit tests (Vitest) | ✅ Done (#28) |
-| History muscle filter + skeleton loading | ✅ Done (#31 #34) |
-| Input & display polish (volume, date format, validation) | ✅ Done (#32 #33 #35 #36) |
-| Exercise library + session templates | ✅ Done (#38) |
-| Error resilience (JSON.parse try-catch + ErrorBoundary) | ✅ Done (#23 #29) |
-| API authentication (Supabase JWT on Claude proxy) | ✅ Done |
-| Code refactor (useReducer, shared BodyPanel, batch DB inserts) | ✅ Done |
-| Carbon g100 redesign — all views (#40–#48) | ✅ Done (#40) |
-| Library autocomplete in History edit mode | ✅ Done (#51) |
-| Weekly strip navigation (Home → History) | ✅ Done (#53) |
-| Node 20 → 22 LTS; @azure/functions 4.14.0 | ✅ Done (#41) |
-| Custom domain (workout.umulig.org) | ✅ Done (#54) |
-
 ## Backlog
 
-| Issue(s) | Description | Priority |
-|---|---|---|
-| #30 | Image storage — Supabase Storage for whiteboard photos | Low |
+Open work is tracked in [GitHub Issues](https://github.com/ChristopherRotnes/BodyMapTraining/issues).

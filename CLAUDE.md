@@ -85,8 +85,9 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 ### Adding more Carbon components
 Refer to the official IBM Carbon documentation and `app/src/styles/carbon-tokens.css` for available tokens. The `@carbon/react` package ships full TypeScript types — use them as the component API reference.
 
-## What is NOT yet built
-- **Gym calendar manager** — admin UI to manually trigger sporty.no sync and inspect `gym_calendar` rows; when built, the HTTP trigger on `sportySync.js` can be removed from the user-facing API
+## Backlog
+
+Tracked in [GitHub Issues](https://github.com/ChristopherRotnes/BodyMapTraining/issues). Run `gh issue list` for current open work.
 
 ## Session data model — edit flow (issue #19)
 
@@ -161,24 +162,6 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 - **Claude API proxy:** `app/api/claude.js` verifies incoming Supabase JWTs via `GET /auth/v1/user`. Requires `ANTHROPIC_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` as Azure app settings. Use `SUPABASE_ANON_KEY` (no `VITE_` prefix) — the `VITE_` prefix is Vite build-time only and is invisible to the Azure Functions runtime.
 - **CI/CD build split:** the frontend is pre-built in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in `env:`), then the Azure SWA action uploads `app/dist/` directly (`app_location: "app/dist"`). This bypasses Oryx for the frontend — Oryx strips `VITE_*` env vars before spawning Vite and they never reach the bundle. Oryx still handles the API (`app/api`). `vite.config.js` has a build-time assertion that fails immediately if the required vars are missing.
 - **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
-
-## Open backlog — issue groupings
-
-| PR | Issues | Description |
-|---|---|---|
-| A — Shared lib foundation | #24 #25 #27 | Extract duplicate utils/prompts/model constant ✅ Done |
-| B — Error resilience | #23 #29 | JSON.parse try-catch + React ErrorBoundary ✅ Done |
-| C — Backend security | #26 | API key on sportySync HTTP trigger ✅ Done |
-| D — Tests | #28 | Vitest unit tests for lib/ functions ✅ Done |
-| E — History improvements | #31 #34 | Muscle filter + skeleton loading ✅ Done |
-| F — Input & display polish | #32 #33 #35 #36 | Volume in report, Norwegian date format, form validation ✅ Done |
-| G — Image storage | #30 | Supabase Storage for whiteboard photos (low priority) |
-| H — Templates + library | #38 | Exercise library, session templates, TemplatePicker, TemplateSessionEditor ✅ Done |
-| I — Security + refactor | — | API JWT auth, callClaude helper, useReducer in MuscleMap, BodyPanel/ExerciseForm/LibraryPicker extraction, batch inserts, Carbon Modal ✅ Done |
-| J — Carbon g100 redesign | #40 epic | PageShell (#42) ✅, body figure (#43) ✅, Home (#44) ✅, Rapport (#45) ✅, Historikk (#46) ✅, Logg økt (#47) ✅, Bibliotek (#48) ✅ — ✅ Done |
-| K — UX polish | #51 #53 | Library autocomplete in History edit mode, weekly strip navigation Home→History ✅ Done |
-| L — Auth + sync fixes | #56 #57 | Upload 401 fix: Azure SWA replaces `Authorization` header — use `X-Supabase-Token` instead; sportySync upsert conflict key ✅ Done |
-| M — Tech stack + URL | #41 #54 | Node 20 → 22 LTS; @azure/functions → 4.14.0; custom domain workout.umulig.org ✅ Done |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
