@@ -39,7 +39,7 @@ cd api && npm install
 
 `app/.env.test` is committed with placeholder values — no setup needed. It lets the Vitest test runner import `supabase.js` without crashing (unit tests make no real Supabase calls).
 
-Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Authentication → URL Configuration).
+Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Authentication → URL Configuration). (Rembember to add other urls you use either as dev, qa or prod)
 
 ### Running
 

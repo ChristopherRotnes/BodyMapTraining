@@ -1,5 +1,10 @@
 # BodyMapTraining — CLAUDE.md
 
+## Remember this if you are an AI
+**Verification before closing issue**
+All issues must be verified by the developer before you can close them on github. Either on dev, qa or prod (user decides). Regardless of method, AI must wait until user has verified fix to close issues.
+
+
 ## Project overview
 **Workout Lens** — a workout-logging app. User photographs a handwritten training program from a gym whiteboard (sporty.no format), the app analyses the image via Claude Vision, displays which muscles were trained on a body figure, and gives next-session recommendations.
 
@@ -202,7 +207,6 @@ cd app && npm install
 ## Azure deploy notes
 - **Resource group:** `rg-muskelkart` (West Europe) — **Azure resource name:** `muskelkart`
 - Supabase Auth redirect URLs: localhost + Azure domain both registered
-- Netlify site is locked (no longer deploys on push)
 - For secrets/settings/live URL, see README → Deployment section
 
 ## Known pitfalls (previously hit, fixed, must not regress)
