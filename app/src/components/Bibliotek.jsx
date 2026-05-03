@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Button, Tag, InlineNotification, InlineLoading,
   Tabs, Tab, TabList, TabPanels, TabPanel,
@@ -13,7 +13,7 @@ import {
 import { MUSCLES, BodySVG } from "../lib/bodymap.jsx";
 import ExerciseForm from "./ExerciseForm";
 
-export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialTab = 0 }) {
+export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialTab = 0 }) {
 
   const [tabIndex, setTabIndex] = useState(initialTab);
 

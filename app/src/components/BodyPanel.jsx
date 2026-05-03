@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@carbon/react";
 import { BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 

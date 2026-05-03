@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button, TextInput } from "@carbon/react";
 
 // Searchable picker that shows library exercises and lets the user add one to a list.

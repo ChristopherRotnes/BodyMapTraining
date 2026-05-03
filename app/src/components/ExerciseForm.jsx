@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button, TextInput } from "@carbon/react";
 import MusclePicker from "./MusclePicker";
 

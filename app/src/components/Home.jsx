@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { format, parseISO, startOfISOWeek, addDays } from "date-fns";
 import { nb } from "date-fns/locale";
 import { InlineLoading } from "@carbon/react";

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  Button, Tag, InlineNotification, InlineLoading,
+  Button, Tag, InlineNotification,
 } from "@carbon/react";
 import { Add, ArrowLeft, ArrowRight, Save } from "@carbon/icons-react";
 import PageShell, { PageTitle, BackButton } from "./PageShell";

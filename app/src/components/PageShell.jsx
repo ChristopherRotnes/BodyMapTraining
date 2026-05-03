@@ -1,4 +1,3 @@
-import React from "react";
 import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { useTheme } from "../theme";

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { subDays, format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { fetchSessionsForReport } from "../lib/db";

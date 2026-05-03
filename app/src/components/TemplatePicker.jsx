@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { Book } from "@carbon/icons-react";
 import { fetchTemplates } from "../lib/db";

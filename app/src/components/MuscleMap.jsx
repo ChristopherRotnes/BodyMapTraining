@@ -1,4 +1,4 @@
-import React, { useReducer, useRef, useCallback, useEffect, useMemo } from "react";
+import { useReducer, useRef, useCallback, useEffect, useMemo } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude } from "../lib/utils";
