@@ -6,6 +6,7 @@
     "ANTHROPIC_API_KEY": "sk-ant-...",
     "SUPABASE_URL": "https://<project-ref>.supabase.co",
     "VITE_SUPABASE_ANON_KEY": "eyJ...",
+    "SUPABASE_ANON_KEY": "eyJ...",
     "SUPABASE_SERVICE_ROLE_KEY": "eyJ...",
     "SPORTY_SYNC_API_KEY": "any-secret-string-you-choose"
   }

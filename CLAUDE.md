@@ -145,6 +145,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
 - **Azure Functions entry point:** `app/api/index.js` imports all function files (`claude.js`, `sportySync.js`). `package.json#main` points to `index.js`. Azure Functions v4 only loads the single file referenced in `main` — add new function files here or they will never be registered.
 - **Sporty.no sync:** `app/api/sportySync.js` — timer trigger at 04:00 + 11:00 UTC upserts today's sessions from `https://sporty.no/api/v1/businessunits/8/groupactivities` into `gym_calendar` by `sporty_id`. HTTP trigger `POST /api/sporty-sync` available for manual testing. Requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` as Azure app settings (service role needed because the timer has no auth user).
+- **Claude API proxy:** `app/api/claude.js` verifies incoming Supabase JWTs via `GET /auth/v1/user`. Requires `ANTHROPIC_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` as Azure app settings. Use `SUPABASE_ANON_KEY` (no `VITE_` prefix) — the `VITE_` prefix is Vite build-time only and is invisible to the Azure Functions runtime.
 - **CI/CD build split:** the frontend is pre-built in the GitHub Actions runner (`npm ci && npm run build` with `VITE_*` in `env:`), then the Azure SWA action uploads `app/dist/` directly (`app_location: "app/dist"`). This bypasses Oryx for the frontend — Oryx strips `VITE_*` env vars before spawning Vite and they never reach the bundle. Oryx still handles the API (`app/api`). `vite.config.js` has a build-time assertion that fails immediately if the required vars are missing.
 - **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
 
@@ -163,6 +164,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 | I — Security + refactor | — | API JWT auth, callClaude helper, useReducer in MuscleMap, BodyPanel/ExerciseForm/LibraryPicker extraction, batch inserts, Carbon Modal ✅ Done |
 | J — Carbon g100 redesign | #40 epic | PageShell (#42) ✅, body figure (#43) ✅, Home (#44) ✅, Rapport (#45) ✅, Historikk (#46) ✅, Logg økt (#47) ✅, Bibliotek (#48) ✅ — ✅ Done |
 | K — UX polish | #51 #53 | Library autocomplete in History edit mode, weekly strip navigation Home→History ✅ Done |
+| L — Auth + sync fixes | #56 #57 | Upload 401 fix: `SUPABASE_ANON_KEY` env var in Azure + claude.js; sportySync upsert conflict key ✅ Done |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
@@ -190,7 +192,7 @@ Open **http://localhost:4280** (not 5173). The SWA emulator proxies `/api/*` to 
 ```bash
 npm install -g @azure/static-web-apps-cli
 cp app/.env.local.example app/.env.local                             # fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY
+cp app/api/local.settings.json.example app/api/local.settings.json  # fill in ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY, SUPABASE_ANON_KEY
 cd app && npm install
 ```
 

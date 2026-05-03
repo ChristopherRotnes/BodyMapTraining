@@ -56,7 +56,7 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
   }
 
   const upsertRes = await fetch(
-    `${supabaseUrl}/rest/v1/gym_calendar`,
+    `${supabaseUrl}/rest/v1/gym_calendar?on_conflict=sporty_id`,
     {
       method: 'POST',
       headers: {
