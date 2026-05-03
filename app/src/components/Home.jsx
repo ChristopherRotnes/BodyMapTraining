@@ -3,7 +3,7 @@ import { format, parseISO, startOfISOWeek, addDays } from "date-fns";
 import { nb } from "date-fns/locale";
 import { InlineLoading } from "@carbon/react";
 import { Camera } from "@carbon/icons-react";
-import { BodySVG, MUSCLES } from "../lib/bodymap.jsx";
+import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
 import { extractMuscles } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
@@ -75,12 +75,6 @@ export default function Home({
   const today = new Date();
   const muscles = lastSession ? extractMuscles(lastSession) : null;
   const isToday = lastSession?.session_date === format(today, "yyyy-MM-dd");
-
-  const muscleMap = muscles
-    ? Object.fromEntries(
-        [...muscles.primary, ...muscles.secondary].map(id => [id, [MUSCLES[id]?.label ?? id]])
-      )
-    : {};
 
   const weekStart = startOfISOWeek(today);
   const weekDays = DAY_LABELS.map((label, i) => {
@@ -171,13 +165,13 @@ export default function Home({
 
             {/* Body figures + exercise list side by side */}
             <div style={{ display: "flex", gap: 16, padding: "12px 16px 0", alignItems: "flex-start" }}>
-              {/* Body figures — hover shows muscle name */}
+              {/* Body figures */}
               <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                 <div style={{ width: 72 }}>
-                  <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="front" muscleMap={muscleMap} />
+                  <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="front" />
                 </div>
                 <div style={{ width: 72 }}>
-                  <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="back" muscleMap={muscleMap} />
+                  <BodySVG primary={muscles.primary} secondary={muscles.secondary} view="back" />
                 </div>
               </div>
 
@@ -261,11 +255,7 @@ export default function Home({
                 maxWidth: 200,
               }}>
                 {tooltip.names.map((name, i) => (
-                  <div key={i} style={{
-                    fontFamily: "var(--cds-font-mono)", fontSize: 12,
-                    color: "var(--cds-text-primary)",
-                    padding: i > 0 ? "4px 0 0" : 0,
-                  }}>
+                  <div key={i} style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", padding: i > 0 ? "4px 0 0" : 0 }}>
                     {name}
                   </div>
                 ))}

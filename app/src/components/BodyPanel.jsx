@@ -4,7 +4,7 @@ import { BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 
 // Renders a front+back body map pair: side-by-side on desktop, toggled on mobile.
 // Manages its own mobile view state so parents don't need to.
-export default function BodyPanel({ primary, secondary, muscleMap, marginBottom = 16 }) {
+export default function BodyPanel({ primary, secondary, muscleMap, marginBottom = 16, onHover, hovered }) {
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState("front");
 
@@ -20,7 +20,7 @@ export default function BodyPanel({ primary, secondary, muscleMap, marginBottom 
           ))}
         </div>
         <div style={{ maxWidth: 240, margin: "0 auto", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-          <BodySVG view={mobileView} primary={primary} secondary={secondary} muscleMap={muscleMap} />
+          <BodySVG view={mobileView} primary={primary} secondary={secondary} muscleMap={muscleMap} onHover={onHover} hovered={hovered} />
         </div>
       </div>
     );
@@ -30,7 +30,7 @@ export default function BodyPanel({ primary, secondary, muscleMap, marginBottom 
     <div style={{ display: "flex", gap: 12, marginBottom }}>
       {["front", "back"].map(view => (
         <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-          <BodySVG view={view} primary={primary} secondary={secondary} muscleMap={muscleMap} />
+          <BodySVG view={view} primary={primary} secondary={secondary} muscleMap={muscleMap} onHover={onHover} hovered={hovered} />
         </div>
       ))}
     </div>

@@ -252,23 +252,28 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   );
 }
 
-export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
+export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hovered }) {
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
   const [tooltip, setTooltip] = React.useState(null);
   const wrapRef = React.useRef();
 
   const handleEnter = (id, e) => {
+    if (onHover) { onHover(id); return; }
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
   const handleMove = (id, e) => {
+    if (onHover) return;
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
-  const handleLeave = () => setTooltip(null);
+  const handleLeave = () => {
+    if (onHover) { onHover(null); return; }
+    setTooltip(null);
+  };
 
   return (
     <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
@@ -295,7 +300,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
             const isPrimary = pSet.has(id);
             const isSec = sSet.has(id);
             if (!isPrimary && !isSec) return null;
-            const isHovered = tooltip?.id === id;
+            const isHovered = onHover ? id === hovered : tooltip?.id === id;
             const fill = isPrimary
               ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
               : `url(#sec-stripe-${view})`;
@@ -321,7 +326,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
         </text>
       </svg>
 
-      {tooltip && muscleMap[tooltip.id]?.length > 0 && (
+      {!onHover && tooltip && muscleMap[tooltip.id]?.length > 0 && (
         <div style={{
           position: "absolute",
           left: Math.min(tooltip.x + 10, (wrapRef.current?.offsetWidth || 200) - 140),
