@@ -387,48 +387,56 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
               )}
 
               <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14 }}>
-                <p style={{ ...labelStyle, marginBottom: 8 }}>Muskelfrekvens</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 6, borderBottom: "1px solid var(--cds-border-strong-01)", marginBottom: 2 }}>
-                  <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", width: 140, flexShrink: 0, fontFamily: "var(--cds-font-mono)", letterSpacing: "1px" }}>MUSKEL</span>
-                  <div style={{ flex: 1 }} />
-                  <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", width: 36, textAlign: "right", flexShrink: 0, letterSpacing: "1px" }}>ØKT</span>
-                  <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", width: 40, textAlign: "right", flexShrink: 0, letterSpacing: "1px" }}>SETT</span>
-                </div>
-                {frequencyTable.map(({ id, primary, secondary }) => {
-                  const barWidth = maxPrimaryCount > 0 ? (primary / maxPrimaryCount) * 100 : 0;
-                  const countColor = primary > 0
-                    ? "var(--cds-text-primary)"
-                    : secondary > 0
-                    ? "#4589ff"
-                    : "var(--cds-text-disabled)";
-                  const countLabel = primary > 0
-                    ? String(primary)
-                    : secondary > 0
-                    ? `(${secondary})`
-                    : "—";
-                  return (
-                    <div key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                      <span style={{ fontSize: 12, color: "var(--cds-text-primary)", width: 140, flexShrink: 0 }}>
-                        {muscleExercises[id]?.size > 0 ? (
-                          <DefinitionTooltip definition={[...muscleExercises[id]].join(", ")} openOnHover align="bottom">
-                            {MUSCLES[id]?.label || id}
-                          </DefinitionTooltip>
-                        ) : MUSCLES[id]?.label || id}
-                      </span>
-                      <div style={{ flex: 1, height: 6, background: "var(--cds-layer-02)" }}>
-                        {primary > 0 && (
-                          <div style={{ height: "100%", width: `${barWidth}%`, background: "var(--heat-4)" }} />
-                        )}
-                      </div>
-                      <span style={{ fontSize: 11, color: countColor, fontFamily: "var(--cds-font-mono)", width: 36, textAlign: "right", flexShrink: 0 }}>
-                        {countLabel}
-                      </span>
-                      <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", width: 40, textAlign: "right", flexShrink: 0 }}>
-                        {muscleVolume[id] > 0 ? muscleVolume[id] : "—"}
-                      </span>
-                    </div>
-                  );
-                })}
+                <p style={{ ...labelStyle, marginBottom: 8 }} id="freq-table-label">Muskelfrekvens</p>
+                <table aria-labelledby="freq-table-label" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--cds-border-strong-01)" }}>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "left", paddingBottom: 6, width: 140 }}>MUSKEL</th>
+                      <th scope="col" aria-label="Frekvensbar" style={{ width: "100%" }} />
+                      <th scope="col" style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 36 }}>ØKT</th>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 40 }}>SETT</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {frequencyTable.map(({ id, primary, secondary }) => {
+                      const barWidth = maxPrimaryCount > 0 ? (primary / maxPrimaryCount) * 100 : 0;
+                      const countColor = primary > 0
+                        ? "var(--cds-text-primary)"
+                        : secondary > 0
+                        ? "#4589ff"
+                        : "var(--cds-text-disabled)";
+                      const countLabel = primary > 0
+                        ? String(primary)
+                        : secondary > 0
+                        ? `(${secondary})`
+                        : "—";
+                      return (
+                        <tr key={id} style={{ borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                          <td style={{ fontSize: 12, color: "var(--cds-text-primary)", padding: "6px 0" }}>
+                            {muscleExercises[id]?.size > 0 ? (
+                              <DefinitionTooltip definition={[...muscleExercises[id]].join(", ")} openOnHover align="bottom">
+                                {MUSCLES[id]?.label || id}
+                              </DefinitionTooltip>
+                            ) : MUSCLES[id]?.label || id}
+                          </td>
+                          <td style={{ padding: "6px 10px" }}>
+                            <div style={{ height: 6, background: "var(--cds-layer-02)" }}>
+                              {primary > 0 && (
+                                <div style={{ height: "100%", width: `${barWidth}%`, background: "var(--heat-4)" }} />
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ fontSize: 11, color: countColor, fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
+                            {countLabel}
+                          </td>
+                          <td style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
+                            {muscleVolume[id] > 0 ? muscleVolume[id] : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
               {sessionCount > 0 && (
