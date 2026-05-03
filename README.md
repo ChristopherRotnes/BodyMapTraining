@@ -10,14 +10,14 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
-7. **History** — two-month calendar view with trained dates highlighted; click a date to see that session's muscle map and exercise list; edit or re-analyse any saved session
+7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session
 8. **Library** — build a named exercise library with click-to-toggle muscle selection; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
 
 ## Tech stack
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 19 + Vite, react-day-picker |
+| Frontend | React 19 + Vite |
 | Design system | IBM Carbon Design System |
 | Auth | Supabase Auth (magic link) |
 | Database | Supabase (Postgres) |
@@ -63,7 +63,7 @@ app/
     components/
       Login.jsx                    # Magic-link email login
       MuscleMap.jsx                # Logger — upload/template-preload, analyse, confirm, visualise
-      History.jsx                  # History — two-month calendar + session detail + edit mode
+      History.jsx                  # History — custom month grid calendar + session detail + edit mode
       Report.jsx                   # Period report — heatmap body map + muscle coverage stats
       ExerciseRow.jsx              # Shared editable exercise row (checkbox, name, sets, reps, delete)
       BodyPanel.jsx                # Shared front/back body map with mobile toggle (used in 3 views)
@@ -80,8 +80,8 @@ app/
       supabase.js                  # Supabase client
       db.js                        # DB helpers: sessions, exercises, muscle_activations, gym_calendar,
                                    #   exercise_library, session_templates, session_template_exercises
-      bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG, calcMuscles, useIsMobile
-      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude
+      bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG (onHover/hovered), calcMuscles, useIsMobile
+      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude, extractMuscles
       prompts.js                   # Claude model IDs + prompt builders
     styles/
       carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
@@ -157,9 +157,14 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Error resilience (JSON.parse try-catch + ErrorBoundary) | ✅ Done (#23 #29) |
 | API authentication (Supabase JWT on Claude proxy) | ✅ Done |
 | Code refactor (useReducer, shared BodyPanel, batch DB inserts) | ✅ Done |
+| Carbon g100 redesign — Home, Rapport, Historikk (#42–#46) | ✅ Done (#40 partial) |
 
 ## Backlog
 
 | Issue(s) | Description | Priority |
 |---|---|---|
+| #47 | Design #40.6 — Logg økt: horizontal stepper, dashed dropzone, sticky action bar | Medium |
+| #48 | Design #40.7 — Bibliotek: body-map thumbnails on templates, exercise count badges | Medium |
+| #51 | Library autocomplete in History edit mode | Medium |
+| #53 | Weekly strip day click → History + mouseover shows session name | Low |
 | #30 | Image storage — Supabase Storage for whiteboard photos | Low |

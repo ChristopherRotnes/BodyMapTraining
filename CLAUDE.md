@@ -30,13 +30,18 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
 - `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav, `Book` library nav, light/dark toggle), `ProgressIndicator`, `Button`, `Tag`, `InlineLoading`, `InlineNotification`; exercise rows delegated to `ExerciseRow`
-- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Select`/`SelectItem`; `react-day-picker` calendar themed to Carbon tokens; edit mode uses `Edit`, `Camera`, `Add`, `Renew` icons; exercise rows delegated to `ExerciseRow`
+- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Select`/`SelectItem`; custom `MonthGrid` calendar (replaced `react-day-picker`); edit mode uses `Edit`, `Camera`, `Add`, `Renew` icons; exercise rows delegated to `ExerciseRow`
 - `Bibliotek.jsx` → Carbon `Tabs`/`Tab`/`TabList`/`TabPanels`/`TabPanel`, `TextInput`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`, `Modal`; exercise form via `ExerciseForm`
 - `TemplatePicker.jsx` → Carbon `Button`, `InlineLoading`, `InlineNotification`
 - `TemplateSessionEditor.jsx` → Carbon `Button`, `Tag`, `InlineNotification`, `InlineLoading`; body map via `BodyPanel`; exercise rows via `ExerciseRow`; library search via `LibraryPicker`
 - `MuscleMap.jsx` confirm step → Carbon `DatePicker`/`DatePickerInput` for session date (defaults to today, max = today)
-- `BodySVG` muscle highlights: primary → green-50 `rgba(36,161,72,…)`, secondary → blue-40 `rgba(120,169,255,…)`
-- Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners
+- `BodySVG` / `HeatmapBodySVG` muscle highlights: primary → `var(--heat-4)` solid green, secondary → diagonal blue hatch (`#001d6c` base + `#4589ff` lines). `HeatmapBodySVG` accepts `onHover(id|null)` and `hovered` props — when `onHover` is provided the internal floating tooltip is suppressed and the caller manages the detail card.
+- `Home.jsx` → `SectionLabel` + `PageHeading` headings; last session card with gym-class identity hero; 7-day weekly strip with heat colors; `fetchThisWeekSessions` in `db.js`
+- `Report.jsx` → `KpiTile` (42px Plex Light value); hover detail card below body figures (blue left border, muscle label, primary count, last session date); 5-step heat legend + hatched SVG secondary swatch; `muscleLastDate` in useMemo
+- `History.jsx` → custom `MonthGrid` (7-column CSS grid, heat fill, today/selected outlines, month nav); `sessionCountMap` useMemo; `SectionLabel` + `PageHeading` at top; removed `react-day-picker` dependency entirely
+- `PageShell.jsx` → `SectionLabel` export (mono 12px, 0.16em tracking, 3px `#0f62fe` left border), `PageHeading` export (Plex Light 28px); `NavBtn` active state: 2px `#0f62fe` bottom border + `var(--cds-layer-01)` background; `PageTitle` kept as alias
+- `carbon-tokens.css` → added `--heat-1..5` green scale (#044317 → #42be65)
+- Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners, `react-day-picker`
 
 ### Hard rules (must not regress)
 - **Sentence case** for all labels — `Add exercise`, not `Add Exercise`
@@ -122,8 +127,8 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 `touchTemplate(id)` updates `used_at` to now — called on "Bruk økt" so templates sort by recency in TemplatePicker.
 
 ## Key architecture decisions
-- **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants, `calcMuscles`, `BodySVG`, `HeatmapBodySVG`, and `useIsMobile`. Both `MuscleMap.jsx` and `History.jsx` import from here — do not duplicate these in component files.
-- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps), `isInvalidNum` (validates sets/reps as integers 1–99), `callClaude(body)` (authenticated fetch to `/api/claude` — injects Supabase JWT automatically). Do not redefine these locally in component files.
+- **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants (`PRIMARY_FILL`, `PRIMARY_HOVER`, `PRIMARY_STROKE`, heat vars), `calcMuscles`, `BodySVG`, `HeatmapBodySVG` (accepts `onHover(id|null)` and `hovered` props — when `onHover` is set the internal tooltip is suppressed), and `useIsMobile`. Do not duplicate these in component files.
+- **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps), `isInvalidNum` (validates sets/reps as integers 1–99), `callClaude(body)` (authenticated fetch to `/api/claude` — injects Supabase JWT automatically), `extractMuscles(session)` (splits `muscle_activations` into primary/secondary Sets, removes primary from secondary). Do not redefine these locally in component files.
 - **Shared Claude config:** `app/src/lib/prompts.js` — exports `CLAUDE_MODEL_VISION` (opus, for image analysis), `CLAUDE_MODEL_TEXT` (sonnet, for recommendations), `ANALYZE_PROMPT`, `buildRecommendPrompt(trained, untrained)`, `buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels)`. All model IDs and prompt text live here; update in one place.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
 - SVG body uses `BODY_PATH` (bezier curves, viewBox `0 0 160 360`) — improved silhouette with curved shoulders, arms, waist and hips. Still simplified, not anatomically precise. `SHAPES` entries are either ellipses (`{ cx, cy, rx, ry }`) or SVG paths (`{ d }`); the render loop handles both. Key muscles with path shapes: `traps` (trapezoid with neck notch), `lats` (wing paths). `BodySVG` renders primary muscles as solid green glow, secondary as diagonal blue stripes (`<pattern id="sec-stripe-{view}">`).
@@ -155,6 +160,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 | G — Image storage | #30 | Supabase Storage for whiteboard photos (low priority) |
 | H — Templates + library | #38 | Exercise library, session templates, TemplatePicker, TemplateSessionEditor ✅ Done |
 | I — Security + refactor | — | API JWT auth, callClaude helper, useReducer in MuscleMap, BodyPanel/ExerciseForm/LibraryPicker extraction, batch inserts, Carbon Modal ✅ Done |
+| J — Carbon g100 redesign | #40 epic | PageShell (#42) ✅, body figure (#43) ✅, Home (#44) ✅, Rapport (#45) ✅, Historikk (#46) ✅, Logg økt (#47) 🔲, Bibliotek (#48) 🔲 |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
