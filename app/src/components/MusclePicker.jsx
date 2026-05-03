@@ -6,9 +6,32 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
   const [hovered, setHovered] = React.useState(null);
+  const [focused, setFocused] = React.useState(null);
+  const groupRefs = React.useRef({});
+
+  const viewMuscles = Object.keys(SHAPES).filter(id => MUSCLES[id]?.view === view);
+
+  const handleKeyDown = (id, e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onToggle(id);
+    } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const idx = viewMuscles.indexOf(id);
+      const next = viewMuscles[(idx + 1) % viewMuscles.length];
+      groupRefs.current[next]?.focus();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const idx = viewMuscles.indexOf(id);
+      const prev = viewMuscles[(idx - 1 + viewMuscles.length) % viewMuscles.length];
+      groupRefs.current[prev]?.focus();
+    }
+  };
 
   return (
     <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
+      role="group"
+      aria-label={view === "front" ? "Frontside muskler" : "Bakside muskler"}
       style={{ width: "100%", height: "auto", display: "block" }}>
       <defs>
         <filter id={`pick-glow-${view}-${instanceId}`} x="-60%" y="-60%" width="220%" height="220%">
@@ -36,31 +59,45 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
           const isPrimary = pSet.has(id);
           const isSec = sSet.has(id);
           const isHov = hovered === id;
+          const isFoc = focused === id;
+          const label = MUSCLES[id]?.label ?? id;
+          const stateLabel = isPrimary ? "primær" : isSec ? "sekundær" : "ikke valgt";
+
           let fill, stroke, filter;
           if (isPrimary) {
-            fill = isHov ? PRIMARY_HOVER : PRIMARY_FILL;
-            stroke = PRIMARY_STROKE;
+            fill = (isHov || isFoc) ? PRIMARY_HOVER : PRIMARY_FILL;
+            stroke = isFoc ? "#0f62fe" : PRIMARY_STROKE;
             filter = `url(#pick-glow-${view}-${instanceId})`;
           } else if (isSec) {
             fill = `url(#pick-sec-stripe-${view}-${instanceId})`;
-            stroke = SEC_STROKE;
+            stroke = isFoc ? "#0f62fe" : SEC_STROKE;
             filter = `url(#pick-softglow-${view}-${instanceId})`;
           } else {
-            fill = isHov ? "rgba(128,128,128,0.25)" : "rgba(128,128,128,0.08)";
-            stroke = "rgba(128,128,128,0.15)";
+            fill = (isHov || isFoc) ? "rgba(128,128,128,0.25)" : "rgba(128,128,128,0.08)";
+            stroke = isFoc ? "#0f62fe" : "rgba(128,128,128,0.15)";
             filter = undefined;
           }
+          const strokeWidth = isFoc ? "1.5" : "0.8";
+
           return (
             <g key={id}
+              ref={el => { groupRefs.current[id] = el; }}
+              tabIndex={0}
+              role="button"
+              aria-label={`${label} – ${stateLabel}`}
+              aria-pressed={isPrimary ? "true" : isSec ? "mixed" : "false"}
               filter={filter}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: "pointer", outline: "none" }}
               onClick={() => onToggle(id)}
               onMouseEnter={() => setHovered(id)}
-              onMouseLeave={() => setHovered(null)}>
+              onMouseLeave={() => setHovered(null)}
+              onFocus={() => setFocused(id)}
+              onBlur={() => setFocused(null)}
+              onKeyDown={e => handleKeyDown(id, e)}>
               {shapes.map((sh, i) =>
                 sh.d
-                  ? <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth="0.8" />
-                  : <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth="0.8" />
+                  ? <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
+                  : <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
               )}
             </g>
           );
@@ -100,7 +137,7 @@ export default function MusclePicker({ primary = [], secondary = [], onChange, i
         <Tag type="green" size="sm">Primær ({primary.length})</Tag>
         <Tag type="blue" size="sm">Sekundær ({secondary.length})</Tag>
         <span id={helpId} style={{ fontSize: 11, color: "var(--cds-text-secondary)", alignSelf: "center", marginLeft: 4 }}>
-          Klikk muskel: av → primær → sekundær → av
+          Klikk muskel: av → primær → sekundær → av. Piltaster navigerer, mellomrom/enter velger.
         </span>
       </div>
       <div aria-describedby={helpId} style={{ display: "flex", gap: 8 }}>

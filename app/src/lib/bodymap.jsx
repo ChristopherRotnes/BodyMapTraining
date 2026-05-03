@@ -123,6 +123,7 @@ function Shape({ sh, i, fill, stroke, strokeWidth = "0.8" }) {
 
 export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {}, onHover, hovered }) {
   const [tooltip, setTooltip] = React.useState(null);
+  const [focused, setFocused] = React.useState(null);
   const wrapRef = React.useRef();
 
   const handleEnter = (id, e) => {
@@ -140,6 +141,19 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   const handleLeave = () => {
     if (onHover) { onHover(null); return; }
     setTooltip(null);
+  };
+  const handleFocus = (id) => {
+    setFocused(id);
+    if (onHover) { onHover(id); return; }
+    const { primary = 0, secondary = 0 } = counts[id] || {};
+    if (primary > 0 || secondary > 0) {
+      setTooltip({ id, x: 10, y: 10 });
+    }
+  };
+  const handleBlur = (id) => {
+    setFocused(null);
+    if (onHover) { onHover(null); return; }
+    setTooltip(prev => prev?.id === id ? null : prev);
   };
 
   return (
@@ -165,7 +179,16 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
           .filter(([id]) => MUSCLES[id]?.view === view)
           .map(([id, shapes]) => {
             const isHovered = id === hovered;
+            const isFocused = focused === id;
             const { primary = 0, secondary = 0 } = counts[id] || {};
+            const isTrained = primary > 0 || secondary > 0;
+            const label = MUSCLES[id]?.label ?? id;
+            const ariaLabel = primary > 0
+              ? `${label} – primær: ${primary} ${primary === 1 ? "økt" : "økter"}`
+              : secondary > 0
+                ? `${label} – sekundær: ${secondary} ${secondary === 1 ? "økt" : "økter"}`
+                : `${label} – ikke trent`;
+
             let fill, stroke;
             if (primary > 0) {
               const ratio = primary / Math.max(1, maxCount);
@@ -178,14 +201,19 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
               fill = "rgba(128,128,128,0.1)";
               stroke = "rgba(128,128,128,0.08)";
             }
-            const finalStroke = isHovered ? "#fff" : stroke;
-            const finalStrokeWidth = isHovered ? "1.5" : undefined;
+            const finalStroke = isFocused ? "#0f62fe" : isHovered ? "#fff" : stroke;
+            const finalStrokeWidth = (isFocused || isHovered) ? "1.5" : undefined;
             return (
               <g key={id}
-                style={{ cursor: "pointer" }}
+                tabIndex={isTrained ? 0 : -1}
+                role="img"
+                aria-label={ariaLabel}
+                style={{ cursor: "pointer", outline: "none" }}
                 onMouseEnter={e => handleEnter(id, e)}
                 onMouseMove={e => handleMove(id, e)}
-                onMouseLeave={handleLeave}>
+                onMouseLeave={handleLeave}
+                onFocus={() => handleFocus(id)}
+                onBlur={() => handleBlur(id)}>
                 {shapes.map((sh, i) => (
                   <Shape key={i} sh={sh} i={i} fill={fill} stroke={finalStroke} strokeWidth={finalStrokeWidth} />
                 ))}
@@ -256,6 +284,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
   const [tooltip, setTooltip] = React.useState(null);
+  const [focused, setFocused] = React.useState(null);
   const wrapRef = React.useRef();
 
   const handleEnter = (id, e) => {
@@ -273,6 +302,16 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
   const handleLeave = () => {
     if (onHover) { onHover(null); return; }
     setTooltip(null);
+  };
+  const handleFocus = (id) => {
+    setFocused(id);
+    if (onHover) { onHover(id); return; }
+    if (muscleMap[id]?.length) setTooltip({ id, x: 10, y: 10 });
+  };
+  const handleBlur = (id) => {
+    setFocused(null);
+    if (onHover) { onHover(null); return; }
+    setTooltip(prev => prev?.id === id ? null : prev);
   };
 
   return (
@@ -301,17 +340,25 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
             const isSec = sSet.has(id);
             if (!isPrimary && !isSec) return null;
             const isHovered = onHover ? id === hovered : tooltip?.id === id;
+            const isFocused = focused === id;
+            const label = MUSCLES[id]?.label ?? id;
+            const ariaLabel = `${label} – ${isPrimary ? "primær" : "sekundær"}`;
             const fill = isPrimary
               ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
               : `url(#sec-stripe-${view})`;
-            const stroke = isHovered ? "#fff" : isPrimary ? PRIMARY_STROKE : "none";
-            const strokeWidth = isHovered ? "1.5" : "0.8";
+            const stroke = isFocused ? "#0f62fe" : isHovered ? "#fff" : isPrimary ? PRIMARY_STROKE : "none";
+            const strokeWidth = (isFocused || isHovered) ? "1.5" : "0.8";
             return (
               <g key={id}
-                style={{ cursor: muscleMap[id]?.length ? "pointer" : "default" }}
+                tabIndex={0}
+                role="img"
+                aria-label={ariaLabel}
+                style={{ cursor: muscleMap[id]?.length ? "pointer" : "default", outline: "none" }}
                 onMouseEnter={e => handleEnter(id, e)}
                 onMouseMove={e => handleMove(id, e)}
-                onMouseLeave={handleLeave}>
+                onMouseLeave={handleLeave}
+                onFocus={() => handleFocus(id)}
+                onBlur={() => handleBlur(id)}>
                 {shapes.map((sh, i) => (
                   <Shape key={i} sh={sh} i={i} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />
                 ))}
