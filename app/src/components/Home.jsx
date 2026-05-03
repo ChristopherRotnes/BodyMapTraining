@@ -136,24 +136,28 @@ export default function Home({
 
         {lastSession && muscles && (
           <div style={{ margin: "0 16px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)" }}>
-            {/* Header: date + class name */}
-            <div style={{ padding: "16px 16px 0" }}>
+            {/* Header: date + session identity */}
+            <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
               <div style={{
                 fontFamily: "var(--cds-font-mono)", fontSize: 11,
                 letterSpacing: "0.12em", color: "var(--cds-text-secondary)",
-                textTransform: "uppercase", marginBottom: 4,
+                textTransform: "uppercase", marginBottom: 6,
               }}>
                 {formatSessionDate(lastSession.session_date)}
               </div>
-              {lastSession.gym_calendar?.name && (
-                <div style={{ fontSize: 18, fontWeight: 600, color: "var(--cds-text-primary)", lineHeight: 1.25 }}>
+              {lastSession.gym_calendar?.name ? (
+                <div style={{ fontSize: 20, fontWeight: 600, color: "var(--cds-text-primary)", lineHeight: 1.2 }}>
                   {lastSession.gym_calendar.name}
+                </div>
+              ) : (
+                <div style={{ fontSize: 16, fontStyle: "italic", color: "var(--cds-text-secondary)" }}>
+                  Egentrening
                 </div>
               )}
             </div>
 
             {/* Body figures + exercise list side by side */}
-            <div style={{ display: "flex", gap: 16, padding: "14px 16px 0", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", gap: 16, padding: "12px 16px 0", alignItems: "flex-start" }}>
               {/* Body figures — hover shows muscle name */}
               <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                 <div style={{ width: 72 }}>
