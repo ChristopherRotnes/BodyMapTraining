@@ -3,16 +3,24 @@ import { supabase } from "./supabase";
 
 // Calls /api/claude with the current user's Supabase JWT in the Authorization
 // header so the backend can reject unauthenticated requests.
+// Retries once after a forced token refresh on 401 to recover from expired tokens.
 export async function callClaude(body) {
-  const { data: { session } } = await supabase.auth.getSession();
-  return fetch("/api/claude", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
+  const makeRequest = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return fetch("/api/claude", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  };
+
+  const res = await makeRequest();
+  if (res.status !== 401) return res;
+  await supabase.auth.refreshSession();
+  return makeRequest();
 }
 
 export function extractMuscles(session) {
