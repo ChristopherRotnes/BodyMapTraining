@@ -15,6 +15,19 @@ export async function callClaude(body) {
   });
 }
 
+export function extractMuscles(session) {
+  const primary = new Set();
+  const secondary = new Set();
+  (session.session_exercises || []).forEach(ex => {
+    (ex.muscle_activations || []).forEach(ma => {
+      if (ma.activation_type === "primary") primary.add(ma.muscle_id);
+      else secondary.add(ma.muscle_id);
+    });
+  });
+  primary.forEach(m => secondary.delete(m));
+  return { primary: [...primary], secondary: [...secondary] };
+}
+
 // Returns true when val is non-empty but not a valid integer in [1, 99].
 export const isInvalidNum = (val) =>
   val != null && val !== "" &&

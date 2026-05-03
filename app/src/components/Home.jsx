@@ -5,6 +5,7 @@ import { InlineLoading } from "@carbon/react";
 import { Camera } from "@carbon/icons-react";
 import { BodySVG, MUSCLES } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
+import { extractMuscles } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 
 const DAY_LABELS = ["M", "T", "O", "T", "F", "L", "S"];
@@ -18,27 +19,24 @@ function heatColor(count) {
   return "var(--heat-5)";
 }
 
-function extractMuscles(session) {
-  const primary = new Set();
-  const secondary = new Set();
-  (session.session_exercises || []).forEach(ex => {
-    (ex.muscle_activations || []).forEach(ma => {
-      if (ma.activation_type === "primary") primary.add(ma.muscle_id);
-      else secondary.add(ma.muscle_id);
-    });
-  });
-  primary.forEach(m => secondary.delete(m));
-  return { primary: [...primary], secondary: [...secondary] };
-}
-
 function formatSessionDate(isoDate) {
   const raw = format(parseISO(isoDate), "EEEE d. MMMM", { locale: nb });
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
-function formatToday() {
-  const raw = format(new Date(), "EEEE d. MMMM", { locale: nb });
+function formatToday(today) {
+  const raw = format(today, "EEEE d. MMMM", { locale: nb });
   return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function countUniqueMuscles(sessions) {
+  const seen = new Set();
+  sessions?.forEach(s =>
+    (s.session_exercises || []).forEach(ex =>
+      (ex.muscle_activations || []).forEach(ma => seen.add(ma.muscle_id))
+    )
+  );
+  return seen.size;
 }
 
 export default function Home({
@@ -53,17 +51,17 @@ export default function Home({
     fetchThisWeekSessions().then(setWeekSessions).catch(() => setWeekSessions([]));
   }, []);
 
+  const today = new Date();
   const muscles = lastSession ? extractMuscles(lastSession) : null;
-  const isToday = lastSession?.session_date === format(new Date(), "yyyy-MM-dd");
+  const isToday = lastSession?.session_date === format(today, "yyyy-MM-dd");
 
-  // Build muscleMap for body figure hover tooltips: muscle_id → [Norwegian label]
   const muscleMap = muscles
     ? Object.fromEntries(
         [...muscles.primary, ...muscles.secondary].map(id => [id, [MUSCLES[id]?.label ?? id]])
       )
     : {};
 
-  const weekStart = startOfISOWeek(new Date());
+  const weekStart = startOfISOWeek(today);
   const weekDays = DAY_LABELS.map((label, i) => {
     const date = format(addDays(weekStart, i), "yyyy-MM-dd");
     const session = weekSessions?.find(s => s.session_date === date);
@@ -72,15 +70,7 @@ export default function Home({
   });
 
   const weekSessionCount = weekSessions?.length ?? 0;
-  const weekMuscleCount = (() => {
-    const seen = new Set();
-    weekSessions?.forEach(s =>
-      (s.session_exercises || []).forEach(ex =>
-        (ex.muscle_activations || []).forEach(ma => seen.add(ma.muscle_id))
-      )
-    );
-    return seen.size;
-  })();
+  const weekMuscleCount = countUniqueMuscles(weekSessions);
 
   return (
     <PageShell
@@ -95,7 +85,7 @@ export default function Home({
 
         {/* Today header + CTA */}
         <SectionLabel>I DAG</SectionLabel>
-        <PageHeading>{formatToday()}</PageHeading>
+        <PageHeading>{formatToday(today)}</PageHeading>
         <div style={{ padding: "0 16px 24px" }}>
           <button
             onClick={onShowLogger}

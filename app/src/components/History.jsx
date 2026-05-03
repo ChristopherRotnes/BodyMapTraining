@@ -5,7 +5,7 @@ import { format, subMonths, parseISO } from "date-fns";
 import "react-day-picker/style.css";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude } from "../lib/utils";
+import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
@@ -39,18 +39,6 @@ function sessionMuscleIds(session) {
   );
 }
 
-function extractMuscles(session) {
-  const primary = new Set();
-  const secondary = new Set();
-  (session.session_exercises || []).forEach(ex => {
-    (ex.muscle_activations || []).forEach(ma => {
-      if (ma.activation_type === "primary") primary.add(ma.muscle_id);
-      else secondary.add(ma.muscle_id);
-    });
-  });
-  primary.forEach(m => secondary.delete(m));
-  return { primary: [...primary], secondary: [...secondary] };
-}
 
 export default function History({ onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialDate }) {
   const [sessions, setSessions] = useState([]);
