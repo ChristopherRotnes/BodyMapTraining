@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, parseISO, startOfISOWeek, addDays } from "date-fns";
 import { nb } from "date-fns/locale";
 import { InlineLoading } from "@carbon/react";
@@ -45,7 +45,8 @@ export default function Home({
 }) {
   const [lastSession, setLastSession] = useState(undefined);
   const [weekSessions, setWeekSessions] = useState(undefined);
-  const [hoveredDay, setHoveredDay] = useState(null);
+  const [tooltip, setTooltip] = useState(null);
+  const weekStripRef = useRef();
   const [syncState, setSyncState] = useState(null);
   const [syncMsg, setSyncMsg] = useState('');
 
@@ -222,26 +223,58 @@ export default function Home({
         {/* Weekly strip */}
         <SectionLabel>UKEN SÅ LANGT</SectionLabel>
         <div style={{ padding: "0 16px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
-            {weekDays.map(({ label, count, date }, i) => (
-              <div key={i} style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginBottom: 4, letterSpacing: "0.1em" }}>
-                  {label}
+          <div ref={weekStripRef} style={{ position: "relative" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+              {weekDays.map(({ label, count, date, names }, i) => (
+                <div key={i} style={{ textAlign: "center" }}>
+                  <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginBottom: 4, letterSpacing: "0.1em" }}>
+                    {label}
+                  </div>
+                  <div
+                    onClick={count > 0 ? () => onShowHistoryWithDate(date) : undefined}
+                    onMouseEnter={count > 0 ? (e) => {
+                      const rect = weekStripRef.current?.getBoundingClientRect();
+                      if (!rect) return;
+                      setTooltip({ names, x: e.clientX - rect.left, y: e.clientY - rect.top });
+                    } : undefined}
+                    onMouseMove={count > 0 ? (e) => {
+                      const rect = weekStripRef.current?.getBoundingClientRect();
+                      if (!rect) return;
+                      setTooltip(prev => prev ? { ...prev, x: e.clientX - rect.left, y: e.clientY - rect.top } : prev);
+                    } : undefined}
+                    onMouseLeave={count > 0 ? () => setTooltip(null) : undefined}
+                    style={{ height: 36, background: heatColor(count), border: "1px solid var(--cds-border-subtle-01)", cursor: count > 0 ? "pointer" : "default" }}
+                  />
                 </div>
-                <div
-                  onClick={count > 0 ? () => onShowHistoryWithDate(date) : undefined}
-                  onMouseEnter={count > 0 ? () => setHoveredDay(i) : undefined}
-                  onMouseLeave={count > 0 ? () => setHoveredDay(null) : undefined}
-                  style={{ height: 36, background: heatColor(count), border: "1px solid var(--cds-border-subtle-01)", cursor: count > 0 ? "pointer" : "default" }}
-                />
+              ))}
+            </div>
+            {tooltip && tooltip.names.length > 0 && (
+              <div style={{
+                position: "absolute",
+                left: Math.min(tooltip.x + 10, (weekStripRef.current?.offsetWidth || 300) - 160),
+                top: Math.max(tooltip.y - 10, 4),
+                background: "var(--cds-layer-02)",
+                border: "1px solid var(--cds-border-subtle-01)",
+                padding: "8px 10px",
+                zIndex: 10,
+                pointerEvents: "none",
+                maxWidth: 200,
+              }}>
+                {tooltip.names.map((name, i) => (
+                  <div key={i} style={{
+                    fontFamily: "var(--cds-font-mono)", fontSize: 12,
+                    color: "var(--cds-text-primary)",
+                    padding: i > 0 ? "4px 0 0" : 0,
+                  }}>
+                    {name}
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
           {weekSessions !== undefined && (
-            <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", marginTop: 8, letterSpacing: "0.06em", minHeight: 16 }}>
-              {hoveredDay !== null && weekDays[hoveredDay]?.names.length > 0
-                ? weekDays[hoveredDay].names.join(" · ")
-                : `${weekSessionCount} ØKTE${weekSessionCount !== 1 ? "R" : ""} · ${weekMuscleCount} MUSKELGRUPPE${weekMuscleCount !== 1 ? "R" : ""}`}
+            <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", marginTop: 8, letterSpacing: "0.06em" }}>
+              {`${weekSessionCount} ØKTE${weekSessionCount !== 1 ? "R" : ""} · ${weekMuscleCount} MUSKELGRUPPE${weekMuscleCount !== 1 ? "R" : ""}`}
             </div>
           )}
         </div>
