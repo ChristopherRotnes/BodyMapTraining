@@ -114,8 +114,11 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
         max_tokens: 1000,
         messages: [{ role: "user", content: prompt }],
       });
-      if (!res.ok) throw new Error(`API-feil ${res.status}`);
       const data = await res.json();
+      if (!res.ok) {
+        const detail = data?.error?.message;
+        throw new Error(detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
+      }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
       try { parsed = JSON.parse(text); } catch {

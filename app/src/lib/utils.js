@@ -60,10 +60,19 @@ export const toBase64 = (file) => new Promise((res, rej) => {
   r.readAsDataURL(file);
 });
 
-export const getMediaType = (file) => {
-  const t = { "image/png": "image/png", "image/gif": "image/gif", "image/webp": "image/webp" };
-  return t[file.type] || "image/jpeg";
-};
+// Detect media type from magic bytes so the declared type always matches the
+// actual content — browsers sometimes report the wrong file.type (e.g. a JPEG
+// saved with a .png extension), which causes Anthropic to reject the request.
+export async function detectMediaType(file) {
+  const buf = await file.slice(0, 12).arrayBuffer();
+  const b = new Uint8Array(buf);
+  if (b[0] === 0xFF && b[1] === 0xD8) return "image/jpeg";
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) return "image/png";
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  return file.type || "image/jpeg";
+}
 
 // Builds muscle-ID → exercise-name map from a live exercises array (confirm/edit step).
 // Falls back to EX_DB keyword matching for exercises without Claude-assigned muscle data.

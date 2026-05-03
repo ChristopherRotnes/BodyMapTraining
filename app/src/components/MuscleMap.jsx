@@ -1,7 +1,7 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
+import { toBase64, detectMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Button, Select, SelectItem,
@@ -137,7 +137,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
       setSizeError(`Bildet er for stort (maks ${MAX_FILE_SIZE_MB} MB). Komprimer eller velg et annet bilde.`);
       return;
     }
-    const mt = getMediaType(file);
+    const mt = await detectMediaType(file);
     const b64 = await toBase64(file);
     dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
   }, [setSizeError]);
@@ -159,8 +159,11 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
         max_tokens: 1500,
         messages: [{ role: "user", content: [...imageBlocks, { type: "text", text: ANALYZE_PROMPT }] }]
       });
-      if (!res.ok) throw new Error(res.status === 401 ? "Ikke innlogget. Logg inn på nytt." : `Serverfeil (${res.status})`);
       const data = await res.json();
+      if (!res.ok) {
+        const detail = data?.error?.message;
+        throw new Error(res.status === 401 ? "Ikke innlogget. Logg inn på nytt." : detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
+      }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
       try { parsed = JSON.parse(text); } catch {
@@ -200,8 +203,11 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
         max_tokens: 1000,
         messages: [{ role: "user", content: buildRecommendPrompt(trained, untrained) }]
       });
-      if (!res.ok) throw new Error(`Serverfeil (${res.status})`);
       const data = await res.json();
+      if (!res.ok) {
+        const detail = data?.error?.message;
+        throw new Error(detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
+      }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
       try { parsed = JSON.parse(text); } catch {

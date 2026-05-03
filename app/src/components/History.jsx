@@ -3,7 +3,7 @@ import { nb } from "date-fns/locale";
 import { format, parseISO } from "date-fns";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError } from "../lib/utils";
+import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
@@ -297,7 +297,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     setAnalyzing(true);
     setAnalyzeError(null);
     try {
-      const mt = getMediaType(file);
+      const mt = await detectMediaType(file);
       const b64 = await toBase64(file);
       const res = await callClaude({
         model: CLAUDE_MODEL_VISION,
@@ -311,6 +311,10 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
         }]
       });
       const data = await res.json();
+      if (!res.ok) {
+        const detail = data?.error?.message;
+        throw new Error(detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
+      }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
       try { parsed = JSON.parse(text); } catch {
