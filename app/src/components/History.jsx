@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { DayPicker } from "react-day-picker";
 import { nb } from "date-fns/locale";
-import { format, subMonths, parseISO } from "date-fns";
-import "react-day-picker/style.css";
+import { format, parseISO } from "date-fns";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles } from "../lib/utils";
@@ -11,12 +9,82 @@ import {
   Button, Tag, InlineNotification, DefinitionTooltip,
   Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
-import { Camera, Add, Edit as EditIcon, Renew, ChevronDown } from "@carbon/icons-react";
+import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
 import BodyPanel from "./BodyPanel";
-import PageShell, { PageTitle } from "./PageShell";
+import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 
 const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
+
+const DAY_HEADERS = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
+
+function calHeatColor(count) {
+  if (!count) return "var(--cds-background)";
+  if (count <= 1) return "var(--heat-1)";
+  if (count <= 3) return "var(--heat-2)";
+  if (count <= 5) return "var(--heat-3)";
+  if (count <= 7) return "var(--heat-4)";
+  return "var(--heat-5)";
+}
+
+function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, today }) {
+  const todayStr = format(today, "yyyy-MM-dd");
+  const selectedStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const firstDOW = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells = [];
+  for (let i = 0; i < firstDOW; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(month + 1).padStart(2, "0");
+    const dd = String(d).padStart(2, "0");
+    cells.push(`${year}-${mm}-${dd}`);
+  }
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1, marginBottom: 2 }}>
+        {DAY_HEADERS.map(d => (
+          <div key={d} style={{ textAlign: "center", fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.1em", textTransform: "uppercase", padding: "6px 0" }}>
+            {d}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1 }}>
+        {cells.map((dateStr, i) => {
+          if (!dateStr) return <div key={`pad-${i}`} style={{ height: 40, background: "var(--cds-background)" }} />;
+          const count = sessionCountMap[dateStr] || 0;
+          const isToday = dateStr === todayStr;
+          const isSelected = dateStr === selectedStr;
+          const isFuture = dateStr > todayStr;
+          const day = parseInt(dateStr.split("-")[2], 10);
+          return (
+            <div
+              key={dateStr}
+              onClick={() => !isFuture && count > 0 && onDayClick(dateStr)}
+              style={{
+                height: 40,
+                background: calHeatColor(count),
+                border: "1px solid var(--cds-border-subtle-01)",
+                outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid #fff" : "none",
+                outlineOffset: "-2px",
+                cursor: !isFuture && count > 0 ? "pointer" : "default",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <span style={{
+                fontSize: 10, fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em",
+                color: count > 0 ? "rgba(255,255,255,0.9)" : isFuture ? "var(--cds-text-disabled)" : "var(--cds-text-secondary)",
+              }}>
+                {day}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function sessionExToEditFormat(exercises) {
   return exercises.map(ex => ({
@@ -51,6 +119,20 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   const [selectedSession, setSelectedSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(false);
   const [today, setToday] = useState(() => new Date());
+
+  const initDate = initialDate ? new Date(initialDate + "T12:00:00") : new Date();
+  const [viewYear, setViewYear] = useState(initDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initDate.getMonth());
+
+  const goPrevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  };
+  const goNextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  };
+  const atCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
 
   useEffect(() => {
     const now = new Date();
@@ -88,7 +170,15 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   const filteredSessions = muscleFilter.length === 0 ? sessions
     : sessions.filter(s => muscleFilter.some(id => sessionMuscleIds(s).has(id)));
   const filteredTrainedSet = new Set(filteredSessions.map(s => s.session_date));
-  const filteredTrainedDates = filteredSessions.map(s => new Date(s.session_date + "T12:00:00"));
+
+  const sessionCountMap = useMemo(() => {
+    const map = {};
+    filteredSessions.forEach(s => {
+      const count = (s.session_exercises || []).length;
+      map[s.session_date] = (map[s.session_date] || 0) + count;
+    });
+    return map;
+  }, [filteredSessions]);
 
   useEffect(() => {
     if (daySessions.length === 1) {
@@ -130,11 +220,9 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     }
   };
 
-  const handleSelect = (date) => {
-    if (!date) return;
-    const dateStr = format(date, "yyyy-MM-dd");
-    if (!filteredTrainedSet.has(dateStr)) return;
-    setSelectedDate(date);
+  const handleSelect = (dateStr) => {
+    if (!dateStr || !filteredTrainedSet.has(dateStr)) return;
+    setSelectedDate(new Date(dateStr + "T12:00:00"));
     setEditMode(false);
     setSelectedSession(null);
     loadSession(dateStr);
@@ -248,7 +336,8 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
       currentView={currentView}
     >
       <div style={{ paddingBottom: 32 }}>
-          <PageTitle>Treningshistorikk</PageTitle>
+          <SectionLabel>HISTORIKK</SectionLabel>
+          <PageHeading>Treningshistorikk</PageHeading>
 
           <MultiSelect
             id="muscle-filter"
@@ -265,19 +354,29 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
               <SkeletonPlaceholder style={{ width: "100%", height: 280 }} />
             </div>
           ) : (
-            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24, overflowX: "auto" }}>
-              <DayPicker
-                numberOfMonths={2}
-                defaultMonth={initialDate ? subMonths(parseISO(initialDate + "T12:00:00"), 1) : subMonths(new Date(), 1)}
-                locale={nb}
-                mode="single"
-                required
-                selected={selectedDate}
-                onSelect={handleSelect}
-                modifiers={{ trained: filteredTrainedDates }}
-                modifiersClassNames={{ trained: "rdp-day-trained" }}
-                disabled={{ after: today }}
+            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "12px", marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription="Forrige måned" onClick={goPrevMonth} />
+                <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                  {format(new Date(viewYear, viewMonth, 1), "MMMM yyyy", { locale: nb }).replace(/^\w/, c => c.toUpperCase())}
+                </span>
+                <Button kind="ghost" size="sm" renderIcon={ChevronRight} hasIconOnly iconDescription="Neste måned" onClick={goNextMonth} disabled={atCurrentMonth} />
+              </div>
+              <MonthGrid
+                year={viewYear}
+                month={viewMonth}
+                sessionCountMap={sessionCountMap}
+                onDayClick={handleSelect}
+                selectedDate={selectedDate}
+                today={today}
               />
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+                <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>VOLUM 1</span>
+                {["--heat-1","--heat-2","--heat-3","--heat-4","--heat-5"].map(v => (
+                  <div key={v} style={{ width: 10, height: 10, background: `var(${v})` }} />
+                ))}
+                <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>5+</span>
+              </div>
             </div>
           )}
 
