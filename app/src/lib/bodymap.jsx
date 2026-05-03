@@ -145,6 +145,8 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   return (
     <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
       <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label={`Treningsfrekvenskart, ${view === "front" ? "fremside" : "bakside"}`}
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
@@ -271,6 +273,8 @@ export function BodySVG({ view, primary, secondary, muscleMap = {} }) {
   return (
     <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
       <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label={`Muskelkart, ${view === "front" ? "fremside" : "bakside"}. Primære: ${[...pSet].map(id => MUSCLES[id]?.label).filter(Boolean).join(", ") || "ingen"}.`}
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
