@@ -24,7 +24,7 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
         </pattern>
       </defs>
 
-      <g style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
+      <g aria-hidden="true" style={{ fill: "var(--cds-layer-02)", stroke: "var(--cds-border-subtle-01)" }} strokeWidth="0.6">
         <circle cx="80" cy="21" r="17" />
         <polygon points="74,37 86,37 87,50 73,50" />
         <path d={BODY_PATH} />
@@ -66,7 +66,7 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
           );
         })}
 
-      <text x="80" y="352" textAnchor="middle" fontSize="7.5"
+      <text aria-hidden="true" x="80" y="352" textAnchor="middle" fontSize="7.5"
         fontFamily="var(--cds-font-mono)" letterSpacing="2"
         style={{ fill: "var(--cds-text-secondary)" }}>
         {view === "front" ? "FRONT" : "BACK"}
@@ -92,16 +92,18 @@ export default function MusclePicker({ primary = [], secondary = [], onChange, i
     onChange({ primary: nextPrimary, secondary: nextSecondary });
   };
 
+  const helpId = `muscle-help-${instanceId}`;
+
   return (
     <div>
       <div style={{ display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" }}>
         <Tag type="green" size="sm">Primær ({primary.length})</Tag>
         <Tag type="blue" size="sm">Sekundær ({secondary.length})</Tag>
-        <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", alignSelf: "center", marginLeft: 4 }}>
+        <span id={helpId} style={{ fontSize: 11, color: "var(--cds-text-secondary)", alignSelf: "center", marginLeft: 4 }}>
           Klikk muskel: av → primær → sekundær → av
         </span>
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
+      <div aria-describedby={helpId} style={{ display: "flex", gap: 8 }}>
         {["front", "back"].map(view => (
           <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "6px 4px" }}>
             <MusclePickerView
