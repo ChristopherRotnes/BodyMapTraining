@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout } from "@carbon/icons-react";
 import { version } from "../../package.json";
 import { Button } from "@carbon/react";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
 import { useNav } from "../lib/NavContext";
+import ChangelogModal from "./ChangelogModal";
 
 function NavBtn({ onClick, ariaLabel, active, children }) {
   return (
@@ -87,6 +89,7 @@ export function BackButton({ onClick }) {
 export default function PageShell({ children }) {
   const { theme, setTheme } = useTheme();
   const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek } = useNav();
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   return (
     <div style={{ background: "var(--cds-background)", minHeight: "100vh" }}>
@@ -140,17 +143,30 @@ export default function PageShell({ children }) {
 
         {children}
 
-        <p style={{
-          fontFamily: "var(--cds-font-mono)",
-          fontSize: 11,
-          color: "var(--cds-text-disabled)",
-          textAlign: "center",
-          padding: "32px 0 16px",
-          margin: 0,
-          letterSpacing: "0.08em",
-        }}>
+        <button
+          onClick={() => setChangelogOpen(true)}
+          aria-label="Vis endringslogg"
+          style={{
+            display: "block",
+            width: "100%",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--cds-font-mono)",
+            fontSize: 11,
+            color: "var(--cds-text-disabled)",
+            textAlign: "center",
+            padding: "32px 0 16px",
+            margin: 0,
+            letterSpacing: "0.08em",
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = "var(--cds-text-secondary)"}
+          onMouseLeave={e => e.currentTarget.style.color = "var(--cds-text-disabled)"}
+        >
           v{version}
-        </p>
+        </button>
+
+        <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
       </div>
     </div>
   );
