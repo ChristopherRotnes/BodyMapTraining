@@ -259,8 +259,14 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                 Last opp ett eller flere bilder av treningsprogrammet.
               </p>
 
+              <p aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>
+                {images.length > 0 ? `${images.length} bilde${images.length !== 1 ? "r" : ""} valgt` : ""}
+              </p>
+
               {images.length === 0 ? (
                 <div
+                  role="region"
+                  aria-label="Last opp treningsbilde"
                   onDragOver={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: true }); }}
                   onDragLeave={() => dispatch({ type: "SET_DRAGGING", dragging: false })}
                   onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
@@ -277,23 +283,26 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                   }}
                 >
                   <div style={{ textAlign: "center", padding: "48px 20px 40px" }}>
-                    <Camera size={40} style={{ color: "var(--cds-text-secondary)", marginBottom: 12 }} />
+                    <Camera size={40} aria-hidden="true" style={{ color: "var(--cds-text-secondary)", marginBottom: 12 }} />
                     <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Trykk for å velge bilde</p>
                     <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>eller dra og slipp · JPEG, PNG, WebP · flere bilder støttes</p>
                   </div>
                 </div>
               ) : (
                 <div
+                  role="region"
+                  aria-label="Last opp treningsbilde"
                   onDragOver={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: true }); }}
                   onDragLeave={() => dispatch({ type: "SET_DRAGGING", dragging: false })}
                   onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
                   style={{ marginBottom: 14 }}
                 >
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                    {images.map(img => (
+                    {images.map((img, idx) => (
                       <div key={img.id} style={{ position: "relative", overflow: "hidden", aspectRatio: "1", background: "var(--cds-layer-01)" }}>
-                        <img src={img.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <img src={img.preview} alt={`Treningsbilde ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         <button
+                          aria-label={`Fjern bilde ${idx + 1}`}
                           onClick={() => dispatch({ type: "REMOVE_IMAGE", id: img.id })}
                           style={{
                             position: "absolute", top: 4, right: 4,
@@ -306,8 +315,9 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                         </button>
                       </div>
                     ))}
-                    <div
+                    <button
                       onClick={() => fileRef.current?.click()}
+                      aria-label="Legg til flere bilder"
                       style={{
                         border: `1px dashed ${dragging ? "var(--cds-interactive)" : "#6f6f6f"}`,
                         background: dragging ? "var(--cds-layer-hover-01)" : "transparent",
@@ -315,9 +325,9 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                         alignItems: "center", justifyContent: "center",
                         aspectRatio: "1", cursor: "pointer", gap: 4,
                       }}>
-                      <Add size={20} style={{ color: "var(--cds-text-secondary)" }} />
+                      <Add size={20} aria-hidden="true" style={{ color: "var(--cds-text-secondary)" }} />
                       <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.5px" }}>Legg til</span>
-                    </div>
+                    </button>
                   </div>
                 </div>
               )}
@@ -372,7 +382,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
 
           {/* ── ANALYZING ── */}
           {step === "analyzing" && (
-            <div style={{ textAlign: "center", padding: "70px 0" }}>
+            <div aria-live="polite" aria-busy="true" style={{ textAlign: "center", padding: "70px 0" }}>
               <InlineLoading
                 description="Leser treningsprogram og identifiserer øvelser…"
                 status="active"
@@ -481,7 +491,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
               <div style={{ display: "flex", gap: 12, marginBottom: 18, alignItems: "center", flexWrap: "wrap" }}>
                 <Tag type="green" size="sm">Primær ({muscles.primary.length})</Tag>
                 <Tag type="blue" size="sm">Sekundær ({muscles.secondary.length})</Tag>
-                <div style={{ marginLeft: "auto" }}>
+                <div aria-live="polite" style={{ marginLeft: "auto" }}>
                   {saving && <InlineLoading description="Lagrer…" status="active" />}
                   {saved && <InlineLoading description="Lagret" status="finished" />}
                   {saveError && <InlineLoading description="Lagring feilet" status="error" />}
