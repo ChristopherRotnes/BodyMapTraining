@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { startOfISOWeek, endOfISOWeek, format } from "date-fns";
 
 // ── EXERCISE LIBRARY ──────────────────────────────────────────────────
 
@@ -245,14 +246,35 @@ export async function fetchLastSession() {
       id, session_date,
       gym_calendar(name),
       session_exercises(
+        id, name, sets, reps,
         muscle_activations(muscle_id, activation_type)
       )
     `)
     .order("session_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+export async function fetchThisWeekSessions() {
+  const today = new Date();
+  const weekStart = format(startOfISOWeek(today), "yyyy-MM-dd");
+  const weekEnd = format(endOfISOWeek(today), "yyyy-MM-dd");
+  const { data, error } = await supabase
+    .from("sessions")
+    .select(`
+      id, session_date,
+      session_exercises(
+        muscle_activations(muscle_id)
+      )
+    `)
+    .gte("session_date", weekStart)
+    .lte("session_date", weekEnd)
+    .order("session_date", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function fetchSessionsForReport(fromDate, toDate) {
