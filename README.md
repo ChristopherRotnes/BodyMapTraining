@@ -10,7 +10,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
-7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session
+7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session; edit mode supports library autocomplete — type an exercise name to get suggestions from your library
 8. **Library** — build a named exercise library with click-to-toggle muscle selection; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
 
 ## Tech stack
@@ -66,6 +66,7 @@ app/
       History.jsx                  # History — custom month grid calendar + session detail + edit mode
       Report.jsx                   # Period report — heatmap body map + muscle coverage stats
       ExerciseRow.jsx              # Shared editable exercise row (checkbox, name, sets, reps, delete)
+      ExerciseRowWithAutocomplete.jsx # ExerciseRow wrapper with library autocomplete dropdown (History edit only)
       BodyPanel.jsx                # Shared front/back body map with mobile toggle (used in 3 views)
       MusclePicker.jsx             # Click-to-toggle body map for assigning muscles to exercises
       ExerciseForm.jsx             # Create/edit a library exercise with MusclePicker
@@ -157,14 +158,13 @@ Live URL: `https://white-island-090dfd003.7.azurestaticapps.net`
 | Error resilience (JSON.parse try-catch + ErrorBoundary) | ✅ Done (#23 #29) |
 | API authentication (Supabase JWT on Claude proxy) | ✅ Done |
 | Code refactor (useReducer, shared BodyPanel, batch DB inserts) | ✅ Done |
-| Carbon g100 redesign — Home, Rapport, Historikk (#42–#46) | ✅ Done (#40 partial) |
+| Carbon g100 redesign — all views (#40–#48) | ✅ Done (#40) |
+| Library autocomplete in History edit mode | ✅ Done (#51) |
+| Weekly strip navigation (Home → History) | ✅ Done (#53) |
 
 ## Backlog
 
 | Issue(s) | Description | Priority |
 |---|---|---|
-| #47 | Design #40.6 — Logg økt: horizontal stepper, dashed dropzone, sticky action bar | Medium |
-| #48 | Design #40.7 — Bibliotek: body-map thumbnails on templates, exercise count badges | Medium |
-| #51 | Library autocomplete in History edit mode | Medium |
-| #53 | Weekly strip day click → History + mouseover shows session name | Low |
+| #41 | Keep app on latest tech stack | High |
 | #30 | Image storage — Supabase Storage for whiteboard photos | Low |

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { nb } from "date-fns/locale";
 import { format, parseISO } from "date-fns";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict } from "../lib/db";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
@@ -11,6 +11,7 @@ import {
 } from "@carbon/react";
 import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
+import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 
@@ -154,6 +155,8 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   const [editError, setEditError] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
+  const [libraryExercises, setLibraryExercises] = useState([]);
+  const [newExerciseIds, setNewExerciseIds] = useState(new Set());
   const fileRef = useRef();
 
   useEffect(() => {
@@ -237,10 +240,14 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     setEditGymSessions([]);
     setEditError(null);
     setAnalyzeError(null);
+    setNewExerciseIds(new Set());
     setEditMode(true);
     fetchGymSessionsByDate(session.session_date)
       .then(setEditGymSessions)
       .catch(() => setEditGymSessions([]));
+    fetchLibraryExercises()
+      .then(setLibraryExercises)
+      .catch(() => {});
   };
 
   const cancelEdit = () => {
@@ -250,6 +257,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     setEditError(null);
     setAnalyzeError(null);
     setEditGymCalendarConflict(null);
+    setNewExerciseIds(new Set());
   };
 
   useEffect(() => {
@@ -506,7 +514,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                         <>
                           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
                             {editExercises.map((ex) => (
-                              <ExerciseRow
+                              <ExerciseRowWithAutocomplete
                                 key={ex.id}
                                 exercise={ex}
                                 autoFocusName={ex.id === editingExId}
@@ -514,6 +522,8 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                                 onDelete={() => setEditExercises(p => p.filter(e => e.id !== ex.id))}
                                 layer="layer-02"
                                 validateNumbers
+                                libraryExercises={libraryExercises}
+                                isNew={newExerciseIds.has(ex.id)}
                               />
                             ))}
                           </div>
@@ -525,6 +535,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                               const id = Date.now();
                               setEditExercises(p => [...p, { id, name: "", standardName: "", sets: null, reps: null, primary: [], secondary: [], enabled: true }]);
                               setEditingExId(id);
+                              setNewExerciseIds(prev => new Set([...prev, id]));
                             }}
                             style={{ width: "100%" }}
                           >
