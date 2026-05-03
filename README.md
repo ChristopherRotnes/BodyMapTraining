@@ -104,6 +104,23 @@ app/
 | `dev` | Staging — Azure SWA creates a preview URL on push |
 | Feature branches | PR against `dev`; Azure SWA creates a preview per PR |
 
+## Issue format
+
+All GitHub issues follow a consistent user-story structure:
+
+**Title:** `As a [user/developer] I want to [action] so I can [benefit]`
+
+**Body sections:**
+
+| Section | Required | Notes |
+|---|---|---|
+| `## Summary` | Always | One paragraph — problem and goal |
+| `## Priority` | Developer/infra issues | High / Medium / Low |
+| `## UI spec (Carbon g100)` | UI changes | Bullet-point spec; Carbon hard rules apply |
+| `## Data model` | DB changes | SQL schema for new/changed tables |
+| `## Acceptance criteria` | Always | GitHub task-list checkboxes (`- [ ]`) |
+| `## Out of scope` | Larger issues | Explicit exclusions to prevent scope creep |
+
 ## Deployment
 
 Hosted on **Azure Static Web Apps** — every push to `master` triggers a build and deploy via GitHub Actions.

@@ -4,6 +4,16 @@
 **Verification before closing issue**
 All issues must be verified by the developer before you can close them on github. Either on dev, qa or prod (user decides). Regardless of method, AI must wait until user has verified fix to close issues.
 
+**Issue format**
+All GitHub issues follow this structure:
+- **Title:** `As a [user/developer] I want to [action] so I can [benefit]`
+- **`## Summary`** — one paragraph describing the problem and goal
+- **`## Priority`** — High / Medium / Low (include for developer/infra issues)
+- **`## UI spec (Carbon g100)`** — bullet-point spec for any UI changes (Carbon rules apply)
+- **`## Data model`** — SQL schema snippet for any new or changed tables
+- **`## Acceptance criteria`** — GitHub task-list checkboxes (`- [ ]`) covering all done conditions
+- **`## Out of scope`** — explicit exclusions to prevent scope creep (optional but recommended for larger issues)
+
 
 ## Project overview
 **Workout Lens** — a workout-logging app. User photographs a handwritten training program from a gym whiteboard (sporty.no format), the app analyses the image via Claude Vision, displays which muscles were trained on a body figure, and gives next-session recommendations.
