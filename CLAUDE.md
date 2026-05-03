@@ -164,7 +164,7 @@ Name + muscles are denormalised into `session_template_exercises` so renaming a 
 | I — Security + refactor | — | API JWT auth, callClaude helper, useReducer in MuscleMap, BodyPanel/ExerciseForm/LibraryPicker extraction, batch inserts, Carbon Modal ✅ Done |
 | J — Carbon g100 redesign | #40 epic | PageShell (#42) ✅, body figure (#43) ✅, Home (#44) ✅, Rapport (#45) ✅, Historikk (#46) ✅, Logg økt (#47) ✅, Bibliotek (#48) ✅ — ✅ Done |
 | K — UX polish | #51 #53 | Library autocomplete in History edit mode, weekly strip navigation Home→History ✅ Done |
-| L — Auth + sync fixes | #56 #57 | Upload 401 fix: `SUPABASE_ANON_KEY` env var in Azure + claude.js; sportySync upsert conflict key ✅ Done |
+| L — Auth + sync fixes | #56 #57 | Upload 401 fix: Azure SWA replaces `Authorization` header — use `X-Supabase-Token` instead; sportySync upsert conflict key ✅ Done |
 
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
@@ -217,4 +217,16 @@ Even after the key was correctly baked into the bundle, browser REST requests ar
 
 **Bug 3 — RLS infinite recursion on `profiles` (Postgres error 42P17):**
 Once the apikey was in requests, saves still failed with `42P17: infinite recursion detected in policy for relation "profiles"`. Root cause: `INSERT INTO sessions` with `Prefer: return=representation` triggers a RETURNING select, which evaluated the `"Admin ser alle økter"` SELECT policy on `sessions` — that policy queried `profiles`, which in turn triggered the `"Admin ser alle profiler"` SELECT policy on `profiles` — and that policy queried `profiles` again, looping forever. Fix: dropped both admin policies (`"Admin ser alle profiler"` on `profiles` and `"Admin ser alle økter"` on `sessions`) via Supabase MCP migration. Neither is needed for a single-user workout logger.
+
+### Issue #57 — `/api/claude` returning 401 despite valid session (resolved 2026-05-03)
+Symptoms: every upload failed with 401. The browser was sending a valid Supabase JWT in `Authorization: Bearer <token>`, but `claude.js` kept rejecting it with Supabase's `bad_jwt / signature is invalid`.
+
+**Root cause — Azure SWA replaces the `Authorization` header:**
+Azure Static Web Apps' proxy layer silently replaces any incoming `Authorization: Bearer` header with its own managed identity token (issued by `*.scm.azurewebsites.net`) before the request reaches the function handler. The Supabase JWT never arrived; Azure's Kudu identity token did instead. Supabase correctly rejected it. This happens even with `authLevel: 'anonymous'` on the function.
+
+**How we diagnosed it:** the Supabase token uses ES256 (asymmetric) and has a `kid` in the JWT header, making it ~900 chars. The server only saw 365 chars — a completely different token with `iss: https://31315134-...scm.azurewebsites.net`.
+
+**Fix:** send the Supabase JWT in a custom header `X-Supabase-Token` that Azure's proxy ignores. See `callClaude` in `app/src/lib/utils.js` and `verifySupabaseJwt` in `app/api/claude.js`.
+
+**Never revert to `Authorization: Bearer` for the Supabase token** — Azure will always intercept it.
 
