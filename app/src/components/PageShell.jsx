@@ -1,4 +1,5 @@
 import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout } from "@carbon/icons-react";
+import { version } from "../../package.json";
 import { Button } from "@carbon/react";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
@@ -138,6 +139,18 @@ export default function PageShell({ children }) {
         </div>
 
         {children}
+
+        <p style={{
+          fontFamily: "var(--cds-font-mono)",
+          fontSize: 11,
+          color: "var(--cds-text-disabled)",
+          textAlign: "center",
+          padding: "32px 0 16px",
+          margin: 0,
+          letterSpacing: "0.08em",
+        }}>
+          v{version}
+        </p>
       </div>
     </div>
   );
