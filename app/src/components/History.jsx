@@ -3,7 +3,7 @@ import { nb } from "date-fns/locale";
 import { format, parseISO } from "date-fns";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles } from "../lib/utils";
+import { toBase64, getMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
@@ -162,7 +162,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   useEffect(() => {
     fetchSessions()
       .then(setSessions)
-      .catch(console.error)
+      .catch(e => logDevError("History/fetchSessions", e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -218,7 +218,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
       });
       setDaySessions(results);
     } catch (err) {
-      console.error("Kunne ikke laste økt:", err);
+      logDevError("History/loadSession", err);
     } finally {
       setLoadingSession(false);
     }
@@ -246,10 +246,10 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     setEditMode(true);
     fetchGymSessionsByDate(session.session_date)
       .then(setEditGymSessions)
-      .catch(() => setEditGymSessions([]));
+      .catch(() => setEditGymSessions([])); // gym calendar is optional — edit still works without it
     fetchLibraryExercises()
       .then(setLibraryExercises)
-      .catch(() => {});
+      .catch(() => {}); // autocomplete degrades silently to manual entry on failure
   };
 
   const cancelEdit = () => {
@@ -269,7 +269,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     }
     checkGymCalendarConflict(editGymSessionId, selectedSession?.id)
       .then(setEditGymCalendarConflict)
-      .catch(() => setEditGymCalendarConflict(null));
+      .catch(() => setEditGymCalendarConflict(null)); // treat conflict check failure as no conflict
   }, [editGymSessionId, editMode, selectedSession]);
 
   const saveEdit = async () => {
@@ -282,6 +282,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
       setSelectedSession(null);
       await loadSession(date);
     } catch (err) {
+      logDevError("History/save", err);
       const msg = err?.message?.includes("unique") || err?.code === "23505"
         ? "Denne gymtimen har allerede en økt lagret."
         : "Lagring feilet. Prøv igjen.";
@@ -318,7 +319,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
       setEditExercises(parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true, sets: ex.sets ?? "1" })));
     } catch (err) {
-      console.error("Re-analyse feilet:", err);
+      logDevError("History/reanalyse", err);
       setAnalyzeError(err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.");
     } finally {
       setAnalyzing(false);

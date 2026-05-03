@@ -6,7 +6,7 @@ import { Add, ArrowLeft, ArrowRight, Save } from "@carbon/icons-react";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
 import { calcMuscles } from "../lib/bodymap.jsx";
-import { buildMuscleMapFromExercises } from "../lib/utils";
+import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
 import ExerciseRow from "./ExerciseRow";
 import BodyPanel from "./BodyPanel";
 import LibraryPicker from "./LibraryPicker";
@@ -50,7 +50,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    fetchLibraryExercises().then(setLibraryExercises).catch(() => {});
+    fetchLibraryExercises().then(setLibraryExercises).catch(() => {}); // degrades silently to manual entry
   }, []);
 
   const muscles = useMemo(
@@ -110,6 +110,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
         setTimeout(onBack, 800);
       }
     } catch (e) {
+      logDevError("TemplateSessionEditor/save", e);
       setSaveError(e.message);
     } finally {
       setSaving(false);

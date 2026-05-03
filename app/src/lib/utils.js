@@ -1,6 +1,18 @@
 import { EX_DB } from "./bodymap.jsx";
 import { supabase } from "./supabase";
 
+const _devErrors = [];
+
+export function logDevError(context, error) {
+  if (!import.meta.env.DEV) return;
+  const entry = { ts: new Date().toISOString(), context, message: error?.message ?? String(error) };
+  _devErrors.push(entry);
+  window.dispatchEvent(new CustomEvent("dev-error", { detail: entry }));
+  console.error(`[${context}]`, error);
+}
+
+export function getDevErrors() { return _devErrors; }
+
 // Calls /api/claude with the Supabase JWT in X-Supabase-Token (not Authorization —
 // Azure SWA replaces the Authorization header with its own managed identity token).
 // Retries once after a forced token refresh on 401 to recover from expired tokens.

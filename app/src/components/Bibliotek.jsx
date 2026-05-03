@@ -11,6 +11,7 @@ import {
   fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
 } from "../lib/db";
 import { MUSCLES, BodySVG } from "../lib/bodymap.jsx";
+import { logDevError } from "../lib/utils";
 import ExerciseForm from "./ExerciseForm";
 
 export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialTab = 0 }) {
@@ -36,11 +37,11 @@ export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, on
   useEffect(() => {
     fetchLibraryExercises()
       .then(setExercises)
-      .catch(e => setExError(e.message))
+      .catch(e => { logDevError("Bibliotek/fetchExercises", e); setExError(e.message); })
       .finally(() => setExLoading(false));
     fetchTemplates()
       .then(setTemplates)
-      .catch(e => setTplError(e.message))
+      .catch(e => { logDevError("Bibliotek/fetchTemplates", e); setTplError(e.message); })
       .finally(() => setTplLoading(false));
   }, []);
 
@@ -50,7 +51,7 @@ export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, on
       const saved = await saveLibraryExercise(fields);
       setExercises(p => [...p, saved].sort((a, b) => a.name.localeCompare(b.name, "no")));
       setShowNewEx(false);
-    } catch (e) { setExError(e.message); }
+    } catch (e) { logDevError("Bibliotek/saveExercise", e); setExError(e.message); }
     finally { setSavingEx(false); }
   };
 
@@ -63,7 +64,7 @@ export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, on
           .sort((a, b) => a.name.localeCompare(b.name, "no"))
       );
       setEditingEx(null);
-    } catch (e) { setExError(e.message); }
+    } catch (e) { logDevError("Bibliotek/updateExercise", e); setExError(e.message); }
     finally { setSavingEx(false); }
   };
 
@@ -83,7 +84,7 @@ export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, on
       setNewTplName("");
       setShowNewTpl(false);
       onEditTemplate(full);
-    } catch (e) { setTplError(e.message); }
+    } catch (e) { logDevError("Bibliotek/saveTemplate", e); setTplError(e.message); }
     finally { setSavingTpl(false); }
   };
 
@@ -105,6 +106,7 @@ export default function Bibliotek({ onEditTemplate, onShowHome, onShowLogger, on
         setTemplates(p => p.filter(t => t.id !== id));
       }
     } catch (e) {
+      logDevError(`Bibliotek/delete-${type}`, e);
       if (type === "exercise") setExError(e.message);
       else setTplError(e.message);
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { Book } from "@carbon/icons-react";
 import { fetchTemplates } from "../lib/db";
+import { logDevError } from "../lib/utils";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 
 export default function TemplatePicker({ onBack, onSelectTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView }) {
@@ -12,7 +13,7 @@ export default function TemplatePicker({ onBack, onSelectTemplate, onShowHome, o
   useEffect(() => {
     fetchTemplates()
       .then(setTemplates)
-      .catch(e => setError(e.message))
+      .catch(e => { logDevError("TemplatePicker/fetchTemplates", e); setError(e.message); })
       .finally(() => setLoading(false));
   }, []);
 

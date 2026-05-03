@@ -3,7 +3,7 @@ import { subDays, format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { fetchSessionsForReport } from "../lib/db";
 import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
-import { buildRecMuscleMap, callClaude } from "../lib/utils";
+import { buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
@@ -85,7 +85,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
     const from = format(subDays(new Date(), periodDays - 1), "yyyy-MM-dd");
     fetchSessionsForReport(from, to)
       .then(setSessions)
-      .catch(err => setError(err.message))
+      .catch(err => { logDevError("Report/fetchSessions", err); setError(err.message); })
       .finally(() => setLoading(false));
   }, [periodDays]);
 
@@ -123,7 +123,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
       }
       setRecs(parsed);
     } catch (err) {
-      console.error("Rapport-anbefalinger feilet:", err);
+      logDevError("Report/anbefalinger", err);
       setRecsError(err.message || "Kunne ikke hente anbefalinger. Prøv igjen.");
     } finally {
       setLoadingRecs(false);

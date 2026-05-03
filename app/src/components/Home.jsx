@@ -5,7 +5,7 @@ import { InlineLoading } from "@carbon/react";
 import { Camera } from "@carbon/icons-react";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
-import { extractMuscles } from "../lib/utils";
+import { extractMuscles, logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 
 const DAY_LABELS = ["M", "T", "O", "T", "F", "L", "S"];
@@ -62,14 +62,15 @@ export default function Home({
       setSyncState(res.ok ? 'ok' : 'error');
       setSyncMsg(res.ok ? `Hentet ${json.upserted} gymklasser` : json.error ?? 'Ukjent feil');
     } catch (e) {
+      logDevError("Home/sync", e);
       setSyncState('error');
       setSyncMsg(e.message);
     }
   }
 
   useEffect(() => {
-    fetchLastSession().then(setLastSession).catch(() => setLastSession(null));
-    fetchThisWeekSessions().then(setWeekSessions).catch(() => setWeekSessions([]));
+    fetchLastSession().then(setLastSession).catch(() => setLastSession(null)); // home renders empty state on failure
+    fetchThisWeekSessions().then(setWeekSessions).catch(() => setWeekSessions([])); // home renders empty state on failure
   }, []);
 
   const today = new Date();

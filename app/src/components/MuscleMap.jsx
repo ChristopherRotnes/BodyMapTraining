@@ -1,7 +1,7 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude } from "../lib/utils";
+import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Button, Select, SelectItem,
@@ -109,14 +109,14 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
     if (step !== "confirm") return;
     fetchGymSessionsByDate(sessionDate)
       .then(sessions => dispatch({ type: "SET_GYM_SESSIONS", sessions }))
-      .catch(() => dispatch({ type: "SET_GYM_SESSIONS", sessions: [] }));
+      .catch(() => dispatch({ type: "SET_GYM_SESSIONS", sessions: [] })); // gym calendar is optional
   }, [step, sessionDate]);
 
   useEffect(() => {
     if (!gymSessionId) { dispatch({ type: "SET_GYM_CONFLICT", conflict: null }); return; }
     checkGymCalendarConflict(gymSessionId)
       .then(conflict => dispatch({ type: "SET_GYM_CONFLICT", conflict }))
-      .catch(() => dispatch({ type: "SET_GYM_CONFLICT", conflict: null }));
+      .catch(() => dispatch({ type: "SET_GYM_CONFLICT", conflict: null })); // treat conflict check failure as no conflict
   }, [gymSessionId]);
 
   // Load exercises from a chosen template and skip straight to the confirm step
@@ -169,7 +169,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
       dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })) });
     } catch (err) {
-      console.error("Analyse feilet:", err);
+      logDevError("MuscleMap/analyse", err);
       dispatch({ type: "ANALYZE_ERROR", error: err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde." });
     }
   };
@@ -187,7 +187,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
     dispatch({ type: "CONFIRM", muscles: calcMuscles(enriched) });
     saveSession(enriched, { gymCalendarId: gymSessionId || null, sessionDate, replace: !!gymCalendarConflict })
       .then(() => dispatch({ type: "SAVE_SUCCESS" }))
-      .catch(err => { console.error("Lagring feilet:", err); dispatch({ type: "SAVE_ERROR" }); });
+      .catch(err => { logDevError("MuscleMap/save", err); dispatch({ type: "SAVE_ERROR" }); });
   };
 
   const recommend = async () => {
@@ -209,7 +209,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
       }
       dispatch({ type: "RECS_SUCCESS", recs: parsed });
     } catch (err) {
-      console.error("Anbefalinger feilet:", err);
+      logDevError("MuscleMap/anbefalinger", err);
       dispatch({ type: "RECS_ERROR", error: err.message || "Kunne ikke hente anbefalinger. Prøv igjen." });
     }
   };
