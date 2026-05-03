@@ -1,4 +1,4 @@
-import { useReducer, useRef, useCallback, useEffect, useMemo } from "react";
+import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, getMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude } from "../lib/utils";
@@ -21,6 +21,9 @@ const localDateStr = () => {
 
 const STEP_HEADINGS = { upload: "Last opp bilde", analyzing: "Analyserer…", confirm: "Bekreft øvelser", muscles: "Analyse av økt" };
 const STEP_LABELS = ["Last opp bilde", "Bekreft øvelser", "Analyse av økt"];
+
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export const initialState = {
   step: "upload",
@@ -100,6 +103,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
           recs, loadingRecs, recsError, saving, saved, saveError,
           gymSessions, gymSessionId, gymCalendarConflict, sessionDate } = state;
   const fileRef = useRef();
+  const [sizeError, setSizeError] = useState(null);
 
   useEffect(() => {
     if (step !== "confirm") return;
@@ -129,14 +133,19 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
 
   const addImage = useCallback(async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setSizeError(`Bildet er for stort (maks ${MAX_FILE_SIZE_MB} MB). Komprimer eller velg et annet bilde.`);
+      return;
+    }
     const mt = getMediaType(file);
     const b64 = await toBase64(file);
     dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
-  }, []);
+  }, [setSizeError]);
 
   const handleFiles = useCallback(async (files) => {
+    setSizeError(null);
     for (const file of Array.from(files)) await addImage(file);
-  }, [addImage]);
+  }, [addImage, setSizeError]);
 
   const analyze = async () => {
     dispatch({ type: "ANALYZE_START" });
@@ -339,6 +348,18 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
               <input ref={fileRef} type="file" accept="image/*" multiple
                 style={{ display: "none" }}
                 onChange={(e) => handleFiles(e.target.files)} />
+
+              <div aria-live="polite" aria-atomic="true">
+                {sizeError && (
+                  <InlineNotification
+                    kind="error"
+                    title="Feil:"
+                    subtitle={sizeError}
+                    hideCloseButton
+                    style={{ marginBottom: 14 }}
+                  />
+                )}
+              </div>
 
               <div aria-live="polite" aria-atomic="true">
                 {error && (
