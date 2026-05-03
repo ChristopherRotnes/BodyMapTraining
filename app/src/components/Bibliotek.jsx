@@ -10,7 +10,7 @@ import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
   fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
 } from "../lib/db";
-import { MUSCLES } from "../lib/bodymap.jsx";
+import { MUSCLES, BodySVG } from "../lib/bodymap.jsx";
 import ExerciseForm from "./ExerciseForm";
 
 export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, currentView, initialTab = 0 }) {
@@ -130,8 +130,8 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
           <PageTitle>Bibliotek</PageTitle>
           <Tabs selectedIndex={tabIndex} onChange={({ selectedIndex }) => setTabIndex(selectedIndex)}>
             <TabList aria-label="Bibliotek-seksjoner">
-              <Tab>Egne øvelser</Tab>
-              <Tab>Mal for gymtime</Tab>
+              <Tab>Øvelser{!exLoading ? ` (${exercises.length})` : ""}</Tab>
+              <Tab>Maler{!tplLoading ? ` (${templates.length})` : ""}</Tab>
             </TabList>
             <TabPanels>
 
@@ -193,9 +193,9 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
                                 )}
                               </div>
                             </div>
-                            {(ex.default_sets || ex.default_reps) && (
-                              <span style={{ fontSize: 12, color: "var(--cds-text-secondary)", flexShrink: 0 }}>
-                                {ex.default_sets || "–"}×{ex.default_reps || "–"}
+                            {(ex.default_sets && ex.default_reps) && (
+                              <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", flexShrink: 0, fontFamily: "var(--cds-font-mono)" }}>
+                                {ex.default_sets}×{ex.default_reps}
                               </span>
                             )}
                             <Button kind="ghost" hasIconOnly renderIcon={EditIcon} iconDescription="Rediger" size="sm"
@@ -261,6 +261,8 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
                       const usedAt = tpl.used_at
                         ? new Date(tpl.used_at).toLocaleDateString("no-NO")
                         : null;
+                      const tplPrimary = [...new Set((tpl.session_template_exercises || []).flatMap(e => e.primary_muscles || []))];
+                      const muscleCount = tplPrimary.length;
                       return (
                         <div key={tpl.id} style={{
                           background: "var(--cds-layer-01)",
@@ -268,14 +270,20 @@ export default function Bibliotek({ onBack, onEditTemplate, onShowHome, onShowLo
                           padding: "10px 12px",
                           display: "flex", alignItems: "center", gap: 8,
                         }}>
+                          <div
+                            style={{ background: "var(--cds-layer-02)", padding: 6, display: "flex", gap: 2, cursor: "pointer", flexShrink: 0 }}
+                            onClick={() => onEditTemplate(tpl)}
+                          >
+                            <div style={{ width: 32 }}><BodySVG view="front" primary={tplPrimary} secondary={[]} /></div>
+                            <div style={{ width: 32 }}><BodySVG view="back" primary={tplPrimary} secondary={[]} /></div>
+                          </div>
                           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }}
                             onClick={() => onEditTemplate(tpl)}>
-                            <div style={{ fontSize: 14, fontWeight: 500, color: "var(--cds-text-primary)", marginBottom: 2 }}>
+                            <div style={{ fontSize: 14, fontWeight: 500, color: "var(--cds-text-primary)", marginBottom: 4 }}>
                               {tpl.name}
                             </div>
-                            <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
-                              {exCount} {exCount === 1 ? "øvelse" : "øvelser"}
-                              {usedAt ? ` · Sist brukt ${usedAt}` : ""}
+                            <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em" }}>
+                              {exCount} ØVELSER · {muscleCount} MUSKLER{usedAt ? ` · SIST ${usedAt}` : ""}
                             </div>
                           </div>
                           <Button kind="ghost" hasIconOnly renderIcon={ChevronRight}

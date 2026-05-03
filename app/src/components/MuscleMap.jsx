@@ -6,19 +6,21 @@ import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendP
 import {
   Button, Select, SelectItem,
   DatePicker, DatePickerInput,
-  ProgressIndicator, ProgressStep,
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
 import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai, Book } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
 import BodyPanel from "./BodyPanel";
-import PageShell, { PageTitle } from "./PageShell";
+import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 
 const localDateStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
+
+const STEP_HEADINGS = { upload: "Last opp bilde", analyzing: "Analyserer…", confirm: "Bekreft øvelser", muscles: "Analyse av økt" };
+const STEP_LABELS = ["Last opp bilde", "Bekreft øvelser", "Analyse av økt"];
 
 export const initialState = {
   step: "upload",
@@ -212,12 +214,43 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
       currentView={currentView}
     >
       <div style={{ paddingBottom: 32 }}>
-          <PageTitle>Logg økt</PageTitle>
-          <ProgressIndicator currentIndex={stepIndex} spaceEqually style={{ marginBottom: 28 }}>
-            <ProgressStep label="Last opp bilde" />
-            <ProgressStep label="Bekreft øvelser" />
-            <ProgressStep label="Muskelkart" />
-          </ProgressIndicator>
+          <SectionLabel>LOGG ØKT</SectionLabel>
+          <PageHeading style={{ marginBottom: 20 }}>{STEP_HEADINGS[step]}</PageHeading>
+          <div style={{ display: "flex", marginBottom: 28 }}>
+            {STEP_LABELS.map((label, idx) => {
+              const isComplete = stepIndex > idx;
+              const isActive = stepIndex === idx;
+              return (
+                <div key={idx} style={{
+                  flex: 1,
+                  borderTop: (isActive || isComplete) ? "2px solid #0f62fe" : "1px solid #393939",
+                  paddingTop: 8,
+                  paddingRight: idx < 2 ? 12 : 0,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: "50%",
+                      border: isComplete ? "none" : `1px solid ${isActive ? "#0f62fe" : "#6f6f6f"}`,
+                      background: isComplete ? "#0f62fe" : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 11, flexShrink: 0,
+                      color: isComplete ? "#fff" : isActive ? "#0f62fe" : "var(--cds-text-secondary)",
+                      fontFamily: "var(--cds-font-mono)",
+                    }}>
+                      {idx + 1}
+                    </div>
+                    <span style={{
+                      fontSize: 12,
+                      color: isActive ? "var(--cds-text-primary)" : "var(--cds-text-secondary)",
+                      fontWeight: isActive ? 600 : 400,
+                    }}>
+                      {label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           {/* ── UPLOAD ── */}
           {step === "upload" && (
@@ -233,7 +266,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                   onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
                   onClick={() => fileRef.current?.click()}
                   style={{
-                    border: `2px dashed ${dragging ? "var(--cds-interactive)" : "var(--cds-border-subtle-01)"}`,
+                    border: `1px dashed ${dragging ? "var(--cds-interactive)" : "#6f6f6f"}`,
                     background: dragging ? "var(--cds-layer-hover-01)" : "transparent",
                     marginBottom: 14,
                     cursor: "pointer",
@@ -241,10 +274,9 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    transition: "border-color 0.2s, background 0.2s",
                   }}
                 >
-                  <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ textAlign: "center", padding: "48px 20px 40px" }}>
                     <Camera size={40} style={{ color: "var(--cds-text-secondary)", marginBottom: 12 }} />
                     <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Trykk for å velge bilde</p>
                     <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>eller dra og slipp · JPEG, PNG, WebP · flere bilder støttes</p>
@@ -265,7 +297,7 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                           onClick={() => dispatch({ type: "REMOVE_IMAGE", id: img.id })}
                           style={{
                             position: "absolute", top: 4, right: 4,
-                            background: "rgba(0,0,0,0.75)", border: "none",
+                            background: "var(--cds-layer-02)", border: "none",
                             color: "#fff", width: 24, height: 24,
                             fontSize: 16, lineHeight: "24px", textAlign: "center",
                             padding: 0, cursor: "pointer",
@@ -277,12 +309,11 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                     <div
                       onClick={() => fileRef.current?.click()}
                       style={{
-                        border: `2px dashed ${dragging ? "var(--cds-interactive)" : "var(--cds-border-subtle-01)"}`,
+                        border: `1px dashed ${dragging ? "var(--cds-interactive)" : "#6f6f6f"}`,
                         background: dragging ? "var(--cds-layer-hover-01)" : "transparent",
                         display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center",
                         aspectRatio: "1", cursor: "pointer", gap: 4,
-                        transition: "border-color 0.2s",
                       }}>
                       <Add size={20} style={{ color: "var(--cds-text-secondary)" }} />
                       <span style={{ fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.5px" }}>Legg til</span>
@@ -307,26 +338,35 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
               )}
 
               <Button
-                kind="primary"
-                renderIcon={images.length > 0 ? ArrowRight : Camera}
-                onClick={images.length > 0 ? analyze : () => fileRef.current?.click()}
-                style={{ width: "100%", maxWidth: "100%", marginBottom: 8 }}
-              >
-                {images.length > 1
-                  ? `Analyser ${images.length} bilder`
-                  : images.length === 1
-                    ? "Analyser program"
-                    : "Velg bilde"}
-              </Button>
-
-              <Button
                 kind="secondary"
                 renderIcon={Book}
                 onClick={onShowTemplatePicker}
-                style={{ width: "100%", maxWidth: "100%" }}
+                style={{ width: "100%", maxWidth: "100%", marginBottom: 0 }}
               >
                 Velg fra bibliotek
               </Button>
+
+              <div style={{
+                position: "sticky",
+                bottom: 0,
+                background: "var(--cds-background)",
+                borderTop: "1px solid #393939",
+                display: "flex",
+                marginTop: 16,
+              }}>
+                <Button kind="ghost" onClick={onShowHome} style={{ flex: 1 }}>
+                  Avbryt
+                </Button>
+                <Button
+                  kind="primary"
+                  renderIcon={ArrowRight}
+                  onClick={analyze}
+                  disabled={images.length === 0}
+                  style={{ flex: 1 }}
+                >
+                  Neste
+                </Button>
+              </div>
             </div>
           )}
 

@@ -266,7 +266,9 @@ export async function fetchThisWeekSessions() {
     .from("sessions")
     .select(`
       id, session_date,
+      gym_calendar(name),
       session_exercises(
+        id, name,
         muscle_activations(muscle_id)
       )
     `)

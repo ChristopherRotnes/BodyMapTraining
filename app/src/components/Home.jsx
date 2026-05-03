@@ -45,6 +45,26 @@ export default function Home({
 }) {
   const [lastSession, setLastSession] = useState(undefined);
   const [weekSessions, setWeekSessions] = useState(undefined);
+  const [hoveredDay, setHoveredDay] = useState(null);
+  const [syncState, setSyncState] = useState(null);
+  const [syncMsg, setSyncMsg] = useState('');
+
+  async function triggerSportySync() {
+    setSyncState('loading');
+    setSyncMsg('');
+    try {
+      const res = await fetch('/api/sporty-sync', {
+        method: 'POST',
+        headers: { 'x-api-key': import.meta.env.VITE_SPORTY_SYNC_API_KEY ?? '' },
+      });
+      const json = await res.json();
+      setSyncState(res.ok ? 'ok' : 'error');
+      setSyncMsg(res.ok ? `Hentet ${json.upserted} gymklasser` : json.error ?? 'Ukjent feil');
+    } catch (e) {
+      setSyncState('error');
+      setSyncMsg(e.message);
+    }
+  }
 
   useEffect(() => {
     fetchLastSession().then(setLastSession).catch(() => setLastSession(null));
@@ -64,9 +84,10 @@ export default function Home({
   const weekStart = startOfISOWeek(today);
   const weekDays = DAY_LABELS.map((label, i) => {
     const date = format(addDays(weekStart, i), "yyyy-MM-dd");
-    const session = weekSessions?.find(s => s.session_date === date);
-    const count = session ? (session.session_exercises?.length ?? 0) : 0;
-    return { label, date, count };
+    const sessions = weekSessions?.filter(s => s.session_date === date) ?? [];
+    const count = sessions.reduce((sum, s) => sum + (s.session_exercises?.length ?? 0), 0);
+    const names = sessions.map(s => s.gym_calendar?.name).filter(Boolean);
+    return { label, date, count, names };
   });
 
   const weekSessionCount = weekSessions?.length ?? 0;
@@ -202,18 +223,54 @@ export default function Home({
         <SectionLabel>UKEN SÅ LANGT</SectionLabel>
         <div style={{ padding: "0 16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
-            {weekDays.map(({ label, count }, i) => (
+            {weekDays.map(({ label, count, date }, i) => (
               <div key={i} style={{ textAlign: "center" }}>
                 <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginBottom: 4, letterSpacing: "0.1em" }}>
                   {label}
                 </div>
-                <div style={{ height: 36, background: heatColor(count), border: "1px solid var(--cds-border-subtle-01)" }} />
+                <div
+                  onClick={count > 0 ? () => onShowHistoryWithDate(date) : undefined}
+                  onMouseEnter={count > 0 ? () => setHoveredDay(i) : undefined}
+                  onMouseLeave={count > 0 ? () => setHoveredDay(null) : undefined}
+                  style={{ height: 36, background: heatColor(count), border: "1px solid var(--cds-border-subtle-01)", cursor: count > 0 ? "pointer" : "default" }}
+                />
               </div>
             ))}
           </div>
           {weekSessions !== undefined && (
-            <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", marginTop: 8, letterSpacing: "0.06em" }}>
-              {weekSessionCount} ØKTE{weekSessionCount !== 1 ? "R" : ""} · {weekMuscleCount} MUSKELGRUPPE{weekMuscleCount !== 1 ? "R" : ""}
+            <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", marginTop: 8, letterSpacing: "0.06em", minHeight: 16 }}>
+              {hoveredDay !== null && weekDays[hoveredDay]?.names.length > 0
+                ? weekDays[hoveredDay].names.join(" · ")
+                : `${weekSessionCount} ØKTE${weekSessionCount !== 1 ? "R" : ""} · ${weekMuscleCount} MUSKELGRUPPE${weekMuscleCount !== 1 ? "R" : ""}`}
+            </div>
+          )}
+        </div>
+
+        {/* DEV: sporty.no sync — remove before release */}
+        <div style={{ margin: "32px 16px 0" }}>
+          <SectionLabel>DEV</SectionLabel>
+          <button
+            onClick={triggerSportySync}
+            disabled={syncState === 'loading'}
+            style={{
+              width: "100%", height: 40,
+              background: "var(--cds-layer-02)",
+              border: "1px solid var(--cds-border-subtle-01)",
+              color: "var(--cds-text-secondary)",
+              fontFamily: "var(--cds-font-mono)", fontSize: 12,
+              cursor: syncState === 'loading' ? 'wait' : 'pointer',
+              letterSpacing: "0.06em",
+            }}
+          >
+            {syncState === 'loading' ? 'SYNKRONISERER…' : 'SYNK SPORTY.NO'}
+          </button>
+          {syncMsg && (
+            <div style={{
+              fontFamily: "var(--cds-font-mono)", fontSize: 11, marginTop: 6,
+              letterSpacing: "0.06em",
+              color: syncState === 'ok' ? "var(--heat-4)" : "var(--cds-support-error)",
+            }}>
+              {syncMsg}
             </div>
           )}
         </div>
