@@ -123,6 +123,8 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
   }, [templatePreload]);
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
+  const headingRef = useRef();
+  useEffect(() => { headingRef.current?.focus(); }, [step]);
   const exerciseMuscleMap = useMemo(() => buildMuscleMapFromExercises(exercises), [exercises]);
 
   const addImage = useCallback(async (file) => {
@@ -214,14 +216,16 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
       currentView={currentView}
     >
       <div style={{ paddingBottom: 32 }}>
-          <SectionLabel>LOGG ØKT</SectionLabel>
-          <PageHeading style={{ marginBottom: 20 }}>{STEP_HEADINGS[step]}</PageHeading>
-          <div style={{ display: "flex", marginBottom: 28 }}>
+          <div ref={headingRef} tabIndex={-1} style={{ outline: "none" }}>
+            <SectionLabel>LOGG ØKT</SectionLabel>
+            <PageHeading style={{ marginBottom: 20 }}>{STEP_HEADINGS[step]}</PageHeading>
+          </div>
+          <div role="list" aria-label="Fremgang" style={{ display: "flex", marginBottom: 28 }}>
             {STEP_LABELS.map((label, idx) => {
               const isComplete = stepIndex > idx;
               const isActive = stepIndex === idx;
               return (
-                <div key={idx} style={{
+                <div key={idx} role="listitem" aria-current={isActive ? "step" : undefined} style={{
                   flex: 1,
                   borderTop: (isActive || isComplete) ? "2px solid #0f62fe" : "1px solid #393939",
                   paddingTop: 8,
@@ -336,16 +340,18 @@ export default function MuscleMap({ onShowHome, onShowLogger, onShowHistory, onS
                 style={{ display: "none" }}
                 onChange={(e) => handleFiles(e.target.files)} />
 
-              {error && (
-                <InlineNotification
-                  kind="error"
-                  title="Feil:"
-                  subtitle={error}
-                  hideCloseButton
-                 
-                  style={{ marginBottom: 14 }}
-                />
-              )}
+              <div aria-live="polite" aria-atomic="true">
+                {error && (
+                  <InlineNotification
+                    kind="error"
+                    title="Feil:"
+                    subtitle={error}
+                    hideCloseButton
+
+                    style={{ marginBottom: 14 }}
+                  />
+                )}
+              </div>
 
               <Button
                 kind="secondary"

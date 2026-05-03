@@ -357,7 +357,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
           />
 
           {loading ? (
-            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24 }}>
+            <div aria-live="polite" aria-busy="true" style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "16px 12px", marginBottom: 24 }}>
               <SkeletonPlaceholder style={{ width: "100%", height: 280 }} />
             </div>
           ) : (
@@ -388,7 +388,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
           )}
 
           {loadingSession && (
-            <div style={{ marginBottom: 24 }}>
+            <div aria-live="polite" aria-busy="true" style={{ marginBottom: 24 }}>
               <AccordionSkeleton count={2} />
             </div>
           )}
