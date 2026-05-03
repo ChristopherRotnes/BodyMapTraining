@@ -123,26 +123,18 @@ export async function touchTemplate(id) {
 }
 
 export async function replaceTemplateExercises(templateId, exercises) {
-  const { error: delErr } = await supabase
-    .from("session_template_exercises")
-    .delete()
-    .eq("template_id", templateId);
-  if (delErr) throw delErr;
-
-  if (exercises.length === 0) return;
-
-  const rows = exercises.map((e, i) => ({
-    template_id: templateId,
-    library_exercise_id: e.library_exercise_id || null,
-    name: e.name,
-    primary_muscles: e.primary_muscles || e.primary || [],
-    secondary_muscles: e.secondary_muscles || e.secondary || [],
-    sets: e.sets || null,
-    reps: e.reps || null,
-    sort_order: i,
-  }));
-
-  const { error } = await supabase.from("session_template_exercises").insert(rows);
+  const { error } = await supabase.rpc('replace_template_exercises', {
+    p_template_id: templateId,
+    p_exercises: exercises.map((e, i) => ({
+      library_exercise_id: e.library_exercise_id || null,
+      name: e.name,
+      primary_muscles: e.primary_muscles || e.primary || [],
+      secondary_muscles: e.secondary_muscles || e.secondary || [],
+      sets: e.sets || null,
+      reps: e.reps || null,
+      sort_order: i,
+    })),
+  });
   if (error) throw error;
 }
 
@@ -163,65 +155,28 @@ export function fetchTodayGymSessions() {
 }
 
 export async function saveSession(exercises, { imageUrl = null, notes = null, trainingGroupId = null, gymCalendarId = null, sessionDate = null, replace = false } = {}) {
-  if (replace && gymCalendarId) {
-    const { error: replaceErr } = await supabase
-      .from("sessions")
-      .delete()
-      .eq("gym_calendar_id", gymCalendarId);
-    if (replaceErr) throw replaceErr;
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const { data: session, error: sessionError } = await supabase
-    .from("sessions")
-    .insert({
-      trainer_id: user.id,
-      training_group_id: trainingGroupId,
-      gym_calendar_id: gymCalendarId,
-      session_date: sessionDate || new Date().toISOString().slice(0, 10),
-      image_url: imageUrl,
-      notes,
-    })
-    .select()
-    .single();
-
-  if (sessionError) throw sessionError;
-
   const enabledExercises = exercises.filter(e => e.enabled && e.name);
 
-  if (enabledExercises.length > 0) {
-    const { data: insertedExercises, error: exError } = await supabase
-      .from("session_exercises")
-      .insert(enabledExercises.map((e, i) => ({
-        session_id: session.id,
-        name: e.name,
-        standard_name: e.standardName || null,
-        sets: e.sets ? parseInt(e.sets, 10) || null : null,
-        reps: e.reps ? parseInt(e.reps, 10) || null : null,
-        position: i,
-      })))
-      .select();
-
-    if (exError) {
-      await supabase.from("sessions").delete().eq("id", session.id);
-      throw exError;
-    }
-
-    const activations = insertedExercises.flatMap((ex, i) => [
-      ...(enabledExercises[i].primary || []).map(muscle_id => ({ session_exercise_id: ex.id, muscle_id, activation_type: "primary" })),
-      ...(enabledExercises[i].secondary || []).map(muscle_id => ({ session_exercise_id: ex.id, muscle_id, activation_type: "secondary" })),
-    ]);
-
-    if (activations.length > 0) {
-      const { error: actError } = await supabase.from("muscle_activations").insert(activations);
-      if (actError) {
-        await supabase.from("sessions").delete().eq("id", session.id);
-        throw actError;
-      }
-    }
-  }
-
+  const { data: session, error } = await supabase.rpc('save_session', {
+    p_gym_calendar_id: gymCalendarId || null,
+    p_session_date: sessionDate || new Date().toISOString().slice(0, 10),
+    p_image_url: imageUrl,
+    p_notes: notes,
+    p_training_group_id: trainingGroupId || null,
+    p_exercises: enabledExercises.map((e, i) => ({
+      name: e.name,
+      standard_name: e.standardName || null,
+      sets: e.sets ? parseInt(e.sets, 10) || null : null,
+      reps: e.reps ? parseInt(e.reps, 10) || null : null,
+      position: i,
+      activations: [
+        ...(e.primary || []).map(muscle_id => ({ muscle_id, activation_type: 'primary' })),
+        ...(e.secondary || []).map(muscle_id => ({ muscle_id, activation_type: 'secondary' })),
+      ],
+    })),
+    p_replace: replace,
+  });
+  if (error) throw error;
   return session;
 }
 
@@ -327,55 +282,23 @@ export async function checkGymCalendarConflict(gymCalendarId, excludeSessionId =
 }
 
 export async function updateSession(sessionId, exercises, gymCalendarId, { replace = false } = {}) {
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (replace && gymCalendarId) {
-    const { error: replaceErr } = await supabase
-      .from("sessions")
-      .delete()
-      .eq("gym_calendar_id", gymCalendarId)
-      .eq("trainer_id", user.id)
-      .neq("id", sessionId);
-    if (replaceErr) throw replaceErr;
-  }
-
-  const { error: delError } = await supabase
-    .from("session_exercises")
-    .delete()
-    .eq("session_id", sessionId);
-  if (delError) throw delError;
-
   const enabledExercises = exercises.filter(e => e.enabled && e.name);
-  for (let i = 0; i < enabledExercises.length; i++) {
-    const e = enabledExercises[i];
-    const { data: ex, error: exError } = await supabase
-      .from("session_exercises")
-      .insert({
-        session_id: sessionId,
-        name: e.name,
-        standard_name: e.standardName || null,
-        sets: e.sets ? parseInt(e.sets, 10) || null : null,
-        reps: e.reps ? parseInt(e.reps, 10) || null : null,
-        position: i,
-      })
-      .select()
-      .single();
-    if (exError) throw exError;
 
-    const activations = [
-      ...(e.primary || []).map(muscle_id => ({ session_exercise_id: ex.id, muscle_id, activation_type: "primary" })),
-      ...(e.secondary || []).map(muscle_id => ({ session_exercise_id: ex.id, muscle_id, activation_type: "secondary" })),
-    ];
-    if (activations.length > 0) {
-      const { error: actError } = await supabase.from("muscle_activations").insert(activations);
-      if (actError) throw actError;
-    }
-  }
-
-  const { error: updateError } = await supabase
-    .from("sessions")
-    .update({ gym_calendar_id: gymCalendarId || null })
-    .eq("id", sessionId)
-    .eq("trainer_id", user.id);
-  if (updateError) throw updateError;
+  const { error } = await supabase.rpc('update_session', {
+    p_session_id: sessionId,
+    p_gym_calendar_id: gymCalendarId || null,
+    p_exercises: enabledExercises.map((e, i) => ({
+      name: e.name,
+      standard_name: e.standardName || null,
+      sets: e.sets ? parseInt(e.sets, 10) || null : null,
+      reps: e.reps ? parseInt(e.reps, 10) || null : null,
+      position: i,
+      activations: [
+        ...(e.primary || []).map(muscle_id => ({ muscle_id, activation_type: 'primary' })),
+        ...(e.secondary || []).map(muscle_id => ({ muscle_id, activation_type: 'secondary' })),
+      ],
+    })),
+    p_replace: replace,
+  });
+  if (error) throw error;
 }
