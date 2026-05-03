@@ -7,12 +7,33 @@ const ALLOWED_MODELS = new Set([
 ]);
 const MAX_TOKENS_LIMIT = 2000;
 
+// In-memory rate limiter: 10 requests per user per minute.
+// Works for a single function instance; sufficient at current scale.
+const rateLimitMap = new Map();
+const RATE_LIMIT_REQUESTS = 10;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(userId, { count: 1, windowStart: now });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_REQUESTS) return false;
+  entry.count++;
+  return true;
+}
+
+// Returns the user's ID if the token is valid, otherwise null.
 async function verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey) {
-  if (!token) return false;
+  if (!token) return null;
   const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
     headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
   });
-  return res.ok;
+  if (!res.ok) return null;
+  const user = await res.json();
+  return user.id ?? null;
 }
 
 app.http('claude', {
@@ -34,11 +55,18 @@ app.http('claude', {
     // Azure SWA replaces the Authorization header with its own managed identity
     // token, so the Supabase JWT is passed in X-Supabase-Token instead.
     const token = request.headers.get('X-Supabase-Token');
-    const authed = await verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey);
-    if (!authed) {
+    const userId = await verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey);
+    if (!userId) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!checkRateLimit(userId)) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
