@@ -22,6 +22,12 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
+      coverage: {
+        provider: 'v8',
+        include: ['src/lib/**', '**/api/claudeUtils.js'],
+        exclude: ['**/__tests__/**'],
+        reporter: ['text', 'json-summary'],
+      },
     },
   }
 })

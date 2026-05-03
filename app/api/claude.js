@@ -1,40 +1,5 @@
 import { app } from '@azure/functions';
-
-// Models and token limits the frontend is permitted to use.
-const ALLOWED_MODELS = new Set([
-  'claude-opus-4-5',
-  'claude-sonnet-4-6',
-]);
-const MAX_TOKENS_LIMIT = 2000;
-
-// In-memory rate limiter: 10 requests per user per minute.
-// Works for a single function instance; sufficient at current scale.
-const rateLimitMap = new Map();
-const RATE_LIMIT_REQUESTS = 10;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-
-function checkRateLimit(userId) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(userId, { count: 1, windowStart: now });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT_REQUESTS) return false;
-  entry.count++;
-  return true;
-}
-
-// Returns the user's ID if the token is valid, otherwise null.
-async function verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey) {
-  if (!token) return null;
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
-  });
-  if (!res.ok) return null;
-  const user = await res.json();
-  return user.id ?? null;
-}
+import { ALLOWED_MODELS, MAX_TOKENS_LIMIT, checkRateLimit, verifySupabaseJwt } from './claudeUtils.js';
 
 app.http('claude', {
   methods: ['POST'],
