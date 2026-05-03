@@ -156,6 +156,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   const [analyzeError, setAnalyzeError] = useState(null);
   const [libraryExercises, setLibraryExercises] = useState([]);
   const [newExerciseIds, setNewExerciseIds] = useState(new Set());
+  const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const fileRef = useRef();
 
   useEffect(() => {
@@ -193,7 +194,8 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
   const toggleExpand = (id) => {
     setExpandedIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); setHoveredMuscle(null); }
+      else next.add(id);
       return next;
     });
   };
@@ -227,6 +229,7 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
     setSelectedDate(new Date(dateStr + "T12:00:00"));
     setEditMode(false);
     setSelectedSession(null);
+    setHoveredMuscle(null);
     loadSession(dateStr);
   };
 
@@ -498,7 +501,37 @@ export default function History({ onShowHome, onShowLogger, onShowHistory, onSho
                       primary={sessionMuscles.primary}
                       secondary={sessionMuscles.secondary}
                       muscleMap={sessionMuscleMap}
+                      onHover={setHoveredMuscle}
+                      hovered={hoveredMuscle}
+                      marginBottom={0}
                     />
+
+                    <div style={{ height: 68, marginBottom: 16, overflow: "hidden" }}>
+                      {hoveredMuscle ? (
+                        <div style={{ borderLeft: "3px solid var(--cds-interactive)", background: "var(--cds-layer-01)", padding: "10px 14px" }}>
+                          <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+                            {MUSCLES[hoveredMuscle]?.label}
+                          </div>
+                          <div style={{ display: "flex", gap: 24, alignItems: "baseline", overflow: "hidden" }}>
+                            <div style={{ flexShrink: 0 }}>
+                              <span style={{ fontSize: 28, fontWeight: 300, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
+                                {(sessionMuscleMap[hoveredMuscle] || []).length}
+                              </span>
+                              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                                {(sessionMuscleMap[hoveredMuscle] || []).length === 1 ? "ØVELSE" : "ØVELSER"}
+                              </span>
+                            </div>
+                            <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>
+                              {(sessionMuscleMap[hoveredMuscle] || []).join(" · ")}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
+                          Hold musepeker over kroppen for detaljer
+                        </div>
+                      )}
+                    </div>
 
                     <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
                       <Tag type="green" size="sm">Primær ({sessionMuscles.primary.length})</Tag>

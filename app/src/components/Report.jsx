@@ -322,9 +322,9 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
                 ))}
               </div>
 
-              <div style={{ minHeight: 68, marginBottom: 12 }}>
+              <div style={{ height: 68, marginBottom: 12, overflow: "hidden" }}>
                 {hoveredMuscle ? (
-                  <div style={{ borderLeft: "3px solid #0f62fe", background: "var(--cds-layer-01)", padding: "10px 14px" }}>
+                  <div style={{ borderLeft: "3px solid var(--cds-interactive)", background: "var(--cds-layer-01)", padding: "10px 14px" }}>
                     <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
                       {MUSCLES[hoveredMuscle]?.label}
                     </div>
