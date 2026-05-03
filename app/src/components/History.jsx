@@ -57,32 +57,45 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedStr;
           const isFuture = dateStr > todayStr;
+          const isInteractive = !isFuture && count > 0;
           const day = parseInt(dateStr.split("-")[2], 10);
+          const cellStyle = {
+            height: 40,
+            background: calHeatColor(count),
+            border: "1px solid var(--cds-border-subtle-01)",
+            outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid #fff" : undefined,
+            outlineOffset: "-2px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          };
+          const daySpan = (
+            <span style={{
+              fontSize: 10, fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em",
+              color: count > 0 ? "rgba(255,255,255,0.9)" : isFuture ? "var(--cds-text-disabled)" : "var(--cds-text-secondary)",
+            }}>
+              {day}
+            </span>
+          );
+          if (isInteractive) {
+            return (
+              <button
+                key={dateStr}
+                aria-label={`${dateStr}: ${count} ${count === 1 ? "økt" : "økter"}`}
+                aria-pressed={isSelected}
+                aria-current={isToday ? "date" : undefined}
+                onClick={() => onDayClick(dateStr)}
+                style={{ ...cellStyle, cursor: "pointer", padding: 0, fontFamily: "inherit" }}
+              >
+                {daySpan}
+              </button>
+            );
+          }
           return (
             <div
               key={dateStr}
-              tabIndex={!isFuture && count > 0 ? 0 : -1}
-              role={!isFuture && count > 0 ? "button" : undefined}
-              aria-label={!isFuture && count > 0 ? `${dateStr}: ${count} ${count === 1 ? "økt" : "økter"}` : undefined}
-              aria-pressed={isSelected || undefined}
-              onClick={() => !isFuture && count > 0 && onDayClick(dateStr)}
-              onKeyDown={!isFuture && count > 0 ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDayClick(dateStr); } } : undefined}
-              style={{
-                height: 40,
-                background: calHeatColor(count),
-                border: "1px solid var(--cds-border-subtle-01)",
-                outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid #fff" : undefined,
-                outlineOffset: "-2px",
-                cursor: !isFuture && count > 0 ? "pointer" : "default",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
+              aria-current={isToday ? "date" : undefined}
+              style={{ ...cellStyle, cursor: "default" }}
             >
-              <span style={{
-                fontSize: 10, fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em",
-                color: count > 0 ? "rgba(255,255,255,0.9)" : isFuture ? "var(--cds-text-disabled)" : "var(--cds-text-secondary)",
-              }}>
-                {day}
-              </span>
+              {daySpan}
             </div>
           );
         })}

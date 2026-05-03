@@ -157,7 +157,8 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   };
 
   return (
-    <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
+    <div ref={wrapRef} style={{ position: "relative", width: "100%" }}
+      onKeyDown={e => { if (e.key === "Escape") { setTooltip(null); setFocused(null); if (onHover) onHover(null); } }}>
       <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label={`Treningsfrekvenskart, ${view === "front" ? "fremside" : "bakside"}`}
@@ -236,7 +237,6 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
           background: "var(--cds-layer-02)",
           border: "1px solid var(--cds-border-subtle-01)",
           padding: "8px 10px",
-          pointerEvents: "none",
           zIndex: 10,
           minWidth: 130,
         }}>
@@ -315,7 +315,8 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
   };
 
   return (
-    <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
+    <div ref={wrapRef} style={{ position: "relative", width: "100%" }}
+      onKeyDown={e => { if (e.key === "Escape") { setTooltip(null); setFocused(null); if (onHover) onHover(null); } }}>
       <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label={`Muskelkart, ${view === "front" ? "fremside" : "bakside"}. Primære: ${[...pSet].map(id => MUSCLES[id]?.label).filter(Boolean).join(", ") || "ingen"}.`}
@@ -381,7 +382,6 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
           background: "var(--cds-layer-02)",
           border: "1px solid var(--cds-border-subtle-01)",
           padding: "8px 10px",
-          pointerEvents: "none",
           zIndex: 10,
           minWidth: 120,
           maxWidth: 160,

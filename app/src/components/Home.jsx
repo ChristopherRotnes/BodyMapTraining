@@ -73,6 +73,13 @@ export default function Home({
     fetchThisWeekSessions().then(setWeekSessions).catch(() => setWeekSessions([])); // home renders empty state on failure
   }, []);
 
+  useEffect(() => {
+    if (!tooltip) return;
+    const fn = e => { if (e.key === "Escape") setTooltip(null); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, [tooltip]);
+
   const today = new Date();
   const muscles = lastSession ? extractMuscles(lastSession) : null;
   const isToday = lastSession?.session_date === format(today, "yyyy-MM-dd");
@@ -242,6 +249,13 @@ export default function Home({
                       setTooltip(prev => prev ? { ...prev, x: e.clientX - rect.left, y: e.clientY - rect.top } : prev);
                     } : undefined}
                     onMouseLeave={count > 0 ? () => setTooltip(null) : undefined}
+                    onFocus={count > 0 ? (e) => {
+                      const stripRect = weekStripRef.current?.getBoundingClientRect();
+                      const cellRect = e.currentTarget.getBoundingClientRect();
+                      if (!stripRect) return;
+                      setTooltip({ names, x: cellRect.left - stripRect.left, y: cellRect.top - stripRect.top + cellRect.height + 4 });
+                    } : undefined}
+                    onBlur={count > 0 ? () => setTooltip(null) : undefined}
                     style={{ height: 36, background: heatColor(count), border: "1px solid var(--cds-border-subtle-01)", cursor: count > 0 ? "pointer" : "default" }}
                   />
                 </div>
@@ -256,7 +270,6 @@ export default function Home({
                 border: "1px solid var(--cds-border-subtle-01)",
                 padding: "8px 10px",
                 zIndex: 10,
-                pointerEvents: "none",
                 maxWidth: 200,
               }}>
                 {tooltip.names.map((name, i) => (

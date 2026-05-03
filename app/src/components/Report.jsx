@@ -94,6 +94,13 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
     setRecsError(null);
   }, [periodDays, selectedDays, selectedTypes]);
 
+  useEffect(() => {
+    if (!hoveredMuscle) return;
+    const fn = e => { if (e.key === "Escape") setHoveredMuscle(null); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, [hoveredMuscle]);
+
   const getAdvice = async () => {
     setLoadingRecs(true);
     setRecs(null);
@@ -349,7 +356,7 @@ export default function Report({ onShowHome, onShowLogger, onShowHistory, onShow
                   </div>
                 ) : (
                   <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
-                    Hold musepeker over kroppen for detaljer
+                    Hold musepeker over eller fokuser muskel for detaljer
                   </div>
                 )}
               </div>
