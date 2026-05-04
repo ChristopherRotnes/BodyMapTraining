@@ -398,8 +398,9 @@ export default function History({ initialDate }) {
           {muscleFilter.length > 0 && selectedDate ? (() => {
             const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
             const count = filteredSessions.filter(s => s.session_date === selectedDateStr).length;
+            const total = sessions.filter(s => s.session_date === selectedDateStr).length;
             const dateLabel = format(selectedDate, "d. MMMM", { locale: nb });
-            return <>{count} {count === 1 ? "økt" : "økter"} {dateLabel} <span style={{ color: "var(--accent)" }}>med disse filtrene</span></>;
+            return <>{count} av {total} {total === 1 ? "økt" : "økter"} <span style={{ color: "var(--accent)" }}>den {dateLabel}</span></>;
           })() : muscleFilter.length > 0 ? (
             <>{currentMonthCount} {currentMonthCount === 1 ? "økt" : "økter"} i {format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb })} <span style={{ color: "var(--accent)" }}>med disse filtrene</span></>
           ) : (
