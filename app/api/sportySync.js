@@ -25,7 +25,9 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
 
   let sportyData;
   try {
-    const res = await fetch(SPORTY_URL);
+    const res = await fetch(SPORTY_URL, {
+      headers: { 'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)' },
+    });
     if (!res.ok) throw new Error(`sporty.no returned ${res.status}`);
     const json = await res.json();
     sportyData = json.data ?? [];
@@ -84,6 +86,52 @@ app.timer('sportySyncTimer', {
   schedule: '0 4,11 * * *',
   handler: async (myTimer, context) => {
     await syncGymCalendar(context);
+  },
+});
+
+// ── HTTP trigger: health check ────────────────────────────────────────
+// GET /api/sporty-health  → returns most-recent gym_calendar row + count
+app.http('sportySyncHealth', {
+  methods: ['GET'],
+  route: 'sporty-health',
+  authLevel: 'anonymous',
+  handler: async (_request, context) => {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return new Response(JSON.stringify({ error: 'Not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const [countRes, latestRes] = await Promise.all([
+      fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=count`, {
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Prefer': 'count=exact',
+          'Range-Unit': 'items',
+          'Range': '0-0',
+        },
+      }),
+      fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=sporty_id,name,start_time&order=start_time.desc&limit=1`, {
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+        },
+      }),
+    ]);
+
+    const totalCount = countRes.headers.get('Content-Range')?.split('/')[1] ?? 'unknown';
+    const latest = latestRes.ok ? await latestRes.json() : [];
+
+    context.log(`Health check: ${totalCount} rows, latest: ${latest[0]?.start_time ?? 'none'}`);
+    return new Response(JSON.stringify({ totalRows: totalCount, latestRow: latest[0] ?? null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   },
 });
 
