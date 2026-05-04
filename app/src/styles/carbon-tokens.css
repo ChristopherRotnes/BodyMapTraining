@@ -402,6 +402,19 @@
   --cond: 'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif;
 }
 
+/* ============ WORKOUT LENS TOKENS — light mode overrides ============ */
+[data-theme="g10"] {
+  --bg-canvas:        #f4f4f4;
+  --surface-card:     #ffffff;
+  --surface-card-2:   #f4f4f4;
+  --border-subtle-wl: #e0e0e0;
+  --border-strong-wl: #8d8d8d;
+  --border-mute-wl:   #c6c6c6;
+  --text-muted-wl:    #525252;
+  --text-subdued-wl:  #6f6f6f;
+  --text-disabled-wl: rgba(22,22,22,.25);
+}
+
 /* Element defaults — semantic tags, productive sizing */
 body { color: var(--cds-text-primary); background: var(--cds-background); font-family: var(--cds-font-sans); font-weight: 400; }
 h1 { font-size: 2.625rem; line-height: 1.199; font-weight: 300; letter-spacing: 0; }
