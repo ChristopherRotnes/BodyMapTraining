@@ -402,7 +402,7 @@ export default function History({ initialDate }) {
         </PageHeading>
 
         {/* Muscle filter — horizontal pill scroll */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16, overflow: "hidden" }}>
           <div style={{
             display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none",
             paddingBottom: 8,
