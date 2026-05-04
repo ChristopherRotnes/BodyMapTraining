@@ -1,5 +1,5 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
-import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict } from "../lib/db";
+import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { EX_DB, MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
@@ -11,6 +11,7 @@ import {
 } from "@carbon/react";
 import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai, Book } from "@carbon/icons-react";
 import ExerciseRow from "./ExerciseRow";
+import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 import { useNav } from "../lib/NavContext";
@@ -106,6 +107,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
           gymSessions, gymSessionId, gymCalendarConflict, sessionDate } = state;
   const fileRef = useRef();
   const [sizeError, setSizeError] = useState(null);
+  const [libraryExercises, setLibraryExercises] = useState([]);
+  const [newExerciseIds, setNewExerciseIds] = useState(() => new Set());
+
+  useEffect(() => {
+    fetchLibraryExercises().then(setLibraryExercises).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (step !== "confirm") return;
@@ -477,10 +484,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
                 {exercises.map((ex) => (
-                  <ExerciseRow
+                  <ExerciseRowWithAutocomplete
                     key={ex.id}
                     exercise={ex}
                     autoFocusName={ex.id === editingId}
+                    isNew={newExerciseIds.has(ex.id)}
+                    libraryExercises={libraryExercises}
                     onChange={(updates) => dispatch({ type: "UPDATE_EXERCISE", id: ex.id, updates })}
                     onDelete={() => dispatch({ type: "DELETE_EXERCISE", id: ex.id })}
                   />
@@ -490,7 +499,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               <Button
                 kind="ghost"
                 renderIcon={Add}
-                onClick={() => dispatch({ type: "ADD_EXERCISE", exercise: { id: Date.now(), name: "", standardName: "", sets: null, reps: null, enabled: true } })}
+                onClick={() => {
+                  const id = Date.now();
+                  setNewExerciseIds(s => new Set(s).add(id));
+                  dispatch({ type: "ADD_EXERCISE", exercise: { id, name: "", standardName: "", sets: null, reps: null, enabled: true } });
+                }}
                 style={{ width: "100%", marginBottom: 16 }}
               >
                 Legg til øvelse manuelt

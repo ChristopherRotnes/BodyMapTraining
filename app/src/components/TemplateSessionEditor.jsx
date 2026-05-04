@@ -8,6 +8,7 @@ import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateT
 import { calcMuscles } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
 import ExerciseRow from "./ExerciseRow";
+import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import LibraryPicker from "./LibraryPicker";
 
@@ -183,10 +184,12 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
           {/* Exercise list */}
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
             {exercises.map(ex => (
-              <ExerciseRow
+              <ExerciseRowWithAutocomplete
                 key={ex.id}
                 exercise={ex}
                 autoFocusName={ex.id === newExId}
+                isNew={ex.id === newExId}
+                libraryExercises={libraryExercises}
                 onChange={(updates) => setExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
                 onDelete={() => setExercises(p => p.filter(e => e.id !== ex.id))}
               />
