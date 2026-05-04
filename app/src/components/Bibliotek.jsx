@@ -168,13 +168,20 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               <InlineNotification kind="error" title="Feil:" subtitle={exError} hideCloseButton style={{ marginBottom: 16 }} />
             )}
 
+            {!showNewEx && (
+              <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
+                style={{ marginBottom: 16 }}>
+                Ny øvelse
+              </Button>
+            )}
+
             {/* Snarvei carousel — template shortcuts */}
             {!tplLoading && templates.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-muted-wl)", marginBottom: 8 }}>
                   SNARVEIER
                 </p>
-                <div style={{ overflowX: "auto", display: "flex", gap: 8, margin: "0 -16px", padding: "0 16px 8px", scrollbarWidth: "none" }}>
+                <div style={{ overflowX: "auto", display: "flex", gap: 8, paddingBottom: 8, scrollbarWidth: "none" }}>
                   {templates.map(tpl => {
                     const exCount = tpl.session_template_exercises?.length || 0;
                     return (
@@ -225,13 +232,6 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                   }}
                 />
               </div>
-            )}
-
-            {!showNewEx && (
-              <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
-                style={{ marginBottom: 12 }}>
-                Ny øvelse
-              </Button>
             )}
 
             {showNewEx && (
