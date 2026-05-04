@@ -129,56 +129,56 @@ function sessionMuscleIds(session) {
 function heroMotivation(count) {
   if (count < 1)  return null;
   if (count === 1)  return "god start!";
-  if (count === 2)  return "to er bedre enn én!";
-  if (count === 3)  return "tre av tre mulige!";
-  if (count === 4)  return "fire er fint.";
-  if (count === 5)  return "fem ned, resten av livet igjen.";
-  if (count === 6)  return "seks! du er i rute.";
-  if (count === 7)  return "syv. nesten én per dag.";
-  if (count === 8)  return "åtte! kroppen takker deg.";
-  if (count === 9)  return "ni. ett til så er det tosifret!";
-  if (count === 10) return "tosifret! 🔟";
-  if (count === 11) return "elleve. du mener alvor.";
-  if (count === 12) return "tolv. tre per uke, ikke dårlig.";
-  if (count === 13) return "tretten. uheldig tall, heldig kropp.";
-  if (count === 14) return "fjorten! halvveis mot 28.";
-  if (count === 15) return "femten. solid.";
-  if (count === 16) return "seksten. du er en maskinen.";
-  if (count === 17) return "sytten — en økt for hvert muskelgruppe!";
-  if (count === 18) return "atten. gymkortet tjener seg inn.";
+  if (count === 2)  return "to for to!";
+  if (count === 3)  return "tre på rad!";
+  if (count === 4)  return "fire! fint.";
+  if (count === 5)  return "fem. solid.";
+  if (count === 6)  return "seks. i rute.";
+  if (count === 7)  return "syv. nesten daglig.";
+  if (count === 8)  return "åtte. kroppen takker.";
+  if (count === 9)  return "ni. ett til!";
+  if (count === 10) return "tosifret!";
+  if (count === 11) return "elleve. du mener det.";
+  if (count === 12) return "tolv. tre per uke.";
+  if (count === 13) return "tretten. heldig kropp.";
+  if (count === 14) return "fjorten. halvveis til 28.";
+  if (count === 15) return "femten. meget bra.";
+  if (count === 16) return "seksten. du er maskinen.";
+  if (count === 17) return "sytten. ett per muskel!";
+  if (count === 18) return "atten. kortet tjener inn.";
   if (count === 19) return "nitten. ett til!";
-  if (count === 20) return "tjue. dette er en vane nå.";
-  if (count === 21) return "tjueen! det tar 21 dager å bygge en vane.";
+  if (count === 20) return "tjue. dette er en vane.";
+  if (count === 21) return "tjueen. vanedannende.";
   if (count === 22) return "tjueto. ingen stopper deg.";
-  if (count === 23) return "tjuetre. Jordon hadde 23. tilfeldig?";
-  if (count === 24) return "tjuefire. en time i uken per økt. grei deal.";
-  if (count === 25) return "tjuefem. kvartmål!";
-  if (count === 26) return "tjueseks. du er halvveis til 52 uker.";
-  if (count === 27) return "tjuesyv. Kobebryant hadde 24. du topper det.";
-  if (count === 28) return "tjueåtte! én per dag denne måneden?";
+  if (count === 23) return "Jordan-nummer.";
+  if (count === 24) return "tjuefire. Kobe-territorium.";
+  if (count === 25) return "kvartmål!";
+  if (count === 26) return "tjueseks. halvveis til 52.";
+  if (count === 27) return "tjuesyv. over Kobe.";
+  if (count === 28) return "tjueåtte. én per dag?";
   if (count === 29) return "tjueni. nesten 30!";
-  if (count === 30) return "30 økter. legendarisk.";
-  if (count === 31) return "31. du har vært her hver dag.";
-  if (count === 32) return "32! Rocky-modus aktivert.";
-  if (count === 33) return "33. halvtredjes. du vet hva du driver med.";
-  if (count === 34) return "34. noen hviler, du trener.";
-  if (count === 35) return "35. femgangen!";
-  if (count === 36) return "36 er 6 ganger 6. tilfeldigheter finnes ikke.";
-  if (count === 37) return "37. dette er ikke lenger et prosjekt — det er deg.";
-  if (count === 38) return "38. du begynner å bli bevisst.";
-  if (count === 39) return "39. ett til så er det firti.";
-  if (count === 40) return "40 STYKK. Arnold ville nikket.";
-  if (count === 41) return "41. over 40 — i en klasse for seg selv.";
-  if (count === 42) return "42. svaret på alt. inkludert trening.";
-  if (count === 43) return "43. hvem trener 43 ganger i måneden?";
-  if (count === 44) return "44. to 22-ere. dobbel innsats.";
-  if (count === 45) return "45. fire og en halv time med innsats. minst.";
-  if (count === 46) return "46. du er ikke normal. det er et kompliment.";
-  if (count === 47) return "47. lege Gunhild er stolt.";
-  if (count === 48) return "48. nesten én og en halv per dag.";
-  if (count === 49) return "49. ett til og du er femti-klubben!";
-  if (count === 50) return "50. FEMTI. dette er ikke virkelig.";
-  return "over 50?! ring legen din.";
+  if (count === 30) return "tredve. legendarisk.";
+  if (count === 31) return "trettieen. hver dag.";
+  if (count === 32) return "Rocky-modus.";
+  if (count === 33) return "trettire. halvtredjes.";
+  if (count === 34) return "trettfire. dedikert.";
+  if (count === 35) return "trettiofem. femgangen!";
+  if (count === 36) return "seksgangen squared.";
+  if (count === 37) return "trettisyv. dette er deg.";
+  if (count === 38) return "trettåtte. bevisst.";
+  if (count === 39) return "trettini. nesten firti!";
+  if (count === 40) return "FIRTI. Arnold nikker.";
+  if (count === 41) return "over 40. egen klasse.";
+  if (count === 42) return "svaret på alt.";
+  if (count === 43) return "førtitre. hvem gjør det?";
+  if (count === 44) return "førtfire. dobbel innsats.";
+  if (count === 45) return "førtiofem. fire-og-halv timer.";
+  if (count === 46) return "ikke normalt. kompliment.";
+  if (count === 47) return "førtisyv. legen er stolt.";
+  if (count === 48) return "én og en halv per dag.";
+  if (count === 49) return "ett til: femti-klubben!";
+  if (count === 50) return "FEMTI. ikke virkelig.";
+  return "over 50. ring legen.";
 }
 
 
@@ -441,7 +441,7 @@ export default function History({ initialDate }) {
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <SectionLabel>HISTORIKK</SectionLabel>
-        <PageHeading>
+        <PageHeading style={{ minHeight: 72 }}>
           {muscleFilter.length > 0 && selectedDate ? (() => {
             const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
             const count = filteredSessions.filter(s => s.session_date === selectedDateStr).length;
