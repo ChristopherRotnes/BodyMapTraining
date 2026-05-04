@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Button, Tag, InlineNotification, InlineLoading,
+  Button, InlineNotification, InlineLoading,
   TextInput, Modal,
 } from "@carbon/react";
 import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/icons-react";
