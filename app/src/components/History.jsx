@@ -408,7 +408,7 @@ export default function History({ initialDate }) {
         </PageHeading>
 
         {/* Muscle filter — horizontal pill scroll */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16, paddingBottom: 8, borderBottom: "1px solid var(--border-subtle-wl)" }}>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingBottom: 8 }}>
             {MUSCLE_FILTER_ITEMS.map(item => {
               const active = muscleFilter.includes(item.id);

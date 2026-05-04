@@ -278,22 +278,22 @@ export default function Report({ prefill, onPrefillConsumed }) {
         </div>
 
         {/* Filters */}
-        <div style={{ marginBottom: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ marginBottom: 12 }}>
           {/* Row 1: period */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingBottom: 8 }}>
             {PERIODS.map(p => (
               <FilterChip key={p.days} label={p.label} active={periodDays === p.days} onClick={() => setPeriodDays(p.days)} />
             ))}
           </div>
           {/* Row 2: weekdays */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 8, paddingBottom: 8, borderTop: "1px solid var(--border-subtle-wl)" }}>
             {DAYS.map(d => (
               <FilterChip key={d.day} label={d.label} active={selectedDays.has(d.day)} onClick={() => toggleDay(d.day)} />
             ))}
           </div>
           {/* Row 3: session types — only when present */}
           {availableTypes.length > 0 && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 8, paddingBottom: 8, borderTop: "1px solid var(--border-subtle-wl)" }}>
               {availableTypes.map(name => (
                 <FilterChip key={name} label={name} active={selectedTypes.has(name)} onClick={() => toggleType(name)} />
               ))}
@@ -302,7 +302,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
           <button
             onClick={() => { setSelectedDays(new Set()); setSelectedTypes(new Set()); }}
             style={{
-              background: "none", border: "none", padding: 0, cursor: "pointer",
+              display: "block", background: "none", border: "none", padding: "4px 0 0", cursor: "pointer",
               fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)",
               letterSpacing: "0.06em", textAlign: "left",
               opacity: (selectedDays.size > 0 || selectedTypes.size > 0) ? 1 : 0,
