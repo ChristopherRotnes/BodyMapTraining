@@ -106,7 +106,9 @@ app.http('sportySyncHealth', {
       });
     }
 
-    const [countRes, latestRes] = await Promise.all([
+    const today = new Date().toISOString().slice(0, 10);
+
+    const [countRes, earliestRes, latestRes, todayRes] = await Promise.all([
       fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=count`, {
         headers: {
           'apikey': serviceKey,
@@ -116,19 +118,30 @@ app.http('sportySyncHealth', {
           'Range': '0-0',
         },
       }),
-      fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=sporty_id,name,start_time&order=start_time.desc&limit=1`, {
-        headers: {
-          'apikey': serviceKey,
-          'Authorization': `Bearer ${serviceKey}`,
-        },
+      fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=start_time&order=start_time.asc&limit=1`, {
+        headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` },
+      }),
+      fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=start_time&order=start_time.desc&limit=1`, {
+        headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` },
+      }),
+      fetch(`${supabaseUrl}/rest/v1/gym_calendar?select=id,name,start_time&start_time=gte.${today}T00:00:00Z&start_time=lte.${today}T23:59:59Z&cancelled=eq.false`, {
+        headers: { 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` },
       }),
     ]);
 
     const totalCount = countRes.headers.get('Content-Range')?.split('/')[1] ?? 'unknown';
-    const latest = latestRes.ok ? await latestRes.json() : [];
+    const [earliest] = earliestRes.ok ? await earliestRes.json() : [];
+    const [latest] = latestRes.ok ? await latestRes.json() : [];
+    const todaySessions = todayRes.ok ? await todayRes.json() : [];
 
-    context.log(`Health check: ${totalCount} rows, latest: ${latest[0]?.start_time ?? 'none'}`);
-    return new Response(JSON.stringify({ totalRows: totalCount, latestRow: latest[0] ?? null }), {
+    context.log(`Health: ${totalCount} rows, range ${earliest?.start_time} → ${latest?.start_time}, today: ${todaySessions.length}`);
+    return new Response(JSON.stringify({
+      totalRows: totalCount,
+      earliestRow: earliest?.start_time ?? null,
+      latestRow: latest?.start_time ?? null,
+      todayCount: todaySessions.length,
+      todaySessions,
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
