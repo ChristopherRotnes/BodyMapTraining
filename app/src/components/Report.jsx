@@ -248,7 +248,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
   const dayLabel = selectedDays.size > 0
     ? DAYS.filter(d => selectedDays.has(d.day)).map(d => d.label.toUpperCase()).join(" · ")
     : "ALLE DAGER";
-  const eyebrow = `PERIODE · ${dayLabel} · ${periodWeeks === 1 ? "1 UKE" : `${periodWeeks} UKER`}`;
+  const periodLabel = periodWeeks === 1 ? "1 UKE" : `${periodWeeks} UKER`;
 
   const labelStyle = {
     fontSize: 10,
@@ -262,7 +262,10 @@ export default function Report({ prefill, onPrefillConsumed }) {
   return (
     <PageShell>
       <div style={{ paddingBottom: 80 }}>
-        <SectionLabel>{eyebrow}</SectionLabel>
+        <SectionLabel>
+          <span style={{ display: "block" }}>PERIODE · {periodLabel}</span>
+          <span style={{ display: "block" }}>{dayLabel}</span>
+        </SectionLabel>
 
         {/* Hero */}
         <div style={{ padding: "4px 16px 20px" }}>
