@@ -120,7 +120,7 @@ export default function Home({ onShowHistoryWithDate }) {
             onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
           >
-            <span>Start ny økt</span>
+            <span>Logg ny økt</span>
             <ArrowRight size={16} />
           </button>
         </div>
