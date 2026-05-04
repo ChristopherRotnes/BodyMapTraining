@@ -64,8 +64,8 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
             borderRadius: 0,
             background: calHeatColor(count),
             border: "1px solid var(--border-subtle-wl)",
-            outline: isSelected ? "2px solid var(--accent)" : isToday ? "2px solid var(--cds-text-primary)" : undefined,
-            outlineOffset: "-2px",
+            outline: isSelected ? "3px solid #ffffff" : isToday ? "1px dashed var(--cds-text-secondary)" : undefined,
+            outlineOffset: isSelected ? "-3px" : "-2px",
             display: "flex", alignItems: "center", justifyContent: "center",
           };
           const daySpan = (
@@ -124,6 +124,14 @@ function sessionMuscleIds(session) {
       (ex.muscle_activations || []).map(ma => ma.muscle_id)
     )
   );
+}
+
+function heroMotivation(count) {
+  if (count < 1) return null;
+  if (count < 2) return "god start!";
+  if (count < 5) return "fortsett sånn!";
+  if (count < 10) return "bra jobba!";
+  return "Rock on!";
 }
 
 
@@ -201,6 +209,11 @@ export default function History({ initialDate }) {
     });
     return map;
   }, [filteredSessions]);
+
+  const currentMonthCount = useMemo(() => filteredSessions.filter(s => {
+    const d = new Date(s.session_date + "T12:00:00");
+    return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+  }).length, [filteredSessions, viewYear, viewMonth]);
 
   useEffect(() => {
     if (daySessions.length === 1) {
@@ -361,9 +374,20 @@ export default function History({ initialDate }) {
   );
 
   const toggleMuscleFilter = (id) => {
-    setMuscleFilter(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    const newFilter = muscleFilter.includes(id)
+      ? muscleFilter.filter(x => x !== id)
+      : [...muscleFilter, id];
+    setMuscleFilter(newFilter);
+    if (!selectedDate && newFilter.length > 0) {
+      const matching = sessions.filter(s => newFilter.some(mid => sessionMuscleIds(s).has(mid)));
+      const todayStr = format(today, "yyyy-MM-dd");
+      const dates = matching.map(s => s.session_date).sort();
+      const target = dates.includes(todayStr) ? todayStr : dates[dates.length - 1];
+      if (target) {
+        setSelectedDate(new Date(target + "T12:00:00"));
+        loadSession(target);
+      }
+    }
   };
 
   return (
@@ -371,8 +395,10 @@ export default function History({ initialDate }) {
       <div style={{ paddingBottom: 32 }}>
         <SectionLabel>HISTORIKK</SectionLabel>
         <PageHeading>
-          {sessions.length} økter.{" "}
-          <span style={{ color: "var(--accent)" }}>Bra trykk.</span>
+          {currentMonthCount} {currentMonthCount === 1 ? "økt" : "økter"} i {format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb })}.
+          {heroMotivation(currentMonthCount) && (
+            <> <span style={{ color: "var(--accent)" }}>{heroMotivation(currentMonthCount)}</span></>
+          )}
         </PageHeading>
 
         {/* Muscle filter — horizontal pill scroll */}
@@ -407,6 +433,7 @@ export default function History({ initialDate }) {
                 </button>
               );
             })}
+            <span style={{ flexShrink: 0, width: 8 }} aria-hidden="true" />
           </div>
           </div>
           <button
