@@ -76,9 +76,9 @@ export const SHAPES = {
 export const BODY_PATH = "M 73,50 C 57,50 24,53 18,60 Q 10,82 11,110 Q 10,130 15,144 Q 18,152 24,155 Q 25,143 26,126 Q 28,80 33,64 Q 46,57 56,58 Q 55,80 53,115 Q 50,140 47,155 Q 47,162 48,167 L 48,355 L 76,355 L 76,167 Q 78,174 80,174 Q 82,174 84,167 L 84,355 L 112,355 L 112,167 Q 113,162 113,155 Q 110,140 107,115 Q 105,80 104,58 Q 114,57 127,64 Q 132,80 134,126 Q 135,143 136,155 Q 142,152 145,144 Q 150,130 149,110 Q 150,82 142,60 C 136,53 103,50 87,50 Z";
 export const BODY_POLY = BODY_PATH; // backward compat alias
 
-export const PRIMARY_FILL   = "var(--heat-4, #24a148)";
-export const PRIMARY_HOVER  = "var(--heat-5, #42be65)";
-export const PRIMARY_STROKE = "#198038";
+export const PRIMARY_FILL   = "var(--heat-4, #d02670)";
+export const PRIMARY_HOVER  = "var(--heat-5, #ee2c80)";
+export const PRIMARY_STROKE = "#ee2c80";
 export const SEC_FILL       = "none";
 export const SEC_HOVER      = "none";
 export const SEC_STROKE     = "none";
@@ -114,14 +114,14 @@ export function calcMuscles(exercises) {
   return { primary: [...p], secondary: [...s] };
 }
 
-function Shape({ sh, i, fill, stroke, strokeWidth = "0.8" }) {
+function Shape({ sh, i, fill, stroke, strokeWidth = "0.8", strokeDasharray }) {
   if (sh.d) {
-    return <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+    return <path key={i} d={sh.d} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} />;
   }
-  return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+  return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} />;
 }
 
-export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {}, onHover, hovered }) {
+export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {}, onHover, hovered, gaps = [] }) {
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
   const wrapRef = React.useRef();
@@ -165,8 +165,8 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
-            <rect width="6" height="6" fill="#001d6c" />
-            <line x1="0" y1="0" x2="0" y2="6" stroke="#4589ff" strokeWidth="3" opacity="0.55" />
+            <rect width="6" height="6" fill="#1c0f30" />
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#9f1853" strokeWidth="3" opacity="0.55" />
           </pattern>
         </defs>
 
@@ -202,7 +202,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
               fill = "rgba(128,128,128,0.1)";
               stroke = "rgba(128,128,128,0.08)";
             }
-            const finalStroke = isFocused ? "#0f62fe" : isHovered ? "#fff" : stroke;
+            const finalStroke = isFocused ? "#ee2c80" : isHovered ? "#fff" : stroke;
             const finalStrokeWidth = (isFocused || isHovered) ? "1.5" : undefined;
             return (
               <g key={id}
@@ -221,6 +221,17 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
               </g>
             );
           })}
+
+        {gaps
+          .filter(id => MUSCLES[id]?.view === view)
+          .map(id => (SHAPES[id] || []).map((sh, i) => (
+            <Shape key={`gap-${id}-${i}`} sh={sh} i={i}
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="0.8"
+              strokeDasharray="2 2"
+            />
+          )))}
 
         <text aria-hidden="true" x="80" y="369" textAnchor="middle" fontSize="7.5"
           fontFamily="var(--cds-font-mono)" letterSpacing="2"
@@ -280,7 +291,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   );
 }
 
-export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hovered }) {
+export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hovered, gaps = [] }) {
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
   const [tooltip, setTooltip] = React.useState(null);
@@ -323,8 +334,8 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
-            <rect width="6" height="6" fill="#001d6c" />
-            <line x1="0" y1="0" x2="0" y2="6" stroke="#4589ff" strokeWidth="3" opacity="0.55" />
+            <rect width="6" height="6" fill="#1c0f30" />
+            <line x1="0" y1="0" x2="0" y2="6" stroke="#9f1853" strokeWidth="3" opacity="0.55" />
           </pattern>
         </defs>
 
@@ -347,7 +358,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
             const fill = isPrimary
               ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
               : `url(#sec-stripe-${view})`;
-            const stroke = isFocused ? "#0f62fe" : isHovered ? "#fff" : isPrimary ? PRIMARY_STROKE : "none";
+            const stroke = isFocused ? "#ee2c80" : isHovered ? "#fff" : isPrimary ? PRIMARY_STROKE : "none";
             const strokeWidth = (isFocused || isHovered) ? "1.5" : "0.8";
             return (
               <g key={id}
@@ -366,6 +377,17 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
               </g>
             );
           })}
+
+        {gaps
+          .filter(id => MUSCLES[id]?.view === view)
+          .map(id => (SHAPES[id] || []).map((sh, i) => (
+            <Shape key={`gap-${id}-${i}`} sh={sh} i={i}
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="0.8"
+              strokeDasharray="2 2"
+            />
+          )))}
 
         <text aria-hidden="true" x="80" y="369" textAnchor="middle" fontSize="7.5"
           fontFamily="var(--cds-font-mono)" letterSpacing="2"

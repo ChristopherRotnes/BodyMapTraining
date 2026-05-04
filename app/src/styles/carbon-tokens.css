@@ -18,6 +18,7 @@
 @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 300; font-display: swap; src: url('/fonts/IBMPlexSansCondensed-Light.woff2') format('woff2'); }
 @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/IBMPlexSansCondensed-Regular.woff2') format('woff2'); }
 @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/IBMPlexSansCondensed-SemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/IBMPlexSansCondensed-Bold.woff2') format('woff2'); }
 
 :root {
   /* ============ CORE COLOR SCALES (full IBM color suite) ============ */
@@ -348,13 +349,57 @@
   .cds-type-display-04 { font-size: 6.375rem; line-height: 1.07; }
 }
 
-/* ============ HEAT SCALE (body-map + calendar volume) ============ */
+/* ============ HEAT SCALE (body-map + calendar volume) — magenta ramp ============ */
 :root {
-  --heat-1: #044317;
-  --heat-2: #0e6027;
-  --heat-3: #198038;
-  --heat-4: #24a148;
-  --heat-5: #42be65;
+  --heat-1: rgba(238,44,128,.18);
+  --heat-2: rgba(238,44,128,.34);
+  --heat-3: rgba(238,44,128,.55);
+  --heat-4: rgba(238,44,128,.78);
+  --heat-5: #ee2c80;
+}
+
+/* ============ WORKOUT LENS DESIGN TOKENS ============ */
+:root {
+  /* Canvas & surfaces */
+  --bg-canvas:       #0e0e10;
+  --surface-card:    #18181b;
+  --surface-card-2:  #14141a;
+
+  /* Borders */
+  --border-subtle-wl:  #232325;
+  --border-strong-wl:  #2c2c30;
+  --border-mute-wl:    #3a3a3e;
+
+  /* Text */
+  --text-muted-wl:     #a8a8af;
+  --text-subdued-wl:   #8d8d93;
+  --text-disabled-wl:  #6c6c70;
+
+  /* Accent — magenta */
+  --accent:          #ee2c80;
+  --accent-hover:    #d9246f;
+  --accent-soft:     #ff7eb6;
+  --accent-bg-08:    rgba(238,44,128,.08);
+  --accent-bg-14:    rgba(238,44,128,.14);
+  --accent-bg-30:    rgba(238,44,128,.30);
+  --accent-bg-55:    rgba(238,44,128,.55);
+
+  /* Status */
+  --success-wl:      #7af2a4;
+  --warning-wl:      #f1c21b;
+  --error-wl:        #fa4d56;
+
+  /* Glow */
+  --glow-action:     0 0 0 8px rgba(238,44,128,.14);
+
+  /* Border radius */
+  --r-card:   16px;
+  --r-tile:   10px;
+  --r-pill:   999px;
+  --r-accent: 3px;
+
+  /* Condensed font shorthand */
+  --cond: 'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif;
 }
 
 /* Element defaults — semantic tags, productive sizing */
