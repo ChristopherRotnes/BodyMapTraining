@@ -4,9 +4,15 @@ const SPORTY_BASE_URL =
   'https://sporty.no/api/v1/businessunits/8/groupactivities';
 
 function buildSportyUrl(daysAhead = 10) {
-  const from = new Date().toISOString().slice(0, 10);
-  const to = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  return `${SPORTY_BASE_URL}?from=${from}&to=${to}`;
+  // sporty.no uses Oslo midnight = previous day T22:00:00.000Z (CEST / UTC+2)
+  const start = new Date();
+  start.setUTCHours(22, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - 1);
+
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + daysAhead);
+
+  return `${SPORTY_BASE_URL}?period_start=${encodeURIComponent(start.toISOString())}&period_end=${encodeURIComponent(end.toISOString())}`;
 }
 
 function shiftRow(row, shiftMs) {
