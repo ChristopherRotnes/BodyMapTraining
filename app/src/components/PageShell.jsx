@@ -15,9 +15,9 @@ function NavBtn({ onClick, ariaLabel, active, children }) {
       style={{
         background: active ? "var(--cds-layer-01)" : "none",
         border: "none",
-        borderBottom: active ? "2px solid #0f62fe" : "2px solid transparent",
+        borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
         cursor: "pointer",
-        color: active ? "var(--cds-text-primary)" : "var(--cds-icon-primary)",
+        color: active ? "var(--accent)" : "var(--cds-icon-primary)",
         padding: "0 10px",
         width: 48,
         height: 48,
@@ -32,7 +32,7 @@ function NavBtn({ onClick, ariaLabel, active, children }) {
   );
 }
 
-export function SectionLabel({ children }) {
+export function SectionLabel({ children, style }) {
   return (
     <p style={{
       fontFamily: "var(--cds-font-mono)",
@@ -41,10 +41,11 @@ export function SectionLabel({ children }) {
       textTransform: "uppercase",
       letterSpacing: "0.16em",
       color: "var(--cds-text-secondary)",
-      borderLeft: "3px solid #0f62fe",
+      borderLeft: "3px solid var(--accent)",
       padding: "8px 0 8px 13px",
       margin: "16px 16px 12px",
       width: "fit-content",
+      ...style,
     }}>
       {children}
     </p>
@@ -58,17 +59,51 @@ export function PageTitle({ children }) {
 export function PageHeading({ children, style }) {
   return (
     <p style={{
-      fontFamily: "var(--cds-font-sans)",
+      fontFamily: "var(--cond)",
       fontSize: 28,
-      fontWeight: 300,
+      fontWeight: 700,
       color: "var(--cds-text-primary)",
       padding: "4px 16px 16px",
       margin: 0,
-      lineHeight: 1.28,
+      lineHeight: 1.2,
+      letterSpacing: "-0.01em",
       ...style,
     }}>
       {children}
     </p>
+  );
+}
+
+export function StickyCta({ children }) {
+  return (
+    <div style={{
+      position: "sticky",
+      bottom: 0,
+      background: "var(--bg-canvas)",
+      borderTop: "1px solid var(--border-subtle-wl)",
+      padding: "12px 0",
+    }}>
+      {children}
+    </div>
+  );
+}
+
+export function AccentChip({ children, style }) {
+  return (
+    <span style={{
+      display: "inline-block",
+      borderRadius: "var(--r-pill)",
+      padding: "3px 10px",
+      background: "var(--accent-bg-14)",
+      border: "1px solid var(--accent-bg-30)",
+      color: "var(--accent-soft)",
+      fontFamily: "var(--cds-font-mono)",
+      fontSize: 11,
+      letterSpacing: "0.06em",
+      ...style,
+    }}>
+      {children}
+    </span>
   );
 }
 
@@ -92,7 +127,7 @@ export default function PageShell({ children }) {
   const [changelogOpen, setChangelogOpen] = useState(false);
 
   return (
-    <div style={{ background: "var(--cds-background)", minHeight: "100vh" }}>
+    <div style={{ background: "var(--bg-canvas)", minHeight: "100vh" }}>
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 16px" }}>
 
         <div style={{
@@ -114,8 +149,12 @@ export default function PageShell({ children }) {
               fontSize: 16,
               fontWeight: 600,
               padding: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
             }}
           >
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} aria-hidden="true" />
             Workout Lens
           </button>
 
