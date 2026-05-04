@@ -7,7 +7,6 @@ import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
 import { calcMuscles } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
-import ExerciseRow from "./ExerciseRow";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import LibraryPicker from "./LibraryPicker";

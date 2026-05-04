@@ -10,7 +10,6 @@ import {
   Tag, DefinitionTooltip,
 } from "@carbon/react";
 import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai, Book } from "@carbon/icons-react";
-import ExerciseRow from "./ExerciseRow";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
