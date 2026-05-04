@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { subDays, format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { fetchSessionsForReport } from "../lib/db";
@@ -8,8 +8,9 @@ import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
-import { AiGenerate } from "@carbon/icons-react";
-import PageShell, { SectionLabel, PageHeading } from "./PageShell";
+import { AiGenerate, Add } from "@carbon/icons-react";
+import PageShell, { SectionLabel, PageHeading, AccentChip, StickyCta } from "./PageShell";
+import { useNav } from "../lib/NavContext";
 
 const PERIODS = [
   { label: "7 dager", days: 7 },
@@ -32,17 +33,19 @@ function FilterChip({ label, active, onClick }) {
     <button
       onClick={onClick}
       style={{
-        padding: "5px 12px",
+        padding: "5px 14px",
         fontSize: 12,
         fontFamily: "var(--cds-font-mono)",
-        letterSpacing: "1px",
+        letterSpacing: "0.06em",
         textTransform: "uppercase",
         border: "1px solid",
-        borderColor: active ? "var(--cds-interactive)" : "var(--cds-border-strong-01)",
-        background: active ? "var(--cds-interactive)" : "transparent",
-        color: active ? "#fff" : "var(--cds-text-primary)",
+        borderColor: active ? "var(--accent)" : "var(--border-subtle-wl)",
+        background: active ? "var(--accent)" : "transparent",
+        color: active ? "#fff" : "var(--text-muted-wl)",
         cursor: "pointer",
-        borderRadius: 0,
+        borderRadius: "var(--r-pill)",
+        whiteSpace: "nowrap",
+        flexShrink: 0,
       }}
     >
       {label}
@@ -52,20 +55,20 @@ function FilterChip({ label, active, onClick }) {
 
 function KpiTile({ label, value }) {
   return (
-    <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "16px 12px" }}>
-      <div style={{ fontSize: 42, fontWeight: 300, color: "var(--cds-text-primary)", fontFamily: "var(--cds-font-sans)", lineHeight: 1, marginBottom: 8 }}>
+    <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "16px 12px", borderRadius: "var(--r-tile)" }}>
+      <div style={{ fontSize: 36, fontWeight: 700, color: "var(--cds-text-primary)", fontFamily: "var(--cond)", lineHeight: 1, marginBottom: 6 }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>
+      <div style={{ fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>
         {label}
       </div>
     </div>
   );
 }
 
-export default function Report() {
-
+export default function Report({ prefill, onPrefillConsumed }) {
   const isMobile = useIsMobile();
+  const { onShowBibliotek } = useNav();
   const [mobileRecView, setMobileRecView] = useState("front");
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedDays, setSelectedDays] = useState(new Set());
@@ -77,6 +80,16 @@ export default function Report() {
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [recsError, setRecsError] = useState(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
+
+  const initialPrefill = useRef(prefill);
+  useEffect(() => {
+    if (!initialPrefill.current) return;
+    const p = initialPrefill.current;
+    if (p.periodDays) setPeriodDays(p.periodDays);
+    if (p.selectedDays) setSelectedDays(p.selectedDays);
+    if (p.selectedTypes) setSelectedTypes(p.selectedTypes);
+    onPrefillConsumed?.();
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -231,10 +244,16 @@ export default function Report() {
     .map(([id, c]) => ({ id, ...c }))
     .sort((a, b) => b.primary - a.primary || b.secondary - a.secondary);
 
+  const periodWeeks = Math.round(periodDays / 7);
+  const dayLabel = selectedDays.size > 0
+    ? DAYS.filter(d => selectedDays.has(d.day)).map(d => d.label.toUpperCase()).join(" · ")
+    : "ALLE DAGER";
+  const eyebrow = `PERIODE · ${dayLabel} · ${periodWeeks === 1 ? "1 UKE" : `${periodWeeks} UKER`}`;
+
   const labelStyle = {
-    fontSize: 11,
-    color: "var(--cds-text-secondary)",
-    letterSpacing: "2px",
+    fontSize: 10,
+    color: "var(--text-muted-wl)",
+    letterSpacing: "0.14em",
     marginBottom: 8,
     fontFamily: "var(--cds-font-mono)",
     textTransform: "uppercase",
@@ -242,93 +261,77 @@ export default function Report() {
 
   return (
     <PageShell>
-      <div style={{ paddingBottom: 32 }}>
-          <SectionLabel>RAPPORT</SectionLabel>
-          <PageHeading>Perioderapport</PageHeading>
+      <div style={{ paddingBottom: 80 }}>
+        <SectionLabel>{eyebrow}</SectionLabel>
 
-          <div style={{ marginBottom: 16 }}>
-            <p style={labelStyle}>Periode</p>
-            <div style={{ display: "flex", gap: 8 }}>
-              {PERIODS.map(p => (
-                <FilterChip
-                  key={p.days}
-                  label={p.label}
-                  active={periodDays === p.days}
-                  onClick={() => setPeriodDays(p.days)}
-                />
-              ))}
-            </div>
+        {/* Hero */}
+        <div style={{ padding: "4px 16px 20px" }}>
+          <p style={{ fontFamily: "var(--cond)", fontSize: 30, fontWeight: 700, lineHeight: 1.1, margin: 0 }}>
+            <span style={{ color: "var(--accent)" }}>{untrainedMuscles.length} muskler</span>
+          </p>
+          <p style={{ fontFamily: "var(--cond)", fontSize: 30, fontWeight: 700, lineHeight: 1.1, margin: 0, color: "var(--cds-text-primary)" }}>
+            aldri trent.
+          </p>
+        </div>
+
+        {/* Filters */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", padding: "0 16px 4px", margin: "0 -16px" }}>
+            {PERIODS.map(p => (
+              <FilterChip key={p.days} label={p.label} active={periodDays === p.days} onClick={() => setPeriodDays(p.days)} />
+            ))}
+            <div style={{ width: 1, background: "var(--border-subtle-wl)", margin: "4px 4px", flexShrink: 0 }} />
+            {DAYS.map(d => (
+              <FilterChip key={d.day} label={d.label} active={selectedDays.has(d.day)} onClick={() => toggleDay(d.day)} />
+            ))}
+            {availableTypes.map(name => (
+              <FilterChip key={name} label={name} active={selectedTypes.has(name)} onClick={() => toggleType(name)} />
+            ))}
           </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-              <p style={{ ...labelStyle, marginBottom: 0 }}>Dag <span style={{ opacity: 0.5 }}>(tom = alle)</span></p>
-              {selectedDays.size > 0 && (
-                <button onClick={() => setSelectedDays(new Set())} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 11, color: "var(--cds-interactive)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textTransform: "uppercase" }}>
-                  Nullstill
-                </button>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {DAYS.map(d => (
-                <FilterChip
-                  key={d.day}
-                  label={d.label}
-                  active={selectedDays.has(d.day)}
-                  onClick={() => toggleDay(d.day)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {availableTypes.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-                <p style={{ ...labelStyle, marginBottom: 0 }}>Økttype <span style={{ opacity: 0.5 }}>(tom = alle)</span></p>
-                {selectedTypes.size > 0 && (
-                  <button onClick={() => setSelectedTypes(new Set())} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 11, color: "var(--cds-interactive)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textTransform: "uppercase" }}>
-                    Nullstill
-                  </button>
-                )}
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {availableTypes.map(name => (
-                  <FilterChip
-                    key={name}
-                    label={name}
-                    active={selectedTypes.has(name)}
-                    onClick={() => toggleType(name)}
-                  />
-                ))}
-              </div>
-            </div>
+          {(selectedDays.size > 0 || selectedTypes.size > 0) && (
+            <button
+              onClick={() => { setSelectedDays(new Set()); setSelectedTypes(new Set()); }}
+              style={{ background: "none", border: "none", padding: "4px 16px 0", cursor: "pointer", fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em" }}
+            >
+              Nullstill filter
+            </button>
           )}
+        </div>
 
-          <div aria-live="polite" aria-atomic="true">
+        <div aria-live="polite" aria-atomic="true">
           {loading ? (
             <InlineLoading description="Laster rapport…" status="active" style={{ marginTop: 24 }} />
           ) : error ? (
             <p role="alert" style={{ color: "var(--cds-support-error)", fontSize: 14 }}>{error}</p>
           ) : (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1, marginBottom: 20 }}>
+              {/* KPI tiles */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 20 }}>
                 <KpiTile label="Økter" value={sessionCount} />
-                <KpiTile label="Muskelgrupper" value={`${musclesCovered}/17`} />
+                <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "16px 12px", borderRadius: "var(--r-tile)" }}>
+                  <div style={{ lineHeight: 1, marginBottom: 6 }}>
+                    <span style={{ fontSize: 36, fontWeight: 600, fontFamily: "var(--cond)", color: "var(--cds-text-primary)" }}>{musclesCovered}</span>
+                    <span style={{ fontSize: 22, fontWeight: 400, fontFamily: "var(--cond)", color: "var(--text-disabled-wl)" }}>/17</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>Muskler</div>
+                </div>
                 <KpiTile label="Snitt/uke" value={avgPerWeek} />
               </div>
 
-              <div style={{ display: "flex", gap: 12, marginBottom: 0 }}>
+              {/* Heatmap body */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 0 }}>
                 {["front", "back"].map(view => (
-                  <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "10px 6px" }}>
+                  <div key={view} style={{ flex: 1, background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "10px 6px", borderRadius: "var(--r-tile)" }}>
                     <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} volumeMap={muscleVolume} onHover={setHoveredMuscle} hovered={hoveredMuscle} />
                   </div>
                 ))}
               </div>
 
+              {/* Hover detail card */}
               <div style={{ height: 68, marginBottom: 12, overflow: "hidden" }}>
                 {hoveredMuscle ? (
-                  <div style={{ borderLeft: "3px solid var(--cds-interactive)", background: "var(--cds-layer-01)", padding: "10px 14px" }}>
-                    <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+                  <div style={{ borderLeft: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
+                    <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
                       {MUSCLES[hoveredMuscle]?.label}
                     </div>
                     <div style={{ display: "flex", gap: 24, alignItems: "baseline" }}>
@@ -336,24 +339,25 @@ export default function Report() {
                         <span style={{ fontSize: 28, fontWeight: 300, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
                           {muscleCounts[hoveredMuscle]?.primary || 0}
                         </span>
-                        <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
                           PRIMÆRØKTER
                         </span>
                       </div>
                       {muscleLastDate[hoveredMuscle] && (
-                        <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
                           SIST {format(new Date(muscleLastDate[hoveredMuscle] + "T12:00:00"), "d. MMM", { locale: nb })}
                         </span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
                     Hold musepeker over eller fokuser muskel for detaljer
                   </div>
                 )}
               </div>
 
+              {/* Heat legend */}
               <div style={{ display: "flex", gap: 16, marginBottom: 20, alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{ display: "flex" }}>
@@ -361,7 +365,7 @@ export default function Report() {
                       <div key={v} style={{ width: 10, height: 12, background: `var(${v})` }} />
                     ))}
                   </div>
-                  <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)" }}>Primær</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)" }}>Primær</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <svg width="12" height="12" style={{ flexShrink: 0 }}>
@@ -373,32 +377,36 @@ export default function Report() {
                     </defs>
                     <rect width="12" height="12" fill="url(#legend-sec)" />
                   </svg>
-                  <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)" }}>Sekundær</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)" }}>Sekundær</span>
                 </div>
               </div>
 
+              {/* Gap callout card */}
               {untrainedMuscles.length > 0 && (
-                <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-support-warning)", padding: 14, marginBottom: 20 }}>
-                  <p style={{ ...labelStyle, color: "var(--cds-support-warning)", marginBottom: 10 }}>
-                    Ikke trent i perioden
+                <div style={{ background: "var(--accent-bg-08)", border: "1px solid var(--accent-bg-30)", padding: "14px 16px", marginBottom: 20, borderRadius: "var(--r-tile)" }}>
+                  <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: 10 }}>
+                    IKKE TRUFFET
                   </p>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {untrainedMuscles.map(id => (
-                      <Tag key={id} type="warm-gray" size="sm">{MUSCLES[id]?.label || id}</Tag>
+                      <AccentChip key={id}>
+                        {MUSCLES[id]?.label || id}
+                      </AccentChip>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: 14 }}>
+              {/* Frequency table */}
+              <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: 14, borderRadius: "var(--r-tile)" }}>
                 <p style={{ ...labelStyle, marginBottom: 8 }} id="freq-table-label">Muskelfrekvens</p>
                 <table aria-labelledby="freq-table-label" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid var(--cds-border-strong-01)" }}>
-                      <th scope="col" style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "left", paddingBottom: 6, width: 140 }}>MUSKEL</th>
+                    <tr style={{ borderBottom: "1px solid var(--border-subtle-wl)" }}>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "left", paddingBottom: 6, width: 140 }}>MUSKEL</th>
                       <th scope="col" aria-label="Frekvensbar" style={{ width: "100%" }} />
-                      <th scope="col" style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 36 }}>ØKT</th>
-                      <th scope="col" style={{ fontSize: 10, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 40 }}>SETT</th>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 36 }}>ØKT</th>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 40 }}>SETT</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -408,14 +416,14 @@ export default function Report() {
                         ? "var(--cds-text-primary)"
                         : secondary > 0
                         ? "#4589ff"
-                        : "var(--cds-text-disabled)";
+                        : "var(--text-disabled-wl)";
                       const countLabel = primary > 0
                         ? String(primary)
                         : secondary > 0
                         ? `(${secondary})`
                         : "—";
                       return (
-                        <tr key={id} style={{ borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+                        <tr key={id} style={{ borderBottom: "1px solid var(--border-subtle-wl)" }}>
                           <td style={{ fontSize: 12, color: "var(--cds-text-primary)", padding: "6px 0" }}>
                             {muscleExercises[id]?.size > 0 ? (
                               <DefinitionTooltip definition={[...muscleExercises[id]].join(", ")} openOnHover align="bottom">
@@ -424,16 +432,16 @@ export default function Report() {
                             ) : MUSCLES[id]?.label || id}
                           </td>
                           <td style={{ padding: "6px 10px" }}>
-                            <div style={{ height: 6, background: "var(--cds-layer-02)" }}>
+                            <div style={{ height: 6, background: "var(--border-subtle-wl)" }}>
                               {primary > 0 && (
-                                <div style={{ height: "100%", width: `${barWidth}%`, background: "var(--heat-4)" }} />
+                                <div style={{ height: "100%", width: `${barWidth}%`, background: "var(--accent)" }} />
                               )}
                             </div>
                           </td>
                           <td style={{ fontSize: 11, color: countColor, fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
                             {countLabel}
                           </td>
-                          <td style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
+                          <td style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
                             {muscleVolume[id] > 0 ? muscleVolume[id] : "—"}
                           </td>
                         </tr>
@@ -456,20 +464,18 @@ export default function Report() {
                   </Button>
 
                   <div aria-live="polite" aria-atomic="true">
-                  {loadingRecs && (
-                    <InlineLoading description="Analyserer treningsdata…" status="active" style={{ marginTop: 12 }} />
-                  )}
-
-                  {recsError && (
-                    <InlineNotification
-                      kind="error"
-                      title="Feil:"
-                      subtitle={recsError}
-                      hideCloseButton
-
-                      style={{ marginTop: 12 }}
-                    />
-                  )}
+                    {loadingRecs && (
+                      <InlineLoading description="Analyserer treningsdata…" status="active" style={{ marginTop: 12 }} />
+                    )}
+                    {recsError && (
+                      <InlineNotification
+                        kind="error"
+                        title="Feil:"
+                        subtitle={recsError}
+                        hideCloseButton
+                        style={{ marginTop: 12 }}
+                      />
+                    )}
                   </div>
 
                   {recs && recs.length > 0 && (() => {
@@ -478,43 +484,70 @@ export default function Report() {
                     const recSecondary = recSecAll.filter(id => !recPrimary.includes(id));
                     return (
                       <div className="fade-in" style={{ marginTop: 12 }}>
-                        <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: 14, marginBottom: 10 }}>
-                          <p style={{ ...labelStyle, marginBottom: 10 }}>Anbefalte øvelser</p>
+                        <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", overflow: "hidden", marginBottom: 10 }}>
+                          <p style={{ ...labelStyle, margin: "14px 14px 10px" }}>Anbefalte øvelser</p>
                           {recs.map((r, i) => (
-                            <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--cds-text-primary)" }}>{r.name}</p>
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: r.tip ? 4 : 0 }}>
-                                {(r.primary || []).length > 0 && (
-                                  <Tag type="green" size="sm">{r.primary.map(id => MUSCLES[id]?.label || id).join(", ")}</Tag>
-                                )}
-                                {(r.secondary || []).length > 0 && (
-                                  <Tag type="blue" size="sm">{r.secondary.map(id => MUSCLES[id]?.label || id).join(", ")}</Tag>
-                                )}
+                            <div key={i} style={{
+                              padding: "10px 14px",
+                              borderLeft: "3px solid var(--accent)",
+                              borderBottom: i < recs.length - 1 ? "1px solid var(--border-subtle-wl)" : "none",
+                              display: "flex", alignItems: "flex-start", gap: 12,
+                            }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontSize: 14, fontFamily: "var(--cond)", fontWeight: 700, marginBottom: 3, color: "var(--cds-text-primary)" }}>{r.name}</p>
+                                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", marginBottom: r.tip ? 4 : 0 }}>
+                                  {[
+                                    (r.primary || []).map(id => MUSCLES[id]?.label || id).join(", "),
+                                    (r.secondary || []).length > 0 && `(${(r.secondary || []).map(id => MUSCLES[id]?.label || id).join(", ")})`
+                                  ].filter(Boolean).join(" · ")}
+                                </p>
+                                {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", margin: 0 }}>{r.tip}</p>}
                               </div>
-                              {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>{r.tip}</p>}
+                              <button
+                                aria-label={`Legg til ${r.name} i biblioteket`}
+                                onClick={() => onShowBibliotek()}
+                                style={{
+                                  width: 28, height: 28, borderRadius: "50%",
+                                  background: "var(--accent)", border: "none", cursor: "pointer",
+                                  color: "#fff", fontSize: 20, lineHeight: "28px",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <Add size={16} />
+                              </button>
                             </div>
                           ))}
                         </div>
 
                         {isMobile ? (
                           <>
-                            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                            <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
                               {["front", "back"].map(v => (
-                                <Button key={v} kind={mobileRecView === v ? "primary" : "ghost"} size="sm"
-                                  onClick={() => setMobileRecView(v)}>
+                                <button key={v}
+                                  onClick={() => setMobileRecView(v)}
+                                  style={{
+                                    padding: "5px 14px", borderRadius: "var(--r-pill)", border: "1px solid",
+                                    borderColor: mobileRecView === v ? "var(--accent)" : "var(--border-subtle-wl)",
+                                    background: mobileRecView === v ? "var(--accent)" : "transparent",
+                                    color: mobileRecView === v ? "#fff" : "var(--text-muted-wl)",
+                                    fontFamily: "var(--cds-font-mono)", fontSize: 11, cursor: "pointer",
+                                    letterSpacing: "0.06em",
+                                  }}
+                                >
                                   {v === "front" ? "Front" : "Bak"}
-                                </Button>
+                                </button>
                               ))}
                             </div>
-                            <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "10px 6px" }}>
+                            <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "10px 6px", borderRadius: "var(--r-tile)" }}>
                               <BodySVG view={mobileRecView} primary={recPrimary} secondary={recSecondary}
                                 muscleMap={buildRecMuscleMap(recs)} />
                             </div>
                           </>
                         ) : (
-                          <div style={{ display: "flex", gap: 12, marginBottom: 10 }}>
+                          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                             {["front", "back"].map(view => (
-                              <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "10px 6px" }}>
+                              <div key={view} style={{ flex: 1, background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "10px 6px", borderRadius: "var(--r-tile)" }}>
                                 <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
                                   muscleMap={buildRecMuscleMap(recs)} />
                               </div>
@@ -522,7 +555,7 @@ export default function Report() {
                           </div>
                         )}
 
-                        <div style={{ display: "flex", gap: 12, marginBottom: 12, fontSize: 12 }}>
+                        <div style={{ display: "flex", gap: 8, marginBottom: 12, fontSize: 12 }}>
                           <Tag type="green" size="sm">Primær</Tag>
                           <Tag type="blue" size="sm">Sekundær</Tag>
                         </div>
@@ -545,8 +578,26 @@ export default function Report() {
               )}
             </>
           )}
-          </div>
         </div>
+
+        {/* Sticky CTA to Bibliotek */}
+        {recs && recs.length > 0 && (
+          <StickyCta>
+            <button
+              onClick={() => onShowBibliotek()}
+              style={{
+                width: "100%", background: "var(--accent)", border: "none", cursor: "pointer",
+                padding: "14px 16px", borderRadius: "var(--r-pill)",
+                fontFamily: "var(--cond)", fontSize: 16, fontWeight: 700,
+                color: "#fff", textAlign: "center",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}
+            >
+              Disse bør du legge inn i programmet →
+            </button>
+          </StickyCta>
+        )}
+      </div>
     </PageShell>
   );
 }
