@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { subDays, format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { fetchSessionsForReport } from "../lib/db";
+import { fetchSessionsForReport, saveLibraryExercise } from "../lib/db";
 import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
 import { buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
-import { AiGenerate, Add } from "@carbon/icons-react";
+import { AiGenerate, Add, Checkmark } from "@carbon/icons-react";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
@@ -80,6 +80,9 @@ export default function Report({ prefill, onPrefillConsumed }) {
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [recsError, setRecsError] = useState(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
+  const [savedRecs, setSavedRecs] = useState(new Set());
+  const [savingRec, setSavingRec] = useState(null);
+  const [saveRecError, setSaveRecError] = useState(null);
 
   const initialPrefill = useRef(prefill);
   useEffect(() => {
@@ -113,6 +116,29 @@ export default function Report({ prefill, onPrefillConsumed }) {
     document.addEventListener("keydown", fn);
     return () => document.removeEventListener("keydown", fn);
   }, [hoveredMuscle]);
+
+  const handleSaveRec = async (r) => {
+    setSavingRec(r.name);
+    setSaveRecError(null);
+    try {
+      await saveLibraryExercise({
+        name: r.name,
+        primary_muscles: r.primary || [],
+        secondary_muscles: r.secondary || [],
+        default_sets: null,
+        default_reps: null,
+      });
+      setSavedRecs(prev => new Set([...prev, r.name]));
+    } catch (err) {
+      if (err?.code === "23505") {
+        setSavedRecs(prev => new Set([...prev, r.name]));
+      } else {
+        setSaveRecError("Kunne ikke lagre øvelsen. Prøv igjen.");
+      }
+    } finally {
+      setSavingRec(null);
+    }
+  };
 
   const getAdvice = async () => {
     setLoadingRecs(true);
@@ -501,6 +527,15 @@ export default function Report({ prefill, onPrefillConsumed }) {
                       <div className="fade-in" style={{ marginTop: 12 }}>
                         <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", overflow: "hidden", marginBottom: 10 }}>
                           <p style={{ ...labelStyle, margin: "14px 14px 10px" }}>Anbefalte øvelser</p>
+                          {saveRecError && (
+                            <InlineNotification
+                              kind="error"
+                              title="Feil:"
+                              subtitle={saveRecError}
+                              hideCloseButton
+                              style={{ margin: "0 14px 8px" }}
+                            />
+                          )}
                           {recs.map((r, i) => (
                             <div key={i} style={{
                               padding: "10px 14px",
@@ -518,19 +553,39 @@ export default function Report({ prefill, onPrefillConsumed }) {
                                 </p>
                                 {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", margin: 0 }}>{r.tip}</p>}
                               </div>
-                              <button
-                                aria-label={`Legg til ${r.name} i biblioteket`}
-                                onClick={() => onShowBibliotek()}
-                                style={{
-                                  width: 28, height: 28, borderRadius: "50%",
-                                  background: "var(--accent)", border: "none", cursor: "pointer",
-                                  color: "#fff", fontSize: 20, lineHeight: "28px",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <Add size={16} />
-                              </button>
+                              {savedRecs.has(r.name) ? (
+                                <button
+                                  disabled
+                                  aria-label={`${r.name} er lagret i biblioteket`}
+                                  style={{
+                                    width: 28, height: 28, borderRadius: "50%",
+                                    background: "var(--cds-layer-02)", border: "none", cursor: "default",
+                                    color: "var(--cds-text-secondary)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Checkmark size={16} />
+                                </button>
+                              ) : (
+                                <button
+                                  aria-label={`Legg til ${r.name} i biblioteket`}
+                                  onClick={() => handleSaveRec(r)}
+                                  disabled={savingRec === r.name}
+                                  style={{
+                                    width: 28, height: 28, borderRadius: "50%",
+                                    background: savingRec === r.name ? "var(--cds-layer-02)" : "var(--accent)",
+                                    border: "none",
+                                    cursor: savingRec === r.name ? "default" : "pointer",
+                                    color: savingRec === r.name ? "var(--cds-text-secondary)" : "#fff",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    flexShrink: 0,
+                                    opacity: savingRec === r.name ? 0.5 : 1,
+                                  }}
+                                >
+                                  <Add size={16} />
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
