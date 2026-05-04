@@ -83,7 +83,7 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
 
 // ── Timer trigger: 04:00 and 11:00 UTC daily ──────────────────────────
 app.timer('sportySyncTimer', {
-  schedule: '0 4,11 * * *',
+  schedule: '0 4,11,14 * * *',
   handler: async (myTimer, context) => {
     await syncGymCalendar(context);
   },
