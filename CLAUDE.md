@@ -45,27 +45,29 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon
 - `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav, `Book` library nav, light/dark toggle), `ProgressIndicator` (horizontal stepper with step labels), `Button`, `Tag`, `InlineLoading`, `InlineNotification`; dashed-border dropzone on upload step; sticky action bar on confirm step; exercise rows delegated to `ExerciseRow`
-- `History.jsx` → Carbon `Header`, `Tag`, `InlineLoading`, `InlineNotification`, `Select`/`SelectItem`; custom `MonthGrid` calendar (replaced `react-day-picker`); edit mode uses `Edit`, `Camera`, `Add`, `Renew` icons; exercise rows delegated to `ExerciseRow`
-- `Bibliotek.jsx` → Carbon `Tabs`/`Tab`/`TabList`/`TabPanels`/`TabPanel`, `TextInput`, `Button`, `Tag`, `InlineNotification`, `InlineLoading`, `Modal`; exercise form via `ExerciseForm`; template cards show a `BodySVG` thumbnail of the template's muscle coverage; tab labels include exercise/template count badges
+- `History.jsx` → `SectionLabel` + `PageHeading` hero (context-aware: default shows month count + per-count motivation message 1–50; filter active + date selected shows "N av total økter den dato"; filter active + no date shows month count with "med disse filtrene"); `PageHeading` has `minHeight: 72` to prevent layout shift; muscle filter chips use `flexWrap: wrap` (all always visible); `borderBottom` separator below chip section; session rows always have 3px left strip (accent when filter-matched); session title in Cond 700; custom `MonthGrid` calendar; edit mode uses `Edit`, `Camera`, `Add`, `Renew` icons; exercise rows delegated to `ExerciseRow`
+- `Bibliotek.jsx` → custom pill tab strip (replaces Carbon `Tabs`; keyboard ArrowLeft/ArrowRight); `PageHeading` hero; live search input on exercises tab; Snarvei template carousel; exercise rows use `AccentChip` for primary muscles + Cond 700 name + 3px accent left strip; template cards use `borderRadius: var(--r-card)`; "Ny øvelse" button renders above Snarveier carousel to prevent tab-switch layout shift; exercise form via `ExerciseForm`
 - `TemplatePicker.jsx` → Carbon `Button`, `InlineLoading`, `InlineNotification`
 - `TemplateSessionEditor.jsx` → Carbon `Button`, `Tag`, `InlineNotification`, `InlineLoading`; body map via `BodyPanel`; exercise rows via `ExerciseRow`; library search via `LibraryPicker`
 - `MuscleMap.jsx` confirm step → Carbon `DatePicker`/`DatePickerInput` for session date (defaults to today, max = today)
 - `BodySVG` / `HeatmapBodySVG` muscle highlights: primary → `var(--heat-4)` solid green, secondary → diagonal blue hatch (`#001d6c` base + `#4589ff` lines). `HeatmapBodySVG` accepts `onHover(id|null)` and `hovered` props — when `onHover` is provided the internal floating tooltip is suppressed and the caller manages the detail card.
 - `Home.jsx` → `SectionLabel` + `PageHeading` headings; last session card with gym-class identity hero; 7-day weekly strip with heat colors — clicking a day that has a session navigates to History pre-selected on that date; `fetchThisWeekSessions` in `db.js`
-- `Report.jsx` → `KpiTile` (42px Plex Light value); hover detail card below body figures (blue left border, muscle label, primary count, last session date); 5-step heat legend + hatched SVG secondary swatch; `muscleLastDate` in useMemo
+- `Report.jsx` → `SectionLabel` eyebrow with period + active day filters on two separate `display:block` spans; two-line Cond 700 hero (untrained count in magenta + "aldri trent."); three separate `flexWrap: wrap` filter rows (period / weekdays / session types) with `1px solid var(--border-subtle-wl)` top borders between groups; "Nullstill filter" always rendered (opacity-toggled); gap callout card uses `var(--accent-bg-08)` with `AccentChip` per untrained muscle; recommendation rows have 3px accent left strip + round magenta `+` button; `StickyCta` "Disse bør du legge inn i programmet →"; prefill prop applied on mount via `useRef`; `KpiTile` (42px Plex Light value); `muscleLastDate` in useMemo
 - `History.jsx` → custom `MonthGrid` (7-column CSS grid, heat fill, today/selected outlines, month nav); `sessionCountMap` useMemo; `SectionLabel` + `PageHeading` at top; removed `react-day-picker` dependency entirely
-- `PageShell.jsx` → `SectionLabel` export (mono 12px, 0.16em tracking, 3px `#0f62fe` left border), `PageHeading` export (Plex Light 28px); `NavBtn` active state: 2px `#0f62fe` bottom border + `var(--cds-layer-01)` background; `PageTitle` kept as alias
-- `carbon-tokens.css` → added `--heat-1..5` green scale (#044317 → #42be65)
-- Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, emoji, rounded corners, `react-day-picker`
+- `PageShell.jsx` → exports: `SectionLabel` (mono 12px, 0.16em tracking, 3px `var(--accent)` left border), `PageHeading` (Cond 700 28px), `PageTitle` (alias for SectionLabel), `AccentChip` (magenta pill: `var(--accent-bg-14)` bg, `var(--accent-soft)` text), `StickyCta` (sticky bottom bar with top border), `BackButton`; `NavBtn` active state: 2px `var(--accent)` bottom border + `var(--cds-layer-01)` background
+- `carbon-tokens.css` → added `--heat-1..5` green scale (#044317 → #42be65); WL custom tokens: `--accent` (#ee2c80 magenta), `--surface-card`, `--border-subtle-wl`, `--text-muted-wl`, `--accent-bg-08/14/30`, `--accent-soft`, `--r-card` (16px), `--r-pill` (999px), `--r-tile` (10px), `--cond` (IBM Plex Sans Condensed); g10 light-mode overrides for all WL tokens
+- `app.css` → global `html, body { overflow-x: hidden }` to prevent horizontal viewport bleed from chip rows; do not use `overflow: hidden` on direct parents of `flexWrap: wrap` chip containers — it clips instead of scrolling
+- Removed: Bebas Neue, DM Sans, Google Fonts import, custom `C` token objects, all raw hex colors, rounded corners, `react-day-picker`
 
 ### Hard rules (must not regress)
 - **Sentence case** for all labels — `Add exercise`, not `Add Exercise`
-- **0px border-radius** on buttons, inputs, cards — Carbon's only exception is Tags (16px pill)
-- **No emoji** — use `@carbon/icons-react` exclusively
+- **0px border-radius** on buttons, inputs, cards — exceptions: Tags/pill chips use `var(--r-pill)` (999px), cards use `var(--r-card)` (16px), tiles use `var(--r-tile)` (10px)
+- **No emoji** — use `@carbon/icons-react` exclusively (exception: motivation messages in History hero are plain strings, not UI)
 - **IBM Plex everywhere** — no system-font fallbacks visible in the rendered page
-- **Semantic tokens** (`var(--cds-*)`) not raw hex — otherwise the theme toggle breaks
+- **Semantic tokens** (`var(--cds-*)` or `var(--wl-*)`) not raw hex — otherwise the theme toggle breaks
 - **No gradients** in product UI — solid colors only
 - **Focus ring** = 2px solid `#0f62fe` outline (Carbon handles this via its component styles)
+- **Filter chips** — always use `flexWrap: wrap`; never `overflowX: auto` on a flex chip container without a constrained parent (it silently fails on mobile Chromium and clips instead of scrolling)
 
 ### Token cheat sheet
 | Concept | Token |
