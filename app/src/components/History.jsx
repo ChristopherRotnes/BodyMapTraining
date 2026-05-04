@@ -409,14 +409,12 @@ export default function History({ initialDate }) {
             })}
           </div>
           </div>
-          {muscleFilter.length > 0 && (
-            <button
-              onClick={() => setMuscleFilter([])}
-              style={{ background: "none", border: "none", padding: "0 16px", cursor: "pointer", fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em" }}
-            >
-              Nullstill filter
-            </button>
-          )}
+          <button
+            onClick={() => setMuscleFilter([])}
+            style={{ background: "none", border: "none", padding: "0 16px", cursor: "pointer", fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", opacity: muscleFilter.length > 0 ? 1 : 0, pointerEvents: muscleFilter.length > 0 ? "auto" : "none" }}
+          >
+            Nullstill filter
+          </button>
         </div>
 
         {loading ? (
