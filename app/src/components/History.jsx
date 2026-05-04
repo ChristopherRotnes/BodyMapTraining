@@ -403,10 +403,9 @@ export default function History({ initialDate }) {
 
         {/* Muscle filter — horizontal pill scroll */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ overflow: "hidden", margin: "0 -16px" }}>
           <div style={{
             display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none",
-            padding: "0 16px 8px",
+            paddingBottom: 8,
           }}>
             {MUSCLE_FILTER_ITEMS.map(item => {
               const active = muscleFilter.includes(item.id);
@@ -433,8 +432,6 @@ export default function History({ initialDate }) {
                 </button>
               );
             })}
-            <span style={{ flexShrink: 0, width: 8 }} aria-hidden="true" />
-          </div>
           </div>
           <button
             onClick={() => setMuscleFilter([])}
