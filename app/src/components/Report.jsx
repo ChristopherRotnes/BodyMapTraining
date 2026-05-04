@@ -279,7 +279,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
 
         {/* Filters */}
         <div style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 4 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingBottom: 4 }}>
             {PERIODS.map(p => (
               <FilterChip key={p.days} label={p.label} active={periodDays === p.days} onClick={() => setPeriodDays(p.days)} />
             ))}
