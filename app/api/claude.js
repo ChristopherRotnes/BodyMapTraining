@@ -56,15 +56,22 @@ app.http('claude', {
       body = { ...body, max_tokens: MAX_TOKENS_LIMIT };
     }
 
-    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(body),
-    });
+    const requestBody = JSON.stringify(body);
+    let upstream;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 2000));
+      upstream = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: requestBody,
+      });
+      if (upstream.status !== 529) break;
+      context.warn(`Anthropic overloaded (529), attempt ${attempt + 1}/3`);
+    }
 
     const data = await upstream.json();
     return new Response(JSON.stringify(data), {
