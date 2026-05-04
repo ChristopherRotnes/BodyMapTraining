@@ -17,6 +17,7 @@ function App() {
   const [pendingTemplateExercises, setPendingTemplateExercises] = useState(null);
   const [historyInitialDate, setHistoryInitialDate] = useState(null);
   const [bibliotekInitialTab, setBibliotekInitialTab] = useState(0);
+  const [reportPrefill, setReportPrefill] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -38,6 +39,7 @@ function App() {
     onShowBibliotek: () => { setBibliotekInitialTab(0); setView("bibliotek"); },
     onShowHistoryWithDate: (dateStr) => { setHistoryInitialDate(dateStr); setView("history"); },
     onShowTemplatePicker: () => setView("template-picker"),
+    onShowReportWithPrefill: (prefill) => { setReportPrefill(prefill); setView("report"); },
   };
 
   let content;
@@ -47,7 +49,7 @@ function App() {
   else if (view === "history")
     content = <History initialDate={historyInitialDate} />;
   else if (view === "report")
-    content = <Report />;
+    content = <Report prefill={reportPrefill} onPrefillConsumed={() => setReportPrefill(null)} />;
   else if (view === "bibliotek")
     content = <Bibliotek
       initialTab={bibliotekInitialTab}
