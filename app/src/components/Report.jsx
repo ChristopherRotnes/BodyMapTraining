@@ -9,7 +9,7 @@ import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
 import { AiGenerate, Add } from "@carbon/icons-react";
-import PageShell, { SectionLabel, PageHeading, AccentChip, StickyCta } from "./PageShell";
+import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
 const PERIODS = [
