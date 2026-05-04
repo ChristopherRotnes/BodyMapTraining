@@ -161,7 +161,8 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         max_tokens: 1500,
         messages: [{ role: "user", content: [...imageBlocks, { type: "text", text: ANALYZE_PROMPT }] }]
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
       if (!res.ok) {
         const detail = data?.error?.message;
         throw new Error(res.status === 401 ? "Ikke innlogget. Logg inn på nytt." : detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
@@ -205,7 +206,8 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         max_tokens: 1000,
         messages: [{ role: "user", content: buildRecommendPrompt(trained, untrained) }]
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
       if (!res.ok) {
         const detail = data?.error?.message;
         throw new Error(detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);

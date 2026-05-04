@@ -328,7 +328,8 @@ export default function History({ initialDate }) {
           ]
         }]
       });
-      const data = await res.json();
+      let data;
+      try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
       if (!res.ok) {
         const detail = data?.error?.message;
         throw new Error(detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
