@@ -7,7 +7,7 @@ import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFro
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
-  Select, SelectItem, MultiSelect, AccordionSkeleton, SkeletonPlaceholder,
+  Select, SelectItem, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
 import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
@@ -19,7 +19,7 @@ const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ 
 const DAY_HEADERS = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
 
 function calHeatColor(count) {
-  if (!count) return "var(--cds-background)";
+  if (!count) return "var(--surface-card)";
   if (count <= 1) return "var(--heat-1)";
   if (count <= 3) return "var(--heat-2)";
   if (count <= 5) return "var(--heat-3)";
@@ -52,7 +52,7 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1 }}>
         {cells.map((dateStr, i) => {
-          if (!dateStr) return <div key={`pad-${i}`} style={{ height: 40, background: "var(--cds-background)" }} />;
+          if (!dateStr) return <div key={`pad-${i}`} style={{ height: 40, background: "var(--surface-card)", borderRadius: 0 }} />;
           const count = sessionCountMap[dateStr] || 0;
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedStr;
@@ -61,10 +61,11 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
           const day = parseInt(dateStr.split("-")[2], 10);
           const cellStyle = {
             height: 40,
+            borderRadius: 0,
             background: calHeatColor(count),
-            border: "1px solid var(--cds-border-strong-01)",
-            outline: isSelected ? "2px solid var(--cds-interactive)" : isToday ? "2px solid var(--cds-text-primary)" : undefined,
-            outlineOffset: "-2px",
+            border: "1px solid var(--border-subtle-wl)",
+            outline: isSelected ? "3px solid #ffffff" : isToday ? "1px dashed var(--cds-text-secondary)" : undefined,
+            outlineOffset: isSelected ? "-3px" : "-2px",
             display: "flex", alignItems: "center", justifyContent: "center",
           };
           const daySpan = (
@@ -123,6 +124,61 @@ function sessionMuscleIds(session) {
       (ex.muscle_activations || []).map(ma => ma.muscle_id)
     )
   );
+}
+
+function heroMotivation(count) {
+  if (count < 1)  return null;
+  if (count === 1)  return "god start!";
+  if (count === 2)  return "to for to!";
+  if (count === 3)  return "tre på rad!";
+  if (count === 4)  return "fire! fint.";
+  if (count === 5)  return "fem. solid.";
+  if (count === 6)  return "seks. i rute.";
+  if (count === 7)  return "syv. nesten daglig.";
+  if (count === 8)  return "åtte. kroppen takker.";
+  if (count === 9)  return "ni. ett til!";
+  if (count === 10) return "tosifret!";
+  if (count === 11) return "elleve. du mener det.";
+  if (count === 12) return "tolv. tre per uke.";
+  if (count === 13) return "tretten. heldig kropp.";
+  if (count === 14) return "fjorten. halvveis til 28.";
+  if (count === 15) return "femten. meget bra.";
+  if (count === 16) return "seksten. du er maskinen.";
+  if (count === 17) return "sytten. ett per muskel!";
+  if (count === 18) return "atten. kortet tjener inn.";
+  if (count === 19) return "nitten. ett til!";
+  if (count === 20) return "tjue. dette er en vane.";
+  if (count === 21) return "tjueen. vanedannende.";
+  if (count === 22) return "tjueto. ingen stopper deg.";
+  if (count === 23) return "Jordan-nummer.";
+  if (count === 24) return "tjuefire. Kobe-territorium.";
+  if (count === 25) return "kvartmål!";
+  if (count === 26) return "tjueseks. halvveis til 52.";
+  if (count === 27) return "tjuesyv. over Kobe.";
+  if (count === 28) return "tjueåtte. én per dag?";
+  if (count === 29) return "tjueni. nesten 30!";
+  if (count === 30) return "tredve. legendarisk.";
+  if (count === 31) return "trettieen. hver dag.";
+  if (count === 32) return "Rocky-modus.";
+  if (count === 33) return "trettire. halvtredjes.";
+  if (count === 34) return "trettfire. dedikert.";
+  if (count === 35) return "trettiofem. femgangen!";
+  if (count === 36) return "seksgangen squared.";
+  if (count === 37) return "trettisyv. dette er deg.";
+  if (count === 38) return "trettåtte. bevisst.";
+  if (count === 39) return "trettini. nesten firti!";
+  if (count === 40) return "FIRTI. Arnold nikker.";
+  if (count === 41) return "over 40. egen klasse.";
+  if (count === 42) return "svaret på alt.";
+  if (count === 43) return "førtitre. hvem gjør det?";
+  if (count === 44) return "førtfire. dobbel innsats.";
+  if (count === 45) return "førtiofem. fire-og-halv timer.";
+  if (count === 46) return "ikke normalt. kompliment.";
+  if (count === 47) return "førtisyv. legen er stolt.";
+  if (count === 48) return "én og en halv per dag.";
+  if (count === 49) return "ett til: femti-klubben!";
+  if (count === 50) return "FEMTI. ikke virkelig.";
+  return "over 50. ring legen.";
 }
 
 
@@ -201,6 +257,11 @@ export default function History({ initialDate }) {
     return map;
   }, [filteredSessions]);
 
+  const currentMonthCount = useMemo(() => filteredSessions.filter(s => {
+    const d = new Date(s.session_date + "T12:00:00");
+    return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+  }).length, [filteredSessions, viewYear, viewMonth]);
+
   useEffect(() => {
     if (daySessions.length === 1) {
       setExpandedIds(new Set([daySessions[0].id]));
@@ -264,10 +325,10 @@ export default function History({ initialDate }) {
     setEditMode(true);
     fetchGymSessionsByDate(session.session_date)
       .then(setEditGymSessions)
-      .catch(() => setEditGymSessions([])); // gym calendar is optional — edit still works without it
+      .catch(() => setEditGymSessions([]));
     fetchLibraryExercises()
       .then(setLibraryExercises)
-      .catch(() => {}); // autocomplete degrades silently to manual entry on failure
+      .catch(() => {});
   };
 
   const cancelEdit = () => {
@@ -287,7 +348,7 @@ export default function History({ initialDate }) {
     }
     checkGymCalendarConflict(editGymSessionId, selectedSession?.id)
       .then(setEditGymCalendarConflict)
-      .catch(() => setEditGymCalendarConflict(null)); // treat conflict check failure as no conflict
+      .catch(() => setEditGymCalendarConflict(null));
   }, [editGymSessionId, editMode, selectedSession]);
 
   const saveEdit = async () => {
@@ -354,352 +415,407 @@ export default function History({ initialDate }) {
     [editMode, editExercises]
   );
 
-
   const hasEditErrors = editMode && (
     editExercises.some(e => e.enabled && !e.name?.trim()) ||
     editExercises.some(e => isInvalidNum(e.sets) || isInvalidNum(e.reps))
   );
 
+  const toggleMuscleFilter = (id) => {
+    const newFilter = muscleFilter.includes(id)
+      ? muscleFilter.filter(x => x !== id)
+      : [...muscleFilter, id];
+    setMuscleFilter(newFilter);
+    if (!selectedDate && newFilter.length > 0) {
+      const matching = sessions.filter(s => newFilter.some(mid => sessionMuscleIds(s).has(mid)));
+      const todayStr = format(today, "yyyy-MM-dd");
+      const dates = matching.map(s => s.session_date).sort();
+      const target = dates.includes(todayStr) ? todayStr : dates[dates.length - 1];
+      if (target) {
+        setSelectedDate(new Date(target + "T12:00:00"));
+        loadSession(target);
+      }
+    }
+  };
+
   return (
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
-          <SectionLabel>HISTORIKK</SectionLabel>
-          <PageHeading>Treningshistorikk</PageHeading>
-
-          <MultiSelect
-            id="muscle-filter"
-            titleText="Filtrer etter muskelgruppe"
-            label="Alle muskelgrupper"
-            items={MUSCLE_FILTER_ITEMS}
-            itemToString={item => item?.label ?? ""}
-            onChange={({ selectedItems }) => setMuscleFilter(selectedItems.map(i => i.id))}
-            style={{ marginBottom: 16 }}
-          />
-
-          {loading ? (
-            <div aria-live="polite" aria-busy="true" style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "16px 12px", marginBottom: 24 }}>
-              <SkeletonPlaceholder style={{ width: "100%", height: 280 }} />
-            </div>
+        <SectionLabel>HISTORIKK</SectionLabel>
+        <PageHeading style={{ minHeight: 72 }}>
+          {muscleFilter.length > 0 && selectedDate ? (() => {
+            const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
+            const count = filteredSessions.filter(s => s.session_date === selectedDateStr).length;
+            const total = sessions.filter(s => s.session_date === selectedDateStr).length;
+            const dateLabel = format(selectedDate, "d. MMMM", { locale: nb });
+            return <>{count} av {total} {total === 1 ? "økt" : "økter"} <span style={{ color: "var(--accent)" }}>den {dateLabel}</span></>;
+          })() : muscleFilter.length > 0 ? (
+            <>{currentMonthCount} {currentMonthCount === 1 ? "økt" : "økter"} i {format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb })} <span style={{ color: "var(--accent)" }}>med disse filtrene</span></>
           ) : (
-            <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-strong-01)", padding: "12px", marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription="Forrige måned" onClick={goPrevMonth} />
-                <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                  {format(new Date(viewYear, viewMonth, 1), "MMMM yyyy", { locale: nb }).replace(/^\w/, c => c.toUpperCase())}
-                </span>
-                <Button kind="ghost" size="sm" renderIcon={ChevronRight} hasIconOnly iconDescription="Neste måned" onClick={goNextMonth} disabled={atCurrentMonth} />
-              </div>
-              <MonthGrid
-                year={viewYear}
-                month={viewMonth}
-                sessionCountMap={sessionCountMap}
-                onDayClick={handleSelect}
-                selectedDate={selectedDate}
-                today={today}
-              />
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}>
-                <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>VOLUM 1</span>
-                {["--heat-1","--heat-2","--heat-3","--heat-4","--heat-5"].map(v => (
-                  <div key={v} style={{ width: 10, height: 10, background: `var(${v})` }} />
-                ))}
-                <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>5+</span>
-              </div>
-            </div>
+            <>{currentMonthCount} {currentMonthCount === 1 ? "økt" : "økter"} i {format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb })}.{heroMotivation(currentMonthCount) && <> <span style={{ color: "var(--accent)" }}>{heroMotivation(currentMonthCount)}</span></>}</>
           )}
+        </PageHeading>
 
-          {loadingSession && (
-            <div aria-live="polite" aria-busy="true" style={{ marginBottom: 24 }}>
-              <AccordionSkeleton count={2} />
+        {/* Muscle filter — horizontal pill scroll */}
+        <div style={{ marginBottom: 16, paddingBottom: 8, borderBottom: "1px solid var(--border-subtle-wl)" }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingBottom: 8 }}>
+            {MUSCLE_FILTER_ITEMS.map(item => {
+              const active = muscleFilter.includes(item.id);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => toggleMuscleFilter(item.id)}
+                  style={{
+                    flexShrink: 0,
+                    padding: "5px 13px",
+                    borderRadius: "var(--r-pill)",
+                    border: "1px solid",
+                    borderColor: active ? "var(--accent)" : "var(--border-subtle-wl)",
+                    background: active ? "var(--accent)" : "transparent",
+                    color: active ? "#fff" : "var(--text-muted-wl)",
+                    fontFamily: "var(--cds-font-mono)",
+                    fontSize: 11,
+                    letterSpacing: "0.06em",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setMuscleFilter([])}
+            style={{ background: "none", border: "none", padding: "0 16px", cursor: "pointer", fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", opacity: muscleFilter.length > 0 ? 1 : 0, pointerEvents: muscleFilter.length > 0 ? "auto" : "none" }}
+          >
+            Nullstill filter
+          </button>
+        </div>
+
+        {loading ? (
+          <div aria-live="polite" aria-busy="true" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "16px 12px", marginBottom: 24 }}>
+            <SkeletonPlaceholder style={{ width: "100%", height: 280 }} />
+          </div>
+        ) : (
+          <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "12px", marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription="Forrige måned" onClick={goPrevMonth} />
+              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                {format(new Date(viewYear, viewMonth, 1), "MMMM yyyy", { locale: nb }).replace(/^\w/, c => c.toUpperCase())}
+              </span>
+              <Button kind="ghost" size="sm" renderIcon={ChevronRight} hasIconOnly iconDescription="Neste måned" onClick={goNextMonth} disabled={atCurrentMonth} />
             </div>
-          )}
+            <MonthGrid
+              year={viewYear}
+              month={viewMonth}
+              sessionCountMap={sessionCountMap}
+              onDayClick={handleSelect}
+              selectedDate={selectedDate}
+              today={today}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}>
+              <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>VOLUM 1</span>
+              {["--heat-1","--heat-2","--heat-3","--heat-4","--heat-5"].map(v => (
+                <div key={v} style={{ width: 10, height: 10, background: `var(${v})` }} />
+              ))}
+              <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>5+</span>
+            </div>
+          </div>
+        )}
 
-          {daySessions.length > 0 && (
-            <div className="fade-in">
-              <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 16, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                {format(new Date(daySessions[0].session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
-              </p>
+        {loadingSession && (
+          <div aria-live="polite" aria-busy="true" style={{ marginBottom: 24 }}>
+            <AccordionSkeleton count={2} />
+          </div>
+        )}
 
-              {[...daySessions].sort((a, b) => {
-                if (!muscleFilter.length) return 0;
-                const aMatch = muscleFilter.some(id => sessionMuscleIds(a).has(id));
-                const bMatch = muscleFilter.some(id => sessionMuscleIds(b).has(id));
-                return aMatch === bMatch ? 0 : aMatch ? -1 : 1;
-              }).map((session) => {
-                const isEditing = editMode && selectedSession?.id === session.id;
-                const isExpanded = expandedIds.has(session.id);
-                const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
-                const sessionMuscleMap = isEditing ? buildMuscleMapFromExercises(editExercises) : buildMuscleMapFromSession(session);
-                const exCount = (session.session_exercises || []).filter(e => e.name).length;
-                const musIds = sessionMuscleIds(session);
-                const isFilterMatch = muscleFilter.length > 0 && muscleFilter.some(id => musIds.has(id));
-                const matchedLabels = isFilterMatch
-                  ? muscleFilter.filter(id => musIds.has(id)).map(id => MUSCLES[id]?.label || id)
-                  : [];
-                const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => MUSCLES[id]?.label || id);
-                const sessionTime = session.gym_calendar?.start_time
-                  ? new Date(session.gym_calendar.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" })
-                  : new Date(session.created_at).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
-                const sessionTitle = session.gym_calendar
-                  ? `${sessionTime} – ${session.gym_calendar.name}`
-                  : `${sessionTime} – Egentrening`;
+        {daySessions.length > 0 && (
+          <div className="fade-in">
+            <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 16, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
+              {format(new Date(daySessions[0].session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
+            </p>
 
-                return (
-                  <div key={session.id} style={{ marginBottom: 4, opacity: muscleFilter.length > 0 && !isFilterMatch ? 0.45 : 1 }}>
-                    <button
-                      onClick={() => toggleExpand(session.id)}
-                      aria-expanded={isExpanded}
-                      aria-controls={`session-content-${session.id}`}
-                      style={{
-                        width: "100%", display: "flex", alignItems: "center", gap: 8,
-                        background: "var(--cds-layer-01)",
-                        border: "1px solid var(--cds-border-strong-01)",
-                        borderLeft: isFilterMatch ? "3px solid var(--cds-support-success)" : "1px solid var(--cds-border-strong-01)",
-                        borderBottom: isExpanded ? "none" : "1px solid var(--cds-border-strong-01)",
-                        padding: "10px 14px", cursor: "pointer", textAlign: "left",
-                      }}
-                    >
-                      <span style={{ fontSize: 14, fontWeight: 500, color: "var(--cds-text-primary)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {sessionTitle}
+            {[...daySessions].sort((a, b) => {
+              if (!muscleFilter.length) return 0;
+              const aMatch = muscleFilter.some(id => sessionMuscleIds(a).has(id));
+              const bMatch = muscleFilter.some(id => sessionMuscleIds(b).has(id));
+              return aMatch === bMatch ? 0 : aMatch ? -1 : 1;
+            }).map((session) => {
+              const isEditing = editMode && selectedSession?.id === session.id;
+              const isExpanded = expandedIds.has(session.id);
+              const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
+              const sessionMuscleMap = isEditing ? buildMuscleMapFromExercises(editExercises) : buildMuscleMapFromSession(session);
+              const exCount = (session.session_exercises || []).filter(e => e.name).length;
+              const musIds = sessionMuscleIds(session);
+              const isFilterMatch = muscleFilter.length > 0 && muscleFilter.some(id => musIds.has(id));
+              const matchedLabels = isFilterMatch
+                ? muscleFilter.filter(id => musIds.has(id)).map(id => MUSCLES[id]?.label || id)
+                : [];
+              const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => MUSCLES[id]?.label || id);
+              const sessionTime = session.gym_calendar?.start_time
+                ? new Date(session.gym_calendar.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" })
+                : new Date(session.created_at).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+              const sessionTitle = session.gym_calendar
+                ? `${sessionTime} – ${session.gym_calendar.name}`
+                : `${sessionTime} – Egentrening`;
+
+              return (
+                <div key={session.id} style={{ marginBottom: 4, opacity: muscleFilter.length > 0 && !isFilterMatch ? 0.45 : 1 }}>
+                  <button
+                    onClick={() => toggleExpand(session.id)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`session-content-${session.id}`}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center", gap: 8,
+                      background: "var(--surface-card)",
+                      border: "1px solid var(--border-subtle-wl)",
+                      borderLeft: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)",
+                      borderBottom: isExpanded ? "none" : "1px solid var(--border-subtle-wl)",
+                      padding: "10px 14px", cursor: "pointer", textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {sessionTitle}
+                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
+                        {exCount} øvelser
                       </span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        <span style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
-                          {exCount} øvelser
-                        </span>
-                        {isFilterMatch
-                          ? matchedLabels.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)
-                          : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)
-                        }
-                        <ChevronDown size={16} style={{ color: "var(--cds-text-secondary)", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
-                      </div>
-                    </button>
-
-                    {isExpanded && (
-                  <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--cds-border-strong-01)", borderTop: "none", padding: "16px 14px", marginBottom: 0 }}>
-
-                    {/* Gym class tag (read) or selector (edit) */}
-                    {isEditing ? (
-                      editGymSessions.length > 0 && (
-                        <>
-                          <Select
-                            id="edit-gym-session"
-                            labelText="Gymtime"
-                            value={editGymSessionId}
-                            onChange={(e) => setEditGymSessionId(e.target.value)}
-                            style={{ marginBottom: editGymCalendarConflict ? 8 : 16 }}
-                          >
-                            <SelectItem value="" text="Ingen time valgt" />
-                            {editGymSessions.map(s => {
-                              const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
-                              const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
-                              return <SelectItem key={s.id} value={s.id} text={label} />;
-                            })}
-                          </Select>
-                          {editGymCalendarConflict && (
-                            <InlineNotification
-                              kind="warning"
-                              title="Eksisterende økt:"
-                              subtitle={`Denne gymtimen har allerede en lagret økt (${editGymCalendarConflict.session_date}). Lagring erstatter den.`}
-                              hideCloseButton
-                              style={{ marginBottom: 16 }}
-                            />
-                          )}
-                        </>
-                      )
-                    ) : (
-                      session.gym_calendar && (
-                        <div style={{ marginBottom: 12 }}>
-                          <Tag type="outline" size="sm">{session.gym_calendar.name}</Tag>
-                        </div>
-                      )
-                    )}
-
-                    {/* Body map */}
-                    <BodyPanel
-                      primary={sessionMuscles.primary}
-                      secondary={sessionMuscles.secondary}
-                      muscleMap={sessionMuscleMap}
-                      onHover={setHoveredMuscle}
-                      hovered={hoveredMuscle}
-                      marginBottom={0}
-                    />
-
-                    <div style={{ height: 68, marginBottom: 16, overflow: "hidden" }}>
-                      {hoveredMuscle ? (
-                        <div style={{ borderLeft: "3px solid var(--cds-interactive)", background: "var(--cds-layer-01)", padding: "10px 14px" }}>
-                          <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
-                            {MUSCLES[hoveredMuscle]?.label}
-                          </div>
-                          <div style={{ display: "flex", gap: 24, alignItems: "baseline", overflow: "hidden" }}>
-                            <div style={{ flexShrink: 0 }}>
-                              <span style={{ fontSize: 28, fontWeight: 300, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
-                                {(sessionMuscleMap[hoveredMuscle] || []).length}
-                              </span>
-                              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                                {(sessionMuscleMap[hoveredMuscle] || []).length === 1 ? "ØVELSE" : "ØVELSER"}
-                              </span>
-                            </div>
-                            <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>
-                              {(sessionMuscleMap[hoveredMuscle] || []).join(" · ")}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
-                          Hold musepeker over kroppen for detaljer
-                        </div>
-                      )}
+                      {isFilterMatch
+                        ? matchedLabels.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)
+                        : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)
+                      }
+                      <ChevronDown size={16} style={{ color: "var(--text-muted-wl)", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
                     </div>
+                  </button>
 
-                    <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-                      <Tag type="green" size="sm">Primær ({sessionMuscles.primary.length})</Tag>
-                      <Tag type="blue" size="sm">Sekundær ({sessionMuscles.secondary.length})</Tag>
-                    </div>
+                  {isExpanded && (
+                    <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--border-subtle-wl)", borderTop: "none", borderLeft: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)", padding: "16px 14px", marginBottom: 0 }}>
 
-                    {/* Exercise list */}
-                    <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14, marginBottom: 12 }}>
-                      <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                        Øvelser
-                      </p>
-
+                      {/* Gym class tag (read) or selector (edit) */}
                       {isEditing ? (
-                        <>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
-                            {editExercises.map((ex) => (
-                              <ExerciseRowWithAutocomplete
-                                key={ex.id}
-                                exercise={ex}
-                                autoFocusName={ex.id === editingExId}
-                                onChange={(updates) => setEditExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
-                                onDelete={() => setEditExercises(p => p.filter(e => e.id !== ex.id))}
-                                layer="layer-02"
-                                validateNumbers
-                                libraryExercises={libraryExercises}
-                                isNew={newExerciseIds.has(ex.id)}
+                        editGymSessions.length > 0 && (
+                          <>
+                            <Select
+                              id="edit-gym-session"
+                              labelText="Gymtime"
+                              value={editGymSessionId}
+                              onChange={(e) => setEditGymSessionId(e.target.value)}
+                              style={{ marginBottom: editGymCalendarConflict ? 8 : 16 }}
+                            >
+                              <SelectItem value="" text="Ingen time valgt" />
+                              {editGymSessions.map(s => {
+                                const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                                const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
+                                return <SelectItem key={s.id} value={s.id} text={label} />;
+                              })}
+                            </Select>
+                            {editGymCalendarConflict && (
+                              <InlineNotification
+                                kind="warning"
+                                title="Eksisterende økt:"
+                                subtitle={`Denne gymtimen har allerede en lagret økt (${editGymCalendarConflict.session_date}). Lagring erstatter den.`}
+                                hideCloseButton
+                                style={{ marginBottom: 16 }}
                               />
-                            ))}
-                          </div>
-                          <Button
-                            kind="ghost"
-                            renderIcon={Add}
-                            size="sm"
-                            onClick={() => {
-                              const id = Date.now();
-                              setEditExercises(p => [...p, { id, name: "", standardName: "", sets: null, reps: null, primary: [], secondary: [], enabled: true }]);
-                              setEditingExId(id);
-                              setNewExerciseIds(prev => new Set([...prev, id]));
-                            }}
-                            style={{ width: "100%" }}
-                          >
-                            Legg til øvelse manuelt
-                          </Button>
-                        </>
+                            )}
+                          </>
+                        )
                       ) : (
-                        (session.session_exercises || []).map(ex => {
-                          const muscleLabels = (ex.muscle_activations || []).map(ma => MUSCLES[ma.muscle_id]?.label || ma.muscle_id).join(", ");
-                          return (
-                            <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--cds-border-subtle-01)", color: "var(--cds-text-primary)" }}>
-                              <span>
-                                {muscleLabels ? (
-                                  <DefinitionTooltip definition={muscleLabels} openOnHover align="bottom">{ex.name}</DefinitionTooltip>
-                                ) : ex.name}
-                              </span>
-                              {(ex.sets || ex.reps) && (
-                                <span style={{ color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
-                                  {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
-                                </span>
-                              )}
+                        session.gym_calendar && (
+                          <div style={{ marginBottom: 12 }}>
+                            <Tag type="outline" size="sm">{session.gym_calendar.name}</Tag>
+                          </div>
+                        )
+                      )}
+
+                      {/* Body map */}
+                      <BodyPanel
+                        primary={sessionMuscles.primary}
+                        secondary={sessionMuscles.secondary}
+                        muscleMap={sessionMuscleMap}
+                        onHover={setHoveredMuscle}
+                        hovered={hoveredMuscle}
+                        marginBottom={0}
+                      />
+
+                      <div style={{ height: 68, marginBottom: 16, overflow: "hidden" }}>
+                        {hoveredMuscle ? (
+                          <div style={{ borderLeft: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
+                            <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+                              {MUSCLES[hoveredMuscle]?.label}
                             </div>
-                          );
-                        })
+                            <div style={{ display: "flex", gap: 24, alignItems: "baseline", overflow: "hidden" }}>
+                              <div style={{ flexShrink: 0 }}>
+                                <span style={{ fontSize: 28, fontWeight: 300, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
+                                  {(sessionMuscleMap[hoveredMuscle] || []).length}
+                                </span>
+                                <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                                  {(sessionMuscleMap[hoveredMuscle] || []).length === 1 ? "ØVELSE" : "ØVELSER"}
+                                </span>
+                              </div>
+                              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>
+                                {(sessionMuscleMap[hoveredMuscle] || []).join(" · ")}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
+                            Hold musepeker over kroppen for detaljer
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                        <Tag type="green" size="sm">Primær ({sessionMuscles.primary.length})</Tag>
+                        <Tag type="blue" size="sm">Sekundær ({sessionMuscles.secondary.length})</Tag>
+                      </div>
+
+                      {/* Exercise list */}
+                      <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
+                        <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
+                          Øvelser
+                        </p>
+
+                        {isEditing ? (
+                          <>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+                              {editExercises.map((ex) => (
+                                <ExerciseRowWithAutocomplete
+                                  key={ex.id}
+                                  exercise={ex}
+                                  autoFocusName={ex.id === editingExId}
+                                  onChange={(updates) => setEditExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
+                                  onDelete={() => setEditExercises(p => p.filter(e => e.id !== ex.id))}
+                                  layer="layer-02"
+                                  validateNumbers
+                                  libraryExercises={libraryExercises}
+                                  isNew={newExerciseIds.has(ex.id)}
+                                />
+                              ))}
+                            </div>
+                            <Button
+                              kind="ghost"
+                              renderIcon={Add}
+                              size="sm"
+                              onClick={() => {
+                                const id = Date.now();
+                                setEditExercises(p => [...p, { id, name: "", standardName: "", sets: null, reps: null, primary: [], secondary: [], enabled: true }]);
+                                setEditingExId(id);
+                                setNewExerciseIds(prev => new Set([...prev, id]));
+                              }}
+                              style={{ width: "100%" }}
+                            >
+                              Legg til øvelse manuelt
+                            </Button>
+                          </>
+                        ) : (
+                          (session.session_exercises || []).map(ex => {
+                            const muscleLabels = (ex.muscle_activations || []).map(ma => MUSCLES[ma.muscle_id]?.label || ma.muscle_id).join(", ");
+                            return (
+                              <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--border-subtle-wl)", color: "var(--cds-text-primary)" }}>
+                                <span>
+                                  {muscleLabels ? (
+                                    <DefinitionTooltip definition={muscleLabels} openOnHover align="bottom">{ex.name}</DefinitionTooltip>
+                                  ) : ex.name}
+                                </span>
+                                {(ex.sets || ex.reps) && (
+                                  <span style={{ color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
+                                    {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Muscle groups (read mode only) */}
+                      {!isEditing && (
+                        <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
+                          <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
+                            Muskelgrupper
+                          </p>
+                          {sessionMuscles.primary.map(id => {
+                            const exNames = (sessionMuscleMap[id] || []).join(", ");
+                            return (
+                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--border-subtle-wl)" }}>
+                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
+                                <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>
+                                  {exNames ? (
+                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
+                                  ) : MUSCLES[id]?.label || id}
+                                </span>
+                                <Tag type="green" size="sm">Primær</Tag>
+                              </div>
+                            );
+                          })}
+                          {sessionMuscles.secondary.map(id => {
+                            const exNames = (sessionMuscleMap[id] || []).join(", ");
+                            return (
+                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--border-subtle-wl)" }}>
+                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
+                                <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>
+                                  {exNames ? (
+                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
+                                  ) : MUSCLES[id]?.label || id}
+                                </span>
+                                <Tag type="blue" size="sm">Sekundær</Tag>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Edit mode actions */}
+                      {isEditing && (
+                        <>
+                          {analyzeError && (
+                            <InlineNotification kind="error" title="Feil:" subtitle={analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
+                          )}
+                          {editError && (
+                            <InlineNotification kind="error" title="Feil:" subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
+                          )}
+                          <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+                            onChange={(e) => { if (e.target.files[0]) reanalyze(e.target.files[0]); e.target.value = ""; }} />
+                          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                            <Button kind="secondary" renderIcon={analyzing ? Renew : Camera} disabled={analyzing} onClick={() => fileRef.current?.click()}>
+                              {analyzing ? "Analyserer…" : "Re-analyser"}
+                            </Button>
+                            <Button kind="ghost" onClick={cancelEdit}>Avbryt</Button>
+                            <Button
+                              kind="primary"
+                              disabled={editSaving || hasEditErrors}
+                              onClick={saveEdit}
+                              style={{ marginLeft: "auto" }}
+                            >
+                              {editSaving ? "Lagrer…" : "Lagre"}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Read mode: edit button (hidden when any session is in edit mode) */}
+                      {!editMode && (
+                        <Button kind="ghost" renderIcon={EditIcon} onClick={() => enterEditMode(session)}>
+                          Rediger økt
+                        </Button>
                       )}
                     </div>
-
-                    {/* Muscle groups (read mode only) */}
-                    {!isEditing && (
-                      <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: 14, marginBottom: 12 }}>
-                        <p style={{ fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                          Muskelgrupper
-                        </p>
-                        {sessionMuscles.primary.map(id => {
-                          const exNames = (sessionMuscleMap[id] || []).join(", ");
-                          return (
-                            <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                              <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
-                              <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>
-                                {exNames ? (
-                                  <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
-                                ) : MUSCLES[id]?.label || id}
-                              </span>
-                              <Tag type="green" size="sm">Primær</Tag>
-                            </div>
-                          );
-                        })}
-                        {sessionMuscles.secondary.map(id => {
-                          const exNames = (sessionMuscleMap[id] || []).join(", ");
-                          return (
-                            <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
-                              <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
-                              <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>
-                                {exNames ? (
-                                  <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
-                                ) : MUSCLES[id]?.label || id}
-                              </span>
-                              <Tag type="blue" size="sm">Sekundær</Tag>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Edit mode actions */}
-                    {isEditing && (
-                      <>
-                        {analyzeError && (
-                          <InlineNotification kind="error" title="Feil:" subtitle={analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
-                        )}
-                        {editError && (
-                          <InlineNotification kind="error" title="Feil:" subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
-                        )}
-                        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
-                          onChange={(e) => { if (e.target.files[0]) reanalyze(e.target.files[0]); e.target.value = ""; }} />
-                        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                          <Button kind="secondary" renderIcon={analyzing ? Renew : Camera} disabled={analyzing} onClick={() => fileRef.current?.click()}>
-                            {analyzing ? "Analyserer…" : "Re-analyser"}
-                          </Button>
-                          <Button kind="ghost" onClick={cancelEdit}>Avbryt</Button>
-                          <Button
-                            kind="primary"
-                            disabled={editSaving || hasEditErrors}
-                            onClick={saveEdit}
-                            style={{ marginLeft: "auto" }}
-                          >
-                            {editSaving ? "Lagrer…" : "Lagre"}
-                          </Button>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Read mode: edit button (hidden when any session is in edit mode) */}
-                    {!editMode && (
-                      <Button kind="ghost" renderIcon={EditIcon} onClick={() => enterEditMode(session)}>
-                        Rediger økt
-                      </Button>
-                    )}
-                  </div>
                   )}
                 </div>
-                );
-              })}
-            </div>
-          )}
+              );
+            })}
+          </div>
+        )}
 
-          {!loading && sessions.length === 0 && (
-            <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
-              Ingen økter lagret ennå.
-            </p>
-          )}
+        {!loading && sessions.length === 0 && (
+          <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
+            Ingen økter lagret ennå.
+          </p>
+        )}
 
-        </div>
+      </div>
     </PageShell>
   );
 }
