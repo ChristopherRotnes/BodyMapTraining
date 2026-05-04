@@ -1,7 +1,13 @@
 import { app } from '@azure/functions';
 
-const SPORTY_URL =
+const SPORTY_BASE_URL =
   'https://sporty.no/api/v1/businessunits/8/groupactivities';
+
+function buildSportyUrl(daysAhead = 10) {
+  const from = new Date().toISOString().slice(0, 10);
+  const to = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return `${SPORTY_BASE_URL}?from=${from}&to=${to}`;
+}
 
 function shiftRow(row, shiftMs) {
   if (!shiftMs) return row;
@@ -25,7 +31,7 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
 
   let sportyData;
   try {
-    const res = await fetch(SPORTY_URL, {
+    const res = await fetch(buildSportyUrl(), {
       headers: { 'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)' },
     });
     if (!res.ok) throw new Error(`sporty.no returned ${res.status}`);
