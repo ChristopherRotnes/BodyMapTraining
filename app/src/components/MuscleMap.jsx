@@ -9,7 +9,7 @@ import {
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Renew, Camera, Ai } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
@@ -802,7 +802,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
             {/* Recommendations */}
             <Button
               kind="tertiary"
-              renderIcon={Ai}
+              renderIcon={AiRecommend}
               onClick={recommend}
               disabled={loadingRecs}
               style={{ width: "100%", maxWidth: "100%", marginBottom: 10 }}
