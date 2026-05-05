@@ -1,4 +1,4 @@
-import '@carbon/styles/css/styles.css';
+import './styles/carbon.scss';
 import './styles/carbon-tokens.css';
 import './styles/app.css';
 import { StrictMode } from 'react'

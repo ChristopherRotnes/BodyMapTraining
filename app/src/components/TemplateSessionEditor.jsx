@@ -137,6 +137,8 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
           {editingTitle ? (
             <input
               autoFocus
+              id="template-name"
+              name="template-name"
               value={templateName}
               onChange={e => setTemplateName(e.target.value)}
               onBlur={() => setEditingTitle(false)}

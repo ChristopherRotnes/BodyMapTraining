@@ -1,0 +1,5 @@
+// Import Carbon Design System without CDN @font-face declarations.
+// Our local @font-face rules in carbon-tokens.css cover IBM Plex fonts.
+@use '@carbon/styles' with (
+  $css--font-face: false
+);

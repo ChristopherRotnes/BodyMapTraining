@@ -789,7 +789,7 @@ export default function History({ initialDate }) {
                           {editError && (
                             <InlineNotification kind="error" title="Feil:" subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
                           )}
-                          <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
+                          <input ref={fileRef} id="session-image-upload" name="session-image-upload" type="file" accept="image/*" style={{ display: "none" }}
                             onChange={(e) => { if (e.target.files[0]) reanalyze(e.target.files[0]); e.target.value = ""; }} />
                           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                             <Button kind="secondary" renderIcon={analyzing ? Renew : Camera} disabled={analyzing} onClick={() => fileRef.current?.click()}>

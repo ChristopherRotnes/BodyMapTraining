@@ -44,6 +44,8 @@ export default function ExerciseRow({
         {editingName ? (
           <input
             autoFocus
+            id={`ex-name-${exercise.id}`}
+            name={`ex-name-${exercise.id}`}
             aria-label="Øvelsenavn"
             value={exercise.name}
             onChange={(e) => onChange({ name: e.target.value, standardName: e.target.value })}
@@ -88,6 +90,8 @@ export default function ExerciseRow({
                 min="1"
                 max="99"
                 placeholder="–"
+                id={`ex-${field}-${exercise.id}`}
+                name={`ex-${field}-${exercise.id}`}
                 aria-label={field === "sets" ? `Sett for ${exercise.name || "øvelse"}` : `Reps for ${exercise.name || "øvelse"}`}
                 aria-invalid={isFieldInvalid || undefined}
                 aria-describedby={isFieldInvalid ? errorId : undefined}

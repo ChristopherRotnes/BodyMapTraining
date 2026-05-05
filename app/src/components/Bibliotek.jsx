@@ -226,6 +226,8 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                 <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted-wl)", pointerEvents: "none" }} />
                 <input
                   type="search"
+                  id="exercise-search"
+                  name="exercise-search"
                   placeholder="Søk øvelse…"
                   value={exSearch}
                   onChange={e => setExSearch(e.target.value)}
