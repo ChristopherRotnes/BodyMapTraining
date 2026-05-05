@@ -4,8 +4,10 @@ import nb from '../../public/locales/nb/translation.json'
 import en from '../../public/locales/en/translation.json'
 import fa from '../../public/locales/fa/translation.json'
 
-const lng = localStorage.getItem('wl-lang') || 'nb'
-document.documentElement.dir = lng === 'fa' ? 'rtl' : 'ltr'
+const lng = (typeof localStorage !== 'undefined' ? localStorage.getItem('wl-lang') : null) || 'nb'
+if (typeof document !== 'undefined') {
+  document.documentElement.dir = lng === 'fa' ? 'rtl' : 'ltr'
+}
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -19,7 +21,9 @@ i18n.use(initReactI18next).init({
 })
 
 i18n.on('languageChanged', (l) => {
-  document.documentElement.dir = l === 'fa' ? 'rtl' : 'ltr'
+  if (typeof document !== 'undefined') {
+    document.documentElement.dir = l === 'fa' ? 'rtl' : 'ltr'
+  }
 })
 
 export default i18n
