@@ -3,6 +3,28 @@ import { supabase } from "../lib/supabase";
 import { Button, TextInput, InlineNotification } from "@carbon/react";
 import { Email } from "@carbon/icons-react";
 
+function getDailyQuote() {
+  const now = new Date();
+  const mmdd = String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+  const special = {
+    "01-01": "Nytt år, ny treningslogg. Dag 1 av 365.",
+    "05-05": "05/05 – en dato som ser like bra ut baklengs. En god økt gjør det samme.",
+    "05-17": "Gratulerer med dagen! 17. mai feires best med bein som allerede er slitne.",
+    "12-24": "Julaften. Treningssalen er tom – det er din fordel.",
+  };
+  if (special[mmdd]) return special[mmdd];
+  const weekday = now.getDay(); // 0=sun
+  return [
+    "Søndag er ikke hviledag – det er oppladningsdag.",
+    "Mandag: uken starter med deg.",
+    "Tirsdag. Ikke mandag-angst, ikke fredags-latskap. Bare ren treningslyst.",
+    "Onsdag – midtpunktet. Perfekt dag for et personlig rekord.",
+    "Torsdag: en økt i dag og du går inn i helgen med samvittigheten i orden.",
+    "Fredag! Siste sjanse til å gjøre uken komplett.",
+    "Lørdag – de beste øktene skjer når ingen forventer det.",
+  ][weekday];
+}
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,8 +66,11 @@ export default function Login() {
         }}>
           Workout Lens
         </div>
-        <div style={{ fontSize: 14, color: "var(--cds-text-secondary)", marginBottom: 32 }}>
+        <div style={{ fontSize: 14, color: "var(--cds-text-secondary)", marginBottom: 12 }}>
           Logg inn for å fortsette
+        </div>
+        <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--cds-text-secondary)", marginBottom: 32 }}>
+          {getDailyQuote()}
         </div>
 
         {sent ? (
