@@ -9,6 +9,7 @@ import Report from "./components/Report";
 import Bibliotek from "./components/Bibliotek";
 import TemplatePicker from "./components/TemplatePicker";
 import TemplateSessionEditor from "./components/TemplateSessionEditor";
+import Planlegger from "./components/Planlegger";
 
 function App() {
   const [session, setSession] = useState(undefined);
@@ -40,6 +41,7 @@ function App() {
     onShowHistoryWithDate: (dateStr) => { setHistoryInitialDate(dateStr); setView("history"); },
     onShowTemplatePicker: () => setView("template-picker"),
     onShowReportWithPrefill: (prefill) => { setReportPrefill(prefill); setView("report"); },
+    onShowPlanlegger: () => setView("planlegger"),
   };
 
   let content;
@@ -85,6 +87,8 @@ function App() {
         setView("logger");
       }}
     />;
+  else if (view === "planlegger")
+    content = <Planlegger />;
   else
     content = <MuscleMap
       templatePreload={pendingTemplateExercises}

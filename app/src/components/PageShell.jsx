@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout } from "@carbon/icons-react";
+import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout, EventSchedule } from "@carbon/icons-react";
 import { version } from "../../package.json";
 import { Button } from "@carbon/react";
 import { useTheme } from "../theme";
@@ -123,7 +123,7 @@ export function BackButton({ onClick }) {
 
 export default function PageShell({ children }) {
   const { theme, setTheme } = useTheme();
-  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek } = useNav();
+  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowPlanlegger } = useNav();
   const [changelogOpen, setChangelogOpen] = useState(false);
 
   return (
@@ -170,6 +170,9 @@ export default function PageShell({ children }) {
             </NavBtn>
             <NavBtn ariaLabel="Bibliotek" onClick={onShowBibliotek} active={currentView === "bibliotek"}>
               <Book size={20} />
+            </NavBtn>
+            <NavBtn ariaLabel="Planlegg uke" onClick={onShowPlanlegger} active={currentView === "planlegger"}>
+              <EventSchedule size={20} />
             </NavBtn>
             <NavBtn ariaLabel="Bytt tema" onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}>
               {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}

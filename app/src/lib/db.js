@@ -281,6 +281,71 @@ export async function checkGymCalendarConflict(gymCalendarId, excludeSessionId =
   return data; // null = no conflict
 }
 
+// ── WEEK PLANS ────────────────────────────────────────────────────────
+
+export async function fetchWeekPlan(weekIso) {
+  const { data: plan, error: planError } = await supabase
+    .from("week_plans")
+    .select("id, week_iso")
+    .eq("week_iso", weekIso)
+    .maybeSingle();
+  if (planError) throw planError;
+  if (!plan) return { plan: null, days: [] };
+
+  const { data: days, error: daysError } = await supabase
+    .from("week_plan_days")
+    .select(`
+      id, day_of_week, sort_order,
+      template_id,
+      session_templates(
+        id, name,
+        session_template_exercises(
+          id, name, primary_muscles, secondary_muscles, sets, reps, sort_order
+        )
+      )
+    `)
+    .eq("plan_id", plan.id)
+    .order("day_of_week", { ascending: true });
+  if (daysError) throw daysError;
+
+  return { plan, days: days || [] };
+}
+
+// assignments: [{ day_of_week: 1..7, template_id: uuid|null }]
+export async function saveWeekPlan(weekIso, assignments) {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: plan, error: upsertError } = await supabase
+    .from("week_plans")
+    .upsert({ user_id: user.id, week_iso: weekIso }, { onConflict: "user_id,week_iso" })
+    .select("id")
+    .single();
+  if (upsertError) throw upsertError;
+
+  await supabase.from("week_plan_days").delete().eq("plan_id", plan.id);
+
+  if (assignments.length > 0) {
+    const rows = assignments.map((a, i) => ({
+      plan_id: plan.id,
+      day_of_week: a.day_of_week,
+      template_id: a.template_id || null,
+      sort_order: i,
+    }));
+    const { error: insertError } = await supabase.from("week_plan_days").insert(rows);
+    if (insertError) throw insertError;
+  }
+
+  return plan;
+}
+
+export async function deleteWeekPlan(weekIso) {
+  const { error } = await supabase
+    .from("week_plans")
+    .delete()
+    .eq("week_iso", weekIso);
+  if (error) throw error;
+}
+
 export async function updateSession(sessionId, exercises, gymCalendarId, { replace = false } = {}) {
   const enabledExercises = exercises.filter(e => e.enabled && e.name);
 
