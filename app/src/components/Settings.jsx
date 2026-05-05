@@ -99,7 +99,7 @@ export default function Settings() {
             Har du tilbakemeldinger eller fant en feil? Ta gjerne kontakt.
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Button kind="ghost" size="sm" href="mailto:kontakt@umulig.org" as="a">
+            <Button kind="ghost" size="sm" href="mailto:kontakt@umulig.org">
               Send e-post
             </Button>
             <Button
@@ -108,7 +108,6 @@ export default function Settings() {
               href="https://github.com/ChristopherRotnes/BodyMapTraining/issues"
               target="_blank"
               rel="noopener noreferrer"
-              as="a"
             >
               Rapporter feil på GitHub
             </Button>
