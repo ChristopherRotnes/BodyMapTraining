@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { ChevronLeft, ChevronRight, Add, Close, TrashCan } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
 import { buildMuscleMapFromExercises } from "../lib/utils";
 import { toWeekIso } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import { logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, StickyCta, AccentChip } from "./PageShell";
-
-const DAY_LABELS = ["MAN", "TIR", "ONS", "TOR", "FRE", "LØR", "SØN"];
 
 function formatWeekLabel(monday) {
   const sunday = new Date(monday);
@@ -19,7 +18,6 @@ function formatWeekLabel(monday) {
   const endDay = sunday.getUTCDate();
   const endMonth = monthNames[sunday.getUTCMonth()];
 
-  // ISO week number
   const d = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate()));
   const dayOfWeek = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek);
@@ -29,7 +27,8 @@ function formatWeekLabel(monday) {
   return `UKE ${week} · ${startDay}–${endDay} ${endMonth}`;
 }
 
-function TemplatePicker({ templates, onSelect, onClose }) {
+function TemplatePickerSheet({ templates, onSelect, onClose }) {
+  const { t } = useTranslation();
   return (
     <div
       onClick={onClose}
@@ -64,10 +63,10 @@ function TemplatePicker({ templates, onSelect, onClose }) {
           borderBottom: "1px solid var(--cds-border-subtle-01)",
         }}>
           <span style={{ fontFamily: "var(--cds-font-sans)", fontWeight: 600, fontSize: 15, color: "var(--cds-text-primary)" }}>
-            Velg mal
+            {t("planlegger.selectTemplate")}
           </span>
           <button
-            aria-label="Lukk"
+            aria-label={t("common.close")}
             onClick={onClose}
             style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cds-icon-primary)", display: "flex", alignItems: "center" }}
           >
@@ -77,7 +76,7 @@ function TemplatePicker({ templates, onSelect, onClose }) {
 
         {templates.length === 0 ? (
           <p style={{ padding: "16px", fontSize: 14, color: "var(--cds-text-secondary)" }}>
-            Ingen maler opprettet ennå.
+            {t("planlegger.noTemplates")}
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
@@ -103,7 +102,7 @@ function TemplatePicker({ templates, onSelect, onClose }) {
                   {tpl.name}
                 </span>
                 <span style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
-                  {(tpl.session_template_exercises || []).length} øvelser
+                  {t("planlegger.exerciseCount", { count: (tpl.session_template_exercises || []).length })}
                 </span>
               </button>
             ))}
@@ -115,6 +114,7 @@ function TemplatePicker({ templates, onSelect, onClose }) {
 }
 
 function DayRow({ dow, date, template, onAdd, onRemove }) {
+  const { t } = useTranslation();
   const dateLabel = date
     ? date.toLocaleDateString("no-NO", { day: "numeric", month: "short", timeZone: "UTC" })
     : "";
@@ -129,8 +129,8 @@ function DayRow({ dow, date, template, onAdd, onRemove }) {
     }));
     const { primary, secondary } = calcMuscles(exercises);
     const ids = [...new Set([...primary, ...secondary])];
-    return ids.slice(0, 4).map(id => MUSCLES[id]?.label || id);
-  }, [template]);
+    return ids.slice(0, 4).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id }));
+  }, [template, t]);
 
   return (
     <div style={{
@@ -143,7 +143,7 @@ function DayRow({ dow, date, template, onAdd, onRemove }) {
     }}>
       <div style={{ width: 36, flexShrink: 0 }}>
         <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>
-          {DAY_LABELS[dow - 1]}
+          {t(`planlegger.days.${dow}`)}
         </div>
         <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
           {dateLabel}
@@ -173,7 +173,7 @@ function DayRow({ dow, date, template, onAdd, onRemove }) {
             )}
           </div>
           <button
-            aria-label={`Fjern ${template.name}`}
+            aria-label={t("planlegger.removeTemplate", { name: template.name })}
             onClick={() => onRemove(dow)}
             style={{
               background: "none",
@@ -210,7 +210,7 @@ function DayRow({ dow, date, template, onAdd, onRemove }) {
           onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--cds-border-subtle-01)"; e.currentTarget.style.color = "var(--cds-text-secondary)"; }}
         >
           <Add size={16} />
-          Legg til økt
+          {t("planlegger.addSession")}
         </button>
       )}
     </div>
@@ -218,8 +218,8 @@ function DayRow({ dow, date, template, onAdd, onRemove }) {
 }
 
 export default function Planlegger() {
+  const { t } = useTranslation();
   const [weekOffset, setWeekOffset] = useState(0);
-  // assignments: { [dow: 1-7]: template | null }
   const [assignments, setAssignments] = useState({});
   const [savedAssignments, setSavedAssignments] = useState({});
   const [templates, setTemplates] = useState([]);
@@ -244,7 +244,6 @@ export default function Planlegger() {
   const weekIso = useMemo(() => toWeekIso(monday), [monday]);
   const weekLabel = useMemo(() => formatWeekLabel(monday), [monday]);
 
-  // Dates for each day of the week
   const weekDates = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(monday);
@@ -253,7 +252,6 @@ export default function Planlegger() {
     });
   }, [monday]);
 
-  // Projected body map from all assigned templates
   const projectedData = useMemo(() => {
     const allExercises = Object.values(assignments)
       .filter(Boolean)
@@ -268,7 +266,6 @@ export default function Planlegger() {
     const { primary, secondary } = calcMuscles(allExercises);
     const muscleMap = buildMuscleMapFromExercises(allExercises);
 
-    // Build counts for HeatmapBodySVG
     const counts = {};
     primary.forEach(id => { counts[id] = { primary: 1, secondary: 0 }; });
     secondary.forEach(id => {
@@ -340,7 +337,6 @@ export default function Planlegger() {
     loadPlan(weekIso);
   }, [weekIso, loadPlan]);
 
-  // Close picker on Escape
   useEffect(() => {
     if (pickerDow === null) return;
     const handler = (e) => { if (e.key === "Escape") setPickerDow(null); };
@@ -399,7 +395,7 @@ export default function Planlegger() {
         {/* Week navigation */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
           <button
-            aria-label="Forrige uke"
+            aria-label={t("planlegger.prevWeek")}
             onClick={() => setWeekOffset(o => o - 1)}
             style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cds-icon-primary)", display: "flex", alignItems: "center" }}
           >
@@ -416,7 +412,7 @@ export default function Planlegger() {
             {weekLabel}
           </span>
           <button
-            aria-label="Neste uke"
+            aria-label={t("planlegger.nextWeek")}
             onClick={() => setWeekOffset(o => o + 1)}
             style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cds-icon-primary)", display: "flex", alignItems: "center" }}
           >
@@ -424,17 +420,17 @@ export default function Planlegger() {
           </button>
         </div>
 
-        <PageHeading>Planlegg uken</PageHeading>
+        <PageHeading>{t("planlegger.heading")}</PageHeading>
 
         {loading ? (
-          <InlineLoading description="Laster plan…" status="active" style={{ padding: "0 16px" }} />
+          <InlineLoading description={t("planlegger.loadingPlan")} status="active" style={{ padding: "0 16px" }} />
         ) : (
           <>
             {/* Projected coverage */}
-            <SectionLabel>Projisert dekning</SectionLabel>
+            <SectionLabel>{t("planlegger.projectedCoverage")}</SectionLabel>
 
             <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", padding: "0 16px", marginBottom: 12 }}>
-              {sessionCount} {sessionCount === 1 ? "økt" : "økter"} · {muscleGroupCount} muskelgrupper
+              {t("planlegger.weekSummary", { count: sessionCount, muscleCount: muscleGroupCount })}
             </p>
 
             {/* Body map */}
@@ -444,7 +440,7 @@ export default function Planlegger() {
                   {["front", "back"].map(v => (
                     <Button key={v} kind={mobileBodyView === v ? "primary" : "ghost"} size="sm"
                       onClick={() => setMobileBodyView(v)}>
-                      {v === "front" ? "Front" : "Bak"}
+                      {v === "front" ? t("bodyPanel.front") : t("bodyPanel.back")}
                     </Button>
                   ))}
                 </div>
@@ -485,32 +481,32 @@ export default function Planlegger() {
                 fontSize: 13,
                 color: "var(--cds-text-primary)",
               }}>
-                <span style={{ fontWeight: 600 }}>{MUSCLES[hoveredMuscle]?.label}:</span>{" "}
+                <span style={{ fontWeight: 600 }}>{t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}:</span>{" "}
                 {projectedData.muscleMap[hoveredMuscle].join(", ")}
               </div>
             )}
 
-            {/* Forslag card */}
+            {/* Gaps card */}
             {showForslag && (
               <div style={{
                 margin: "0 16px 16px",
                 padding: "14px 16px",
                 background: "var(--cds-notification-background-warning, #1c1500)",
                 border: "1px solid var(--cds-support-warning, #f1c21b)",
-                borderLeft: "3px solid var(--cds-support-warning, #f1c21b)",
+                borderInlineStart: "3px solid var(--cds-support-warning, #f1c21b)",
               }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: "var(--cds-text-primary)", marginBottom: 8 }}>
-                  {untrainedMuscleIds.length} muskelgrupper er ikke dekket denne uken
+                  {t("planlegger.gapsCard", { count: untrainedMuscleIds.length })}
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: forslagTemplates.length > 0 ? 10 : 0 }}>
                   {untrainedMuscleIds.map(id => (
-                    <AccentChip key={id}>{MUSCLES[id]?.label || id}</AccentChip>
+                    <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
                   ))}
                 </div>
                 {forslagTemplates.length > 0 && (
                   <>
                     <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", marginBottom: 6 }}>
-                      Maler som dekker disse:
+                      {t("planlegger.templatesCovering")}
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       {forslagTemplates.map(tpl => (
@@ -525,10 +521,10 @@ export default function Planlegger() {
             )}
 
             {/* Week plan */}
-            <SectionLabel>Ukesplan</SectionLabel>
+            <SectionLabel>{t("planlegger.weekPlan")}</SectionLabel>
 
             {saveError && (
-              <InlineNotification kind="error" title="Feil:" subtitle={saveError} hideCloseButton
+              <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={saveError} hideCloseButton
                 style={{ margin: "0 16px 12px" }} />
             )}
 
@@ -558,11 +554,11 @@ export default function Planlegger() {
                 gap: 8,
               }}>
                 <span style={{ fontSize: 13, color: "var(--cds-text-primary)" }}>
-                  Fjerne hele ukeplanen?
+                  {t("planlegger.confirmDelete")}
                 </span>
                 <div style={{ display: "flex", gap: 8 }}>
                   <Button kind="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
-                    Avbryt
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     kind="danger"
@@ -571,7 +567,7 @@ export default function Planlegger() {
                     onClick={handleDelete}
                     disabled={deleting}
                   >
-                    {deleting ? "Fjerner…" : "Fjern"}
+                    {deleting ? t("planlegger.removing") : t("planlegger.remove")}
                   </Button>
                 </div>
               </div>
@@ -592,7 +588,7 @@ export default function Planlegger() {
                 onClick={() => setConfirmDelete(true)}
                 disabled={saving || deleting}
               >
-                Fjern uke
+                {t("planlegger.removeWeek")}
               </Button>
             )}
             <Button
@@ -602,7 +598,7 @@ export default function Planlegger() {
               disabled={saving || deleting}
               style={{ flex: 1 }}
             >
-              {saving ? <InlineLoading description="Lagrer…" status="active" /> : "Lagre plan"}
+              {saving ? <InlineLoading description={t("common.saving")} status="active" /> : t("planlegger.savePlan")}
             </Button>
           </div>
         </StickyCta>
@@ -610,7 +606,7 @@ export default function Planlegger() {
 
       {/* Template picker bottom sheet */}
       {pickerDow !== null && (
-        <TemplatePicker
+        <TemplatePickerSheet
           templates={templates}
           onSelect={(tpl) => handleAssign(pickerDow, tpl)}
           onClose={() => setPickerDow(null)}

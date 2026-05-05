@@ -3,6 +3,7 @@ import {
   Button, Tag, InlineNotification,
 } from "@carbon/react";
 import { Add, ArrowLeft, ArrowRight, Save } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
 import { calcMuscles } from "../lib/bodymap.jsx";
@@ -35,6 +36,7 @@ function templateExToEditorShape(te) {
 //   onBack            — navigate back
 //   onUseTemplate(exercises) — called in "use" mode when trainer clicks "Bruk økt"
 export default function TemplateSessionEditor({ template, mode, onBack, onUseTemplate }) {
+  const { t } = useTranslation();
   const [exercises, setExercises] = useState(() =>
     (template.session_template_exercises || []).map(templateExToEditorShape)
   );
@@ -130,7 +132,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <BackButton onClick={onBack} />
-        <PageTitle>{mode === "edit" ? "Rediger mal" : "Bruk mal"}</PageTitle>
+        <PageTitle>{mode === "edit" ? t("templateEditor.titleEdit") : t("templateEditor.titleUse")}</PageTitle>
 
         {/* Editable template name */}
         <div style={{ marginBottom: 20 }}>
@@ -160,7 +162,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
             <span
               onClick={() => setEditingTitle(true)}
               style={{ cursor: "text", fontSize: 18, fontWeight: 600, color: "var(--cds-text-primary)" }}
-              title="Klikk for å endre navn"
+              title={t("templateEditor.clickToRename")}
             >
               {templateName}
             </span>
@@ -178,8 +180,8 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
           />
 
           <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-            <Tag type="green" size="sm">Primær ({muscles.primary.length})</Tag>
-            <Tag type="blue" size="sm">Sekundær ({muscles.secondary.length})</Tag>
+            <Tag type="green" size="sm">{t("templateEditor.primaryCount", { count: muscles.primary.length })}</Tag>
+            <Tag type="blue" size="sm">{t("templateEditor.secondaryCount", { count: muscles.secondary.length })}</Tag>
           </div>
 
           {/* Exercise list */}
@@ -209,18 +211,18 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
               <Button kind="ghost" renderIcon={Add} size="sm"
                 onClick={() => setShowLibraryPicker(true)}
                 style={{ flex: 1 }}>
-                Fra biblioteket
+                {t("templateEditor.fromLibrary")}
               </Button>
               <Button kind="ghost" renderIcon={Add} size="sm"
                 onClick={addManual}
                 style={{ flex: 1 }}>
-                Manuelt
+                {t("templateEditor.manual")}
               </Button>
             </div>
           )}
 
           {saveError && (
-            <InlineNotification kind="error" title="Feil:" subtitle={saveError} hideCloseButton
+            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={saveError} hideCloseButton
               style={{ marginBottom: 12 }} />
           )}
 
@@ -243,15 +245,15 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
                     fontFamily: "var(--cds-font-sans)",
                   }}
                 >
-                  {saving ? "Lagrer…" : saved ? "Lagret" : "Lagre endringer i malen"}
+                  {saving ? t("common.saving") : saved ? t("common.saved") : t("templateEditor.saveChanges")}
                 </button>
                 <div style={{ display: "flex", gap: 8 }}>
                   <Button kind="secondary" renderIcon={ArrowLeft} onClick={onBack}>
-                    Tilbake
+                    {t("common.back")}
                   </Button>
                   <Button kind="primary" renderIcon={ArrowRight} onClick={handleUseSession}
                     disabled={!canProceed} style={{ flex: 1 }}>
-                    Bruk økt
+                    {t("templateEditor.useSession")}
                   </Button>
                 </div>
               </>
@@ -260,11 +262,11 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
             {mode === "edit" && (
               <div style={{ display: "flex", gap: 8 }}>
                 <Button kind="secondary" renderIcon={ArrowLeft} onClick={onBack}>
-                  Tilbake
+                  {t("common.back")}
                 </Button>
                 <Button kind="primary" renderIcon={Save} onClick={saveToTemplate}
                   disabled={saving || !canProceed} style={{ flex: 1 }}>
-                  {saving ? "Lagrer…" : "Lagre mal"}
+                  {saving ? t("common.saving") : t("templateEditor.saveTemplate")}
                 </Button>
               </div>
             )}

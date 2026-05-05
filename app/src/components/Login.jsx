@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { Button, TextInput, InlineNotification } from "@carbon/react";
 import { Email } from "@carbon/icons-react";
 
+// Daily quotes stay in Norwegian regardless of language setting.
 function getDailyQuote() {
   const now = new Date();
   const mmdd = String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
@@ -26,6 +28,7 @@ function getDailyQuote() {
 }
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -67,7 +70,7 @@ export default function Login() {
           Workout Lens
         </div>
         <div style={{ fontSize: 14, color: "var(--cds-text-secondary)", marginBottom: 12 }}>
-          Logg inn for å fortsette
+          {t("login.subtitle")}
         </div>
         <div style={{ fontSize: 13, fontStyle: "italic", color: "var(--cds-text-secondary)", marginBottom: 32 }}>
           {getDailyQuote()}
@@ -84,9 +87,9 @@ export default function Login() {
             gap: 12,
           }}>
             <Email size={32} style={{ color: "var(--cds-interactive)" }} />
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Sjekk e-posten din</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t("login.checkEmail")}</div>
             <div style={{ fontSize: 13, color: "var(--cds-text-secondary)", textAlign: "center" }}>
-              Vi sendte en innloggingslenke til <strong style={{ color: "var(--cds-text-primary)" }}>{email}</strong>
+              {t("login.sentTo")} <strong style={{ color: "var(--cds-text-primary)" }}>{email}</strong>
             </div>
           </div>
         ) : (
@@ -94,8 +97,8 @@ export default function Login() {
             <TextInput
               id="email"
               type="email"
-              labelText="E-postadresse"
-              placeholder="din@epost.no"
+              labelText={t("login.emailLabel")}
+              placeholder={t("login.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -103,10 +106,10 @@ export default function Login() {
             {error && (
               <InlineNotification
                 kind="error"
-                title="Innlogging feilet:"
+                title={t("login.failed")}
                 subtitle={error}
                 hideCloseButton
-               
+
               />
             )}
             <Button
@@ -115,7 +118,7 @@ export default function Login() {
               disabled={loading || !email}
               style={{ width: "100%", maxWidth: "100%" }}
             >
-              {loading ? "Sender…" : "Send innloggingslenke"}
+              {loading ? t("login.sending") : t("login.sendLink")}
             </Button>
           </form>
         )}

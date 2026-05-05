@@ -14,17 +14,13 @@ import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
 import { useNav } from "../lib/NavContext";
+import { useTranslation } from "react-i18next";
+import i18n from "../lib/i18n";
 
 const localDateStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
-
-const STEP_DEFS = [
-  { num: "01", label: "Knips" },
-  { num: "02", label: "Bekreft" },
-  { num: "03", label: "Resultat" },
-];
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -111,6 +107,7 @@ export function reducer(state, action) {
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
 export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }) {
+  const { t } = useTranslation();
   const { onShowHome, onShowTemplatePicker, onShowReportWithPrefill } = useNav();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { step, images, exercises, muscles, error, dragging, editingId,
@@ -121,6 +118,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
   const [libraryExercises, setLibraryExercises] = useState([]);
   const [newExerciseIds, setNewExerciseIds] = useState(() => new Set());
   const [useTodayDate, setUseTodayDate] = useState(true);
+
+  const STEP_DEFS = [
+    { num: "01", label: t("muscleMap.stepSnap") },
+    { num: "02", label: t("muscleMap.stepConfirm") },
+    { num: "03", label: t("muscleMap.stepResult") },
+  ];
 
   useEffect(() => {
     fetchLibraryExercises().then(setLibraryExercises).catch(() => {});
@@ -226,7 +229,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
       const res = await callClaude({
         model: CLAUDE_MODEL_TEXT,
         max_tokens: 1000,
-        messages: [{ role: "user", content: buildRecommendPrompt(trained, untrained) }]
+        messages: [{ role: "user", content: buildRecommendPrompt(trained, untrained, i18n.language) }]
       });
       let data;
       try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
@@ -255,11 +258,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
       <div style={{ paddingBottom: 100 }}>
 
         <div ref={headingRef} tabIndex={-1} style={{ outline: "none" }}>
-          <SectionLabel>LOGG ØKT</SectionLabel>
+          <SectionLabel>{t("muscleMap.sectionLabel")}</SectionLabel>
         </div>
 
         {/* Top-border stepper */}
-        <div role="list" aria-label="Fremgang" style={{ display: "flex", marginBottom: 28, padding: "0 16px" }}>
+        <div role="list" aria-label={t("muscleMap.progressLabel")} style={{ display: "flex", marginBottom: 28, padding: "0 16px" }}>
           {STEP_DEFS.map((s, idx) => {
             const isActive = stepIndex === idx;
             const isComplete = stepIndex > idx;
@@ -287,19 +290,19 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
             {/* Hero */}
             <div style={{ fontFamily: "var(--cond)", fontWeight: 700, lineHeight: 0.9, letterSpacing: "-0.02em", marginBottom: 28 }}>
-              <div style={{ fontSize: 32, color: "var(--cds-text-primary)" }}>Ta bilde av</div>
-              <div style={{ fontSize: 52, color: "var(--accent)" }}>tavla.</div>
+              <div style={{ fontSize: 32, color: "var(--cds-text-primary)" }}>{t("muscleMap.heroLine1")}</div>
+              <div style={{ fontSize: 52, color: "var(--accent)" }}>{t("muscleMap.heroLine2")}</div>
             </div>
 
             <p aria-live="polite" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>
-              {images.length > 0 ? `${images.length} bilde${images.length !== 1 ? "r" : ""} valgt` : ""}
+              {images.length > 0 ? t("muscleMap.imageCount", { count: images.length }) : ""}
             </p>
 
             {/* Dropzone */}
             {images.length === 0 ? (
               <div
                 role="region"
-                aria-label="Last opp treningsbilde"
+                aria-label={t("muscleMap.dropzoneLabel")}
                 onDragOver={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: true }); }}
                 onDragLeave={() => dispatch({ type: "SET_DRAGGING", dragging: false })}
                 onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
@@ -328,14 +331,14 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   }}>
                     <Camera size={28} aria-hidden="true" style={{ color: "var(--accent)" }} />
                   </div>
-                  <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Trykk for å velge bilde</p>
-                  <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>eller dra og slipp · JPEG, PNG, WebP</p>
+                  <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{t("muscleMap.dropzoneClick")}</p>
+                  <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>{t("muscleMap.dropzoneDrag")}</p>
                 </div>
               </div>
             ) : (
               <div
                 role="region"
-                aria-label="Last opp treningsbilde"
+                aria-label={t("muscleMap.dropzoneLabel")}
                 onDragOver={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: true }); }}
                 onDragLeave={() => dispatch({ type: "SET_DRAGGING", dragging: false })}
                 onDrop={(e) => { e.preventDefault(); dispatch({ type: "SET_DRAGGING", dragging: false }); handleFiles(e.dataTransfer.files); }}
@@ -344,9 +347,9 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                   {images.map((img, idx) => (
                     <div key={img.id} style={{ position: "relative", overflow: "hidden", aspectRatio: "1", background: "var(--cds-layer-01)" }}>
-                      <img src={img.preview} alt={`Treningsbilde ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <img src={img.preview} alt={t("muscleMap.imageAlt", { n: idx + 1 })} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       <button
-                        aria-label={`Fjern bilde ${idx + 1}`}
+                        aria-label={t("muscleMap.removeImage", { n: idx + 1 })}
                         onClick={() => dispatch({ type: "REMOVE_IMAGE", id: img.id })}
                         style={{
                           position: "absolute", top: 4, right: 4,
@@ -361,7 +364,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   ))}
                   <button
                     onClick={() => fileRef.current?.click()}
-                    aria-label="Legg til flere bilder"
+                    aria-label={t("muscleMap.addMoreImages")}
                     style={{
                       border: `1px dashed ${dragging ? "var(--accent)" : "var(--accent-bg-30)"}`,
                       background: dragging ? "var(--accent-bg-08)" : "transparent",
@@ -371,7 +374,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                       aspectRatio: "1", cursor: "pointer", gap: 4,
                     }}>
                     <Add size={20} aria-hidden="true" style={{ color: "var(--text-muted-wl)" }} />
-                    <span style={{ fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.5px" }}>Legg til</span>
+                    <span style={{ fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.5px" }}>{t("common.add")}</span>
                   </button>
                 </div>
               </div>
@@ -395,7 +398,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   cursor: "pointer",
                 }}
               >
-                Mal
+                {t("muscleMap.useTemplate")}
               </button>
               <button
                 onClick={() => dispatch({ type: "ANALYZE_SUCCESS", exercises: [] })}
@@ -409,29 +412,29 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   cursor: "pointer",
                 }}
               >
-                Legg inn manuelt
+                {t("muscleMap.manualEntry")}
               </button>
             </div>
 
             {/* Tips callout */}
             <div style={{
-              borderLeft: "3px solid var(--accent)",
+              borderInlineStart: "3px solid var(--accent)",
               background: "var(--accent-bg-08)",
               padding: "10px 12px",
               marginBottom: 14,
             }}>
-              <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>Tips</p>
-              <p style={{ fontSize: 13, color: "var(--cds-text-secondary)" }}>God belysning og hele tavla i bildet gir best resultat. Flere bilder støttes.</p>
+              <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>{t("muscleMap.tipsHeading")}</p>
+              <p style={{ fontSize: 13, color: "var(--cds-text-secondary)" }}>{t("muscleMap.tipsBody")}</p>
             </div>
 
             <div aria-live="polite" aria-atomic="true">
               {sizeError && (
-                <InlineNotification kind="error" title="Feil:" subtitle={sizeError} hideCloseButton style={{ marginBottom: 14 }} />
+                <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={sizeError} hideCloseButton style={{ marginBottom: 14 }} />
               )}
             </div>
             <div aria-live="polite" aria-atomic="true">
               {error && (
-                <InlineNotification kind="error" title="Feil:" subtitle={error} hideCloseButton style={{ marginBottom: 14 }} />
+                <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={error} hideCloseButton style={{ marginBottom: 14 }} />
               )}
             </div>
 
@@ -446,7 +449,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                     fontFamily: "var(--cds-font-sans)", fontSize: 14, cursor: "pointer",
                   }}
                 >
-                  Avbryt
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={analyze}
@@ -462,7 +465,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                   }}
                 >
-                  <span>Analyser bilde</span>
+                  <span>{t("muscleMap.analyzeBtn")}</span>
                   <ArrowRight size={16} />
                 </button>
               </div>
@@ -474,7 +477,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         {step === "analyzing" && (
           <div aria-live="polite" aria-busy="true" style={{ textAlign: "center", padding: "70px 16px" }}>
             <InlineLoading
-              description="Leser treningsprogram og identifiserer øvelser…"
+              description={t("muscleMap.analyzing")}
               status="active"
               style={{ justifyContent: "center" }}
             />
@@ -490,7 +493,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               <span style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 56, color: "var(--accent)", lineHeight: 1, display: "block" }}>
                 {exercises.length}
               </span>
-              <span style={{ fontSize: 20, color: "var(--cds-text-primary)" }}>øvelser funnet.</span>
+              <span style={{ fontSize: 20, color: "var(--cds-text-primary)" }}>{t("muscleMap.foundExercises", { count: exercises.length })}</span>
             </div>
 
             {/* Tilbake */}
@@ -502,7 +505,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                 display: "flex", alignItems: "center", gap: 4,
               }}
             >
-              <ArrowLeft size={14} /> Tilbake
+              <ArrowLeft size={14} /> {t("common.back")}
             </button>
 
             {/* I dag / Annen dag segmented pill */}
@@ -518,7 +521,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   transition: "background 120ms ease",
                 }}
               >
-                I dag
+                {t("muscleMap.today")}
               </button>
               <button
                 onClick={() => setUseTodayDate(false)}
@@ -531,7 +534,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   transition: "background 120ms ease",
                 }}
               >
-                Annen dag
+                {t("muscleMap.otherDay")}
               </button>
             </div>
 
@@ -550,19 +553,19 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                 }}
                 style={{ marginBottom: 16 }}
               >
-                <DatePickerInput id="session-date" labelText="Dato" placeholder="dd/mm/åååå" size="md" />
+                <DatePickerInput id="session-date" labelText={t("muscleMap.dateLabel")} placeholder={t("muscleMap.datePlaceholder")} size="md" />
               </DatePicker>
             )}
 
             {gymSessions.length > 0 && (
               <Select
                 id="gym-session-select"
-                labelText="Hvilken time var dette?"
+                labelText={t("muscleMap.selectGymSession")}
                 value={gymSessionId}
                 onChange={(e) => dispatch({ type: "SET_GYM_SESSION_ID", id: e.target.value })}
                 style={{ marginBottom: gymCalendarConflict ? 8 : 16 }}
               >
-                <SelectItem value="" text="Velg gymtime (valgfritt)" />
+                <SelectItem value="" text={t("muscleMap.selectGymOptional")} />
                 {gymSessions.map(s => {
                   const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
                   const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
@@ -574,8 +577,8 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
             {gymCalendarConflict && (
               <InlineNotification
                 kind="warning"
-                title="Eksisterende økt:"
-                subtitle={`Denne gymtimen har allerede en lagret økt (${gymCalendarConflict.session_date}). Lagring erstatter den.`}
+                title={t("muscleMap.conflictTitle")}
+                subtitle={t("muscleMap.conflictBody", { date: gymCalendarConflict.session_date })}
                 hideCloseButton
                 style={{ marginBottom: 16 }}
               />
@@ -596,12 +599,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   <div
                     title={
                       (ex.primary?.length || ex.secondary?.length)
-                        ? "Muskler gjenkjent av Claude"
+                        ? t("muscleMap.musclesViaClaude")
                         : (() => {
                             const txt = ((ex.name || "") + " " + (ex.standardName || "")).toLowerCase();
                             return EX_DB.some(r => r.kw.some(k => txt.includes(k)))
-                              ? "Muskler gjenkjent via database"
-                              : "Muskler ikke gjenkjent";
+                              ? t("muscleMap.musclesViaDB")
+                              : t("muscleMap.musclesUnknown");
                           })()
                     }
                     aria-hidden="true"
@@ -628,7 +631,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               }}
               style={{ width: "100%", marginBottom: 16 }}
             >
-              Legg til øvelse manuelt
+              {t("muscleMap.addManual")}
             </Button>
 
             <StickyCta>
@@ -646,7 +649,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                 }}
               >
-                <span>Lagre og se resultat</span>
+                <span>{t("muscleMap.saveAndShow")}</span>
                 <ArrowRight size={16} />
               </button>
             </StickyCta>
@@ -659,11 +662,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
             {/* Hero */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 20, color: "var(--cds-text-primary)", marginBottom: 2 }}>Du traff</div>
+              <div style={{ fontSize: 20, color: "var(--cds-text-primary)", marginBottom: 2 }}>{t("muscleMap.hitMuscles1")}</div>
               <span style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 56, color: "var(--accent)", lineHeight: 1, display: "block" }}>
                 {totalMuscles}
               </span>
-              <div style={{ fontSize: 20, color: "var(--cds-text-primary)" }}>muskler.</div>
+              <div style={{ fontSize: 20, color: "var(--cds-text-primary)" }}>{t("muscleMap.hitMuscles2")}</div>
             </div>
 
             {/* KPI strip */}
@@ -676,9 +679,9 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               overflow: "hidden",
             }}>
               {[
-                { label: "Øvelser", value: enabledCount },
-                { label: "Muskler", value: totalMuscles },
-                { label: "Tid", value: "—" },
+                { label: t("common.exercises"), value: enabledCount },
+                { label: t("muscleMap.kpiMuscles"), value: totalMuscles },
+                { label: t("muscleMap.kpiTime"), value: "—" },
               ].map((tile, i) => (
                 <div key={i} style={{
                   flex: 1, padding: "14px 0", textAlign: "center",
@@ -696,9 +699,9 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
             {/* Save status */}
             <div aria-live="polite" style={{ marginBottom: 16, minHeight: 24, display: "flex", justifyContent: "flex-end" }}>
-              {saving && <InlineLoading description="Lagrer…" status="active" />}
-              {saved && <InlineLoading description="Lagret" status="finished" />}
-              {saveError && <InlineLoading description="Lagring feilet" status="error" />}
+              {saving && <InlineLoading description={t("common.saving")} status="active" />}
+              {saved && <InlineLoading description={t("common.saved")} status="finished" />}
+              {saveError && <InlineLoading description={t("muscleMap.savingError")} status="error" />}
             </div>
 
             {/* Body maps */}
@@ -713,12 +716,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
             {(muscles.primary.length > 0 || muscles.secondary.length > 0) && (
               <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", padding: 16, marginBottom: 16 }}>
                 <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
-                  Trente muskler
+                  {t("muscleMap.trainedMuscles")}
                 </p>
                 {muscles.primary.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: muscles.secondary.length > 0 ? 10 : 0 }}>
                     {muscles.primary.map(id => (
-                      <AccentChip key={id}>{MUSCLES[id]?.label || id}</AccentChip>
+                      <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
                     ))}
                   </div>
                 )}
@@ -732,7 +735,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                         color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)",
                         fontSize: 11, letterSpacing: "0.06em",
                       }}>
-                        {MUSCLES[id]?.label || id}
+                        {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                       </span>
                     ))}
                   </div>
@@ -743,10 +746,10 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
             {/* Exercises this session */}
             <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", padding: 16, marginBottom: 16 }}>
               <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>
-                Øvelser denne økten
+                {t("muscleMap.exercisesThisSession")}
               </p>
               {exercises.filter(e => e.enabled && e.name).map(ex => {
-                const muscleLabels = [...(ex.primary || []), ...(ex.secondary || [])].map(id => MUSCLES[id]?.label || id).join(", ");
+                const muscleLabels = [...(ex.primary || []), ...(ex.secondary || [])].map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", ");
                 return (
                   <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 13, borderBottom: "1px solid var(--border-subtle-wl)", color: "var(--cds-text-primary)" }}>
                     <span>
@@ -771,10 +774,10 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               marginBottom: 16,
             }}>
               <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", color: "var(--text-muted-wl)", textTransform: "uppercase", marginBottom: 8 }}>
-                Neste steg
+                {t("muscleMap.nextStep")}
               </div>
               <p style={{ fontSize: 14, color: "var(--cds-text-primary)", marginBottom: 14 }}>
-                Se hvilke muskler du glemmer over tid.
+                {t("muscleMap.nextStepBody")}
               </p>
               <button
                 onClick={() => {
@@ -794,7 +797,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                 onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
                 onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
               >
-                <span>Analyser perioden</span>
+                <span>{t("muscleMap.analyzePeriod")}</span>
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -807,11 +810,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               disabled={loadingRecs}
               style={{ width: "100%", maxWidth: "100%", marginBottom: 10 }}
             >
-              {loadingRecs ? "Henter anbefalinger…" : "Hva bør jeg trene neste gang?"}
+              {loadingRecs ? t("muscleMap.loadingRecs") : t("muscleMap.getRecommendations")}
             </Button>
 
             {recsError && (
-              <InlineNotification kind="error" title="Feil:" subtitle={recsError} hideCloseButton style={{ marginBottom: 10 }} />
+              <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={recsError} hideCloseButton style={{ marginBottom: 10 }} />
             )}
 
             {recs && recs.length > 0 && (() => {
@@ -822,17 +825,17 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                 <div className="fade-in">
                   <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", padding: 14, marginBottom: 10 }}>
                     <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>
-                      Anbefalte øvelser
+                      {t("muscleMap.recommendedExercises")}
                     </p>
                     {recs.map((r, i) => (
                       <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid var(--border-subtle-wl)" }}>
                         <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: "var(--cds-text-primary)" }}>{r.name}</p>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: r.tip ? 4 : 0 }}>
                           {(r.primary || []).length > 0 && (
-                            <Tag type="green" size="sm">{r.primary.map(id => MUSCLES[id]?.label || id).join(", ")}</Tag>
+                            <Tag type="green" size="sm">{r.primary.map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", ")}</Tag>
                           )}
                           {(r.secondary || []).length > 0 && (
-                            <Tag type="blue" size="sm">{r.secondary.map(id => MUSCLES[id]?.label || id).join(", ")}</Tag>
+                            <Tag type="blue" size="sm">{r.secondary.map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", ")}</Tag>
                           )}
                         </div>
                         {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>{r.tip}</p>}
@@ -848,8 +851,8 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   />
 
                   <div style={{ display: "flex", gap: 12, marginBottom: 12, fontSize: 12 }}>
-                    <Tag type="green" size="sm">Primær</Tag>
-                    <Tag type="blue" size="sm">Sekundær</Tag>
+                    <Tag type="green" size="sm">{t("muscleMap.primaryTag")}</Tag>
+                    <Tag type="blue" size="sm">{t("muscleMap.secondaryTag")}</Tag>
                   </div>
                 </div>
               );
@@ -857,12 +860,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
             {recs && recs.length === 0 && (
               <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", textAlign: "center", marginBottom: 10 }}>
-                Ingen anbefalinger tilgjengelig.
+                {t("muscleMap.noRecs")}
               </p>
             )}
 
             <Button kind="ghost" renderIcon={Renew} onClick={() => dispatch({ type: "RESET" })} style={{ width: "100%", maxWidth: "100%" }}>
-              Logg ny økt
+              {t("muscleMap.logNew")}
             </Button>
           </div>
         )}

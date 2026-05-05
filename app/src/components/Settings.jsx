@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Toggle, Button } from "@carbon/react";
+import { Toggle, Button, RadioButtonGroup, RadioButton } from "@carbon/react";
+import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 import BodyPanel from "./BodyPanel";
 import ChangelogModal from "./ChangelogModal";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
+import i18n from "../lib/i18n";
 import { version } from "../../package.json";
 
 const PREVIEW_PRIMARY = ["chest", "quads", "lats"];
@@ -19,9 +21,11 @@ const cardStyle = {
 };
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [lang, setLang] = useState(() => localStorage.getItem("wl-lang") || "nb");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -29,18 +33,24 @@ export default function Settings() {
     });
   }, []);
 
+  function handleLangChange(val) {
+    setLang(val);
+    i18n.changeLanguage(val);
+    localStorage.setItem("wl-lang", val);
+  }
+
   return (
     <PageShell>
-      <PageHeading>Innstillinger</PageHeading>
+      <PageHeading>{t("settings.heading")}</PageHeading>
 
-      <SectionLabel>Utseende</SectionLabel>
+      <SectionLabel>{t("settings.appearance")}</SectionLabel>
       <div style={{ padding: "0 16px 24px" }}>
         <div style={cardStyle}>
           <Toggle
             id="theme-toggle"
-            labelText="Mørkt tema"
-            labelA="Av"
-            labelB="På"
+            labelText={t("settings.darkTheme")}
+            labelA={t("settings.darkThemeOff")}
+            labelB={t("settings.darkThemeOn")}
             toggled={theme === "g100"}
             onToggle={(checked) => setTheme(checked ? "g100" : "g10")}
           />
@@ -52,7 +62,7 @@ export default function Settings() {
         />
       </div>
 
-      <SectionLabel>Konto</SectionLabel>
+      <SectionLabel>{t("settings.account")}</SectionLabel>
       <div style={{ padding: "0 16px 24px" }}>
         <div style={cardStyle}>
           <p style={{
@@ -64,12 +74,12 @@ export default function Settings() {
             {userEmail}
           </p>
           <Button kind="danger" size="sm" onClick={() => supabase.auth.signOut()}>
-            Logg ut
+            {t("settings.signOut")}
           </Button>
         </div>
       </div>
 
-      <SectionLabel>Om appen</SectionLabel>
+      <SectionLabel>{t("settings.about")}</SectionLabel>
       <div style={{ padding: "0 16px 24px" }}>
         <div style={cardStyle}>
           <p style={{
@@ -82,12 +92,12 @@ export default function Settings() {
             v{version}
           </p>
           <Button kind="ghost" size="sm" onClick={() => setChangelogOpen(true)}>
-            Vis endringslogg
+            {t("settings.changelog")}
           </Button>
         </div>
       </div>
 
-      <SectionLabel>Kontakt</SectionLabel>
+      <SectionLabel>{t("settings.contact")}</SectionLabel>
       <div style={{ padding: "0 16px 24px" }}>
         <div style={cardStyle}>
           <p style={{
@@ -96,11 +106,11 @@ export default function Settings() {
             fontSize: 14,
             margin: "0 0 16px",
           }}>
-            Har du tilbakemeldinger eller fant en feil? Ta gjerne kontakt.
+            {t("settings.contactBody")}
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Button kind="ghost" size="sm" href="mailto:kontakt@umulig.org">
-              Send e-post
+              {t("settings.sendEmail")}
             </Button>
             <Button
               kind="ghost"
@@ -109,23 +119,26 @@ export default function Settings() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Rapporter feil på GitHub
+              {t("settings.reportGithub")}
             </Button>
           </div>
         </div>
       </div>
 
-      <SectionLabel>Språk</SectionLabel>
+      <SectionLabel>{t("settings.language")}</SectionLabel>
       <div style={{ padding: "0 16px 32px" }}>
         <div style={{ ...cardStyle, marginBottom: 0 }}>
-          <p style={{
-            color: "var(--cds-text-disabled)",
-            fontFamily: "var(--cds-font-sans)",
-            fontSize: 14,
-            margin: 0,
-          }}>
-            Kommer snart
-          </p>
+          <RadioButtonGroup
+            name="language-selector"
+            valueSelected={lang}
+            onChange={handleLangChange}
+            legendText=""
+            orientation="vertical"
+          >
+            <RadioButton labelText={t("settings.languageNorwegian")} value="nb" id="lang-nb" />
+            <RadioButton labelText={t("settings.languageEnglish")} value="en" id="lang-en" />
+            <RadioButton labelText={t("settings.languagePersian")} value="fa" id="lang-fa" />
+          </RadioButtonGroup>
         </div>
       </div>
 
