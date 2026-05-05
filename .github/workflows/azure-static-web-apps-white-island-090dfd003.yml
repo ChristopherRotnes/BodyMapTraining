@@ -17,36 +17,14 @@ on:
       - 'app/**'
       - '.github/workflows/**'
 
-jobs:
-  test:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    name: Lint, test and audit
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: app/package-lock.json
-      - name: Install dependencies
-        working-directory: app
-        run: npm ci
-      - name: Lint
-        working-directory: app
-        run: npm run lint
-      - name: Test with coverage
-        working-directory: app
-        run: npm run test:ci
-      - name: Audit dependencies
-        working-directory: app
-        run: npm audit --audit-level=high
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+jobs:
   build_and_deploy_job:
-    needs: test
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
+    name: Test, Build and Deploy
     permissions:
       contents: read
       pull-requests: write
@@ -60,9 +38,33 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+      - name: Lint and audit
+        working-directory: app
+        run: |
+          npm run lint &
+          LINT_PID=$!
+          npm audit --audit-level=high &
+          AUDIT_PID=$!
+          wait $LINT_PID
+          LINT_EXIT=$?
+          wait $AUDIT_PID
+          AUDIT_EXIT=$?
+          if [ $LINT_EXIT -ne 0 ] || [ $AUDIT_EXIT -ne 0 ]; then exit 1; fi
+      - name: Test with coverage
+        working-directory: app
+        run: npm run test:ci
+      - name: Restore Vite build cache
+        uses: actions/cache@v4
+        with:
+          path: app/node_modules/.vite
+          key: vite-${{ runner.os }}-${{ hashFiles('app/src/**', 'app/vite.config.js') }}
+          restore-keys: vite-${{ runner.os }}-
       - name: Build app
         working-directory: app
-        run: npm ci && npm run build
+        run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
