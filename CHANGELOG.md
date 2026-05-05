@@ -2,6 +2,23 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.0-rc.1] — 2026-05-05
+
+### Added
+- **Weekly training planner** — new `Planlegger` view (calendar icon in nav) lets users assign templates to each day of the week; a live `HeatmapBodySVG` shows projected cumulative muscle coverage; a Forslag card surfaces neglected muscles when ≥2 have no planned coverage; plan is persisted to Supabase (`week_plans` / `week_plan_days` tables with RLS) (#59)
+- **Settings view** — dedicated settings screen (gear icon in nav) with theme toggle + live body map preview, account section (email + logout), version/changelog, and a contact section; replaces the old inline theme toggle and logout button in the header (#123)
+
+### Changed
+- `EventSchedule` nav icon now navigates to the weekly planner (was a non-interactive placeholder after issue #123)
+- Header reduced from a cluttered mix of function + utility icons to 6 clean icons: Camera, History, Report, Library, Planner, Settings — all at 48px on a 390px iPhone (#123)
+- `ChangelogModal` moved from `PageShell` inline rendering to the Settings view (#123)
+- Version footer button removed from `PageShell` (now shown in Settings → Om appen) (#123)
+
+### Infrastructure
+- New Supabase tables: `week_plans` (user_id, week_iso UNIQUE per user) and `week_plan_days` (plan_id FK cascade, day_of_week 1–7, template_id nullable FK); RLS policies restrict to owning user (#59)
+
+---
+
 ## [1.1.0-rc.1] — 2026-05-05
 
 First release candidate for beta testing. Builds on 1.0.0 with a full UI redesign and several usability improvements.

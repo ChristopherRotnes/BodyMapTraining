@@ -12,6 +12,8 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
 7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session; edit mode supports library autocomplete — type an exercise name to get suggestions from your library
 8. **Library** — build a named exercise library with click-to-toggle muscle selection; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
+9. **Weekly planner** — assign templates to each day of the week; a live heatmap body map shows projected cumulative muscle coverage; a Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
+10. **Settings** — theme toggle (dark/light) with live body map preview, account info, changelog, and contact section
 
 ## Tech stack
 
@@ -58,7 +60,7 @@ app/
   src/
     main.jsx                       # Entry — imports Carbon + app CSS, wraps with ThemeProvider
     App.jsx                        # Auth gate + view router (logger, history, report, bibliotek,
-                                   #   template-picker, template-editor)
+                                   #   template-picker, template-editor, settings, planlegger)
     theme.jsx                      # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
     components/
       Login.jsx                    # Magic-link email login
@@ -74,15 +76,19 @@ app/
       Bibliotek.jsx                # Library page — exercise library CRUD + template CRUD (two tabs)
       TemplatePicker.jsx           # Template selection screen (recently used first)
       TemplateSessionEditor.jsx    # Edit/use a template with live body map; save-back or hand off to logger
-      PageShell.jsx                # Shared nav shell (header, nav buttons, theme toggle, logout)
+      Planlegger.jsx               # Weekly training planner — assign templates to days, projected heatmap
+      Settings.jsx                 # Settings view — theme toggle, account, changelog, contact
+      PageShell.jsx                # Shared nav shell (6-icon header: camera/history/report/library/planner/settings)
       Home.jsx                     # Landing page — last session summary + quick-nav
       ErrorBoundary.jsx            # Catches render errors and shows a reload prompt
     lib/
       supabase.js                  # Supabase client
       db.js                        # DB helpers: sessions, exercises, muscle_activations, gym_calendar,
-                                   #   exercise_library, session_templates, session_template_exercises
+                                   #   exercise_library, session_templates, session_template_exercises,
+                                   #   week_plans, week_plan_days
       bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG (onHover/hovered), calcMuscles, useIsMobile
-      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude, extractMuscles
+      utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude, extractMuscles,
+                                   #   toWeekIso, weekIsoToMonday
       prompts.js                   # Claude model IDs + prompt builders
     styles/
       carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
