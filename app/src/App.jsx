@@ -9,6 +9,7 @@ import Report from "./components/Report";
 import Bibliotek from "./components/Bibliotek";
 import TemplatePicker from "./components/TemplatePicker";
 import TemplateSessionEditor from "./components/TemplateSessionEditor";
+import Settings from "./components/Settings";
 
 function App() {
   const [session, setSession] = useState(undefined);
@@ -40,6 +41,7 @@ function App() {
     onShowHistoryWithDate: (dateStr) => { setHistoryInitialDate(dateStr); setView("history"); },
     onShowTemplatePicker: () => setView("template-picker"),
     onShowReportWithPrefill: (prefill) => { setReportPrefill(prefill); setView("report"); },
+    onShowSettings: () => setView("settings"),
   };
 
   let content;
@@ -66,6 +68,8 @@ function App() {
         setView("template-editor");
       }}
     />;
+  else if (view === "settings")
+    content = <Settings />;
   else if (view === "template-editor" && templateEditorState)
     content = <TemplateSessionEditor
       template={templateEditorState.template}
