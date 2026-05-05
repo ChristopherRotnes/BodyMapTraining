@@ -1,11 +1,7 @@
-import { useState } from "react";
-import { Camera, RecentlyViewed, Analytics, Book, Asleep, Light, ArrowLeft, Logout } from "@carbon/icons-react";
-import { version } from "../../package.json";
+import { Camera, RecentlyViewed, Analytics, Book, EventSchedule, Settings, ArrowLeft } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
-import { useTheme } from "../theme";
-import { supabase } from "../lib/supabase";
+import { useTranslation } from "react-i18next";
 import { useNav } from "../lib/NavContext";
-import ChangelogModal from "./ChangelogModal";
 
 function NavBtn({ onClick, ariaLabel, active, children }) {
   return (
@@ -41,8 +37,10 @@ export function SectionLabel({ children, style }) {
       textTransform: "uppercase",
       letterSpacing: "0.16em",
       color: "var(--cds-text-secondary)",
-      borderLeft: "3px solid var(--accent)",
-      padding: "8px 0 8px 13px",
+      borderInlineStart: "3px solid var(--accent)",
+      paddingInlineStart: 13,
+      paddingTop: 8,
+      paddingBottom: 8,
       margin: "16px 16px 12px",
       width: "fit-content",
       ...style,
@@ -108,6 +106,7 @@ export function AccentChip({ children, style }) {
 }
 
 export function BackButton({ onClick }) {
+  const { t } = useTranslation();
   return (
     <Button
       kind="ghost"
@@ -116,15 +115,14 @@ export function BackButton({ onClick }) {
       onClick={onClick}
       style={{ paddingLeft: 0, marginBottom: 16 }}
     >
-      Tilbake
+      {t("common.back")}
     </Button>
   );
 }
 
 export default function PageShell({ children }) {
-  const { theme, setTheme } = useTheme();
-  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek } = useNav();
-  const [changelogOpen, setChangelogOpen] = useState(false);
+  const { t } = useTranslation();
+  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowSettings, onShowPlanlegger } = useNav();
 
   return (
     <div style={{ background: "var(--bg-canvas)", minHeight: "100vh" }}>
@@ -159,53 +157,28 @@ export default function PageShell({ children }) {
           </button>
 
           <div style={{ display: "flex", alignItems: "center" }}>
-            <NavBtn ariaLabel="Logg økt" onClick={onShowLogger} active={currentView === "logger"}>
+            <NavBtn ariaLabel={t("nav.logSession")} onClick={onShowLogger} active={currentView === "logger"}>
               <Camera size={20} />
             </NavBtn>
-            <NavBtn ariaLabel="Treningshistorikk" onClick={onShowHistory} active={currentView === "history"}>
+            <NavBtn ariaLabel={t("nav.history")} onClick={onShowHistory} active={currentView === "history"}>
               <RecentlyViewed size={20} />
             </NavBtn>
-            <NavBtn ariaLabel="Perioderapport" onClick={onShowReport} active={currentView === "report"}>
+            <NavBtn ariaLabel={t("nav.report")} onClick={onShowReport} active={currentView === "report"}>
               <Analytics size={20} />
             </NavBtn>
-            <NavBtn ariaLabel="Bibliotek" onClick={onShowBibliotek} active={currentView === "bibliotek"}>
+            <NavBtn ariaLabel={t("nav.library")} onClick={onShowBibliotek} active={currentView === "bibliotek"}>
               <Book size={20} />
             </NavBtn>
-            <NavBtn ariaLabel="Bytt tema" onClick={() => setTheme(theme === "g10" ? "g100" : "g10")}>
-              {theme === "g10" ? <Asleep size={20} /> : <Light size={20} />}
+            <NavBtn ariaLabel={t("nav.planner")} onClick={onShowPlanlegger} active={currentView === "planlegger"}>
+              <EventSchedule size={20} />
             </NavBtn>
-            <NavBtn ariaLabel="Logg ut" onClick={() => supabase.auth.signOut()}>
-              <Logout size={20} />
+            <NavBtn ariaLabel={t("nav.settings")} onClick={onShowSettings} active={currentView === "settings"}>
+              <Settings size={20} />
             </NavBtn>
           </div>
         </div>
 
         {children}
-
-        <button
-          onClick={() => setChangelogOpen(true)}
-          aria-label="Vis endringslogg"
-          style={{
-            display: "block",
-            width: "100%",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "var(--cds-font-mono)",
-            fontSize: 11,
-            color: "var(--cds-text-disabled)",
-            textAlign: "center",
-            padding: "32px 0 16px",
-            margin: 0,
-            letterSpacing: "0.08em",
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--cds-text-secondary)"}
-          onMouseLeave={e => e.currentTarget.style.color = "var(--cds-text-disabled)"}
-        >
-          v{version}
-        </button>
-
-        <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
       </div>
     </div>
   );

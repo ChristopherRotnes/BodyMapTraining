@@ -11,22 +11,8 @@ import {
 import { AiGenerate, Add, Checkmark } from "@carbon/icons-react";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
 import { useNav } from "../lib/NavContext";
-
-const PERIODS = [
-  { label: "7 dager", days: 7 },
-  { label: "30 dager", days: 30 },
-  { label: "90 dager", days: 90 },
-];
-
-const DAYS = [
-  { label: "Man", day: 1 },
-  { label: "Tir", day: 2 },
-  { label: "Ons", day: 3 },
-  { label: "Tor", day: 4 },
-  { label: "Fre", day: 5 },
-  { label: "Lør", day: 6 },
-  { label: "Søn", day: 0 },
-];
+import { useTranslation } from "react-i18next";
+import i18n from "../lib/i18n";
 
 function FilterChip({ label, active, onClick }) {
   return (
@@ -67,6 +53,7 @@ function KpiTile({ label, value }) {
 }
 
 export default function Report({ prefill, onPrefillConsumed }) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { onShowBibliotek } = useNav();
   const [mobileRecView, setMobileRecView] = useState("front");
@@ -83,6 +70,22 @@ export default function Report({ prefill, onPrefillConsumed }) {
   const [savedRecs, setSavedRecs] = useState(new Set());
   const [savingRec, setSavingRec] = useState(null);
   const [saveRecError, setSaveRecError] = useState(null);
+
+  const PERIODS = [
+    { label: t("report.periods.7"), days: 7 },
+    { label: t("report.periods.30"), days: 30 },
+    { label: t("report.periods.90"), days: 90 },
+  ];
+
+  const DAYS = [
+    { label: t("report.days.mon"), day: 1 },
+    { label: t("report.days.tue"), day: 2 },
+    { label: t("report.days.wed"), day: 3 },
+    { label: t("report.days.thu"), day: 4 },
+    { label: t("report.days.fri"), day: 5 },
+    { label: t("report.days.sat"), day: 6 },
+    { label: t("report.days.sun"), day: 0 },
+  ];
 
   const initialPrefill = useRef(prefill);
   useEffect(() => {
@@ -133,7 +136,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
       if (err?.code === "23505") {
         setSavedRecs(prev => new Set([...prev, r.name]));
       } else {
-        setSaveRecError("Kunne ikke lagre øvelsen. Prøv igjen.");
+        setSaveRecError(t("report.saveRecError"));
       }
     } finally {
       setSavingRec(null);
@@ -152,7 +155,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
 
     const untrainedLabels = untrainedMuscles.map(id => MUSCLES[id]?.label || id).join(", ");
 
-    const prompt = buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels);
+    const prompt = buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels, i18n.language);
 
     try {
       const res = await callClaude({
@@ -173,7 +176,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
       setRecs(parsed);
     } catch (err) {
       logDevError("Report/anbefalinger", err);
-      setRecsError(err.message || "Kunne ikke hente anbefalinger. Prøv igjen.");
+      setRecsError(err.message || t("report.fetchRecError"));
     } finally {
       setLoadingRecs(false);
     }
@@ -270,11 +273,10 @@ export default function Report({ prefill, onPrefillConsumed }) {
     .map(([id, c]) => ({ id, ...c }))
     .sort((a, b) => b.primary - a.primary || b.secondary - a.secondary);
 
-  const periodWeeks = Math.round(periodDays / 7);
   const dayLabel = selectedDays.size > 0
     ? DAYS.filter(d => selectedDays.has(d.day)).map(d => d.label.toUpperCase()).join(" · ")
-    : "ALLE DAGER";
-  const periodLabel = periodWeeks === 1 ? "1 UKE" : `${periodWeeks} UKER`;
+    : t("report.activeDays");
+  const periodLabel = t(`report.periods.${periodDays}`, { defaultValue: `${periodDays}` });
 
   const labelStyle = {
     fontSize: 10,
@@ -289,17 +291,17 @@ export default function Report({ prefill, onPrefillConsumed }) {
     <PageShell>
       <div style={{ paddingBottom: 80 }}>
         <SectionLabel>
-          <span style={{ display: "block" }}>PERIODE · {periodLabel}</span>
+          <span style={{ display: "block" }}>{t("report.period")} · {periodLabel}</span>
           <span style={{ display: "block" }}>{dayLabel}</span>
         </SectionLabel>
 
         {/* Hero */}
         <div style={{ padding: "4px 16px 20px" }}>
           <p style={{ fontFamily: "var(--cond)", fontSize: 30, fontWeight: 700, lineHeight: 1.1, margin: 0 }}>
-            <span style={{ color: "var(--accent)" }}>{untrainedMuscles.length} muskler</span>
+            <span style={{ color: "var(--accent)" }}>{t("report.heroMuscles", { count: untrainedMuscles.length })}</span>
           </p>
           <p style={{ fontFamily: "var(--cond)", fontSize: 30, fontWeight: 700, lineHeight: 1.1, margin: 0, color: "var(--cds-text-primary)" }}>
-            aldri trent.
+            {t("report.heroNeverTrained")}
           </p>
         </div>
 
@@ -335,28 +337,28 @@ export default function Report({ prefill, onPrefillConsumed }) {
               pointerEvents: (selectedDays.size > 0 || selectedTypes.size > 0) ? "auto" : "none",
             }}
           >
-            Nullstill filter
+            {t("common.resetFilter")}
           </button>
         </div>
 
         <div aria-live="polite" aria-atomic="true">
           {loading ? (
-            <InlineLoading description="Laster rapport…" status="active" style={{ marginTop: 24 }} />
+            <InlineLoading description={t("common.loading")} status="active" style={{ marginTop: 24 }} />
           ) : error ? (
             <p role="alert" style={{ color: "var(--cds-support-error)", fontSize: 14 }}>{error}</p>
           ) : (
             <>
               {/* KPI tiles */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 20 }}>
-                <KpiTile label="Økter" value={sessionCount} />
+                <KpiTile label={t("report.kpiSessions")} value={sessionCount} />
                 <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "16px 12px", borderRadius: "var(--r-tile)" }}>
                   <div style={{ lineHeight: 1, marginBottom: 6 }}>
                     <span style={{ fontSize: 36, fontWeight: 600, fontFamily: "var(--cond)", color: "var(--cds-text-primary)" }}>{musclesCovered}</span>
                     <span style={{ fontSize: 22, fontWeight: 400, fontFamily: "var(--cond)", color: "var(--text-disabled-wl)" }}>/17</span>
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>Muskler</div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "var(--cds-font-mono)" }}>{t("report.kpiMuscles")}</div>
                 </div>
-                <KpiTile label="Snitt/uke" value={avgPerWeek} />
+                <KpiTile label={t("report.kpiAvgPerWeek")} value={avgPerWeek} />
               </div>
 
               {/* Heatmap body */}
@@ -371,9 +373,9 @@ export default function Report({ prefill, onPrefillConsumed }) {
               {/* Hover detail card */}
               <div style={{ height: 68, marginBottom: 12, overflow: "hidden" }}>
                 {hoveredMuscle ? (
-                  <div style={{ borderLeft: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
+                  <div style={{ borderInlineStart: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
                     <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
-                      {MUSCLES[hoveredMuscle]?.label}
+                      {t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}
                     </div>
                     <div style={{ display: "flex", gap: 24, alignItems: "baseline" }}>
                       <div>
@@ -381,19 +383,19 @@ export default function Report({ prefill, onPrefillConsumed }) {
                           {muscleCounts[hoveredMuscle]?.primary || 0}
                         </span>
                         <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                          PRIMÆRØKTER
+                          {t("report.primarySessions")}
                         </span>
                       </div>
                       {muscleLastDate[hoveredMuscle] && (
                         <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                          SIST {format(new Date(muscleLastDate[hoveredMuscle] + "T12:00:00"), "d. MMM", { locale: nb })}
+                          {t("report.lastDate")} {format(new Date(muscleLastDate[hoveredMuscle] + "T12:00:00"), "d. MMM", { locale: nb })}
                         </span>
                       )}
                     </div>
                   </div>
                 ) : (
                   <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
-                    Hold musepeker over eller fokuser muskel for detaljer
+                    {t("report.hoverHint")}
                   </div>
                 )}
               </div>
@@ -406,7 +408,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                       <div key={v} style={{ width: 10, height: 12, background: `var(${v})` }} />
                     ))}
                   </div>
-                  <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)" }}>Primær</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)" }}>{t("report.legendPrimary")}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <svg width="12" height="12" style={{ flexShrink: 0 }}>
@@ -418,7 +420,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                     </defs>
                     <rect width="12" height="12" fill="url(#legend-sec)" />
                   </svg>
-                  <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)" }}>Sekundær</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)" }}>{t("report.legendSecondary")}</span>
                 </div>
               </div>
 
@@ -426,12 +428,12 @@ export default function Report({ prefill, onPrefillConsumed }) {
               {untrainedMuscles.length > 0 && (
                 <div style={{ background: "var(--accent-bg-08)", border: "1px solid var(--accent-bg-30)", padding: "14px 16px", marginBottom: 20, borderRadius: "var(--r-tile)" }}>
                   <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: 10 }}>
-                    IKKE TRUFFET
+                    {t("report.gapHeading")}
                   </p>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {untrainedMuscles.map(id => (
                       <AccentChip key={id}>
-                        {MUSCLES[id]?.label || id}
+                        {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                       </AccentChip>
                     ))}
                   </div>
@@ -440,14 +442,14 @@ export default function Report({ prefill, onPrefillConsumed }) {
 
               {/* Frequency table */}
               <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: 14, borderRadius: "var(--r-tile)" }}>
-                <p style={{ ...labelStyle, marginBottom: 8 }} id="freq-table-label">Muskelfrekvens</p>
+                <p style={{ ...labelStyle, marginBottom: 8 }} id="freq-table-label">{t("report.frequencyTable")}</p>
                 <table aria-labelledby="freq-table-label" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--border-subtle-wl)" }}>
-                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "left", paddingBottom: 6, width: 140 }}>MUSKEL</th>
-                      <th scope="col" aria-label="Frekvensbar" style={{ width: "100%" }} />
-                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 36 }}>ØKT</th>
-                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 40 }}>SETT</th>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "left", paddingBottom: 6, width: 140 }}>{t("report.colMuscle")}</th>
+                      <th scope="col" aria-label={t("report.frequencyTable")} style={{ width: "100%" }} />
+                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 36 }}>{t("report.colSession")}</th>
+                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 40 }}>{t("report.colSets")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -468,9 +470,9 @@ export default function Report({ prefill, onPrefillConsumed }) {
                           <td style={{ fontSize: 12, color: "var(--cds-text-primary)", padding: "6px 0" }}>
                             {muscleExercises[id]?.size > 0 ? (
                               <DefinitionTooltip definition={[...muscleExercises[id]].join(", ")} openOnHover align="bottom">
-                                {MUSCLES[id]?.label || id}
+                                {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                               </DefinitionTooltip>
-                            ) : MUSCLES[id]?.label || id}
+                            ) : t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                           </td>
                           <td style={{ padding: "6px 10px" }}>
                             <div style={{ height: 6, background: "var(--border-subtle-wl)" }}>
@@ -501,17 +503,17 @@ export default function Report({ prefill, onPrefillConsumed }) {
                     onClick={getAdvice}
                     disabled={loadingRecs}
                   >
-                    {loadingRecs ? "Henter anbefalinger…" : "Få anbefaling"}
+                    {loadingRecs ? t("report.loadingRecs") : t("report.getRecommendation")}
                   </Button>
 
                   <div aria-live="polite" aria-atomic="true">
                     {loadingRecs && (
-                      <InlineLoading description="Analyserer treningsdata…" status="active" style={{ marginTop: 12 }} />
+                      <InlineLoading description={t("report.analyzingData")} status="active" style={{ marginTop: 12 }} />
                     )}
                     {recsError && (
                       <InlineNotification
                         kind="error"
-                        title="Feil:"
+                        title={`${t("common.error")}:`}
                         subtitle={recsError}
                         hideCloseButton
                         style={{ marginTop: 12 }}
@@ -526,11 +528,11 @@ export default function Report({ prefill, onPrefillConsumed }) {
                     return (
                       <div className="fade-in" style={{ marginTop: 12 }}>
                         <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", overflow: "hidden", marginBottom: 10 }}>
-                          <p style={{ ...labelStyle, margin: "14px 14px 10px" }}>Anbefalte øvelser</p>
+                          <p style={{ ...labelStyle, margin: "14px 14px 10px" }}>{t("report.recommendedExercises")}</p>
                           {saveRecError && (
                             <InlineNotification
                               kind="error"
-                              title="Feil:"
+                              title={`${t("common.error")}:`}
                               subtitle={saveRecError}
                               hideCloseButton
                               style={{ margin: "0 14px 8px" }}
@@ -539,7 +541,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                           {recs.map((r, i) => (
                             <div key={i} style={{
                               padding: "10px 14px",
-                              borderLeft: "3px solid var(--accent)",
+                              borderInlineStart: "3px solid var(--accent)",
                               borderBottom: i < recs.length - 1 ? "1px solid var(--border-subtle-wl)" : "none",
                               display: "flex", alignItems: "flex-start", gap: 12,
                             }}>
@@ -547,8 +549,8 @@ export default function Report({ prefill, onPrefillConsumed }) {
                                 <p style={{ fontSize: 14, fontFamily: "var(--cond)", fontWeight: 700, marginBottom: 3, color: "var(--cds-text-primary)" }}>{r.name}</p>
                                 <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", marginBottom: r.tip ? 4 : 0 }}>
                                   {[
-                                    (r.primary || []).map(id => MUSCLES[id]?.label || id).join(", "),
-                                    (r.secondary || []).length > 0 && `(${(r.secondary || []).map(id => MUSCLES[id]?.label || id).join(", ")})`
+                                    (r.primary || []).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", "),
+                                    (r.secondary || []).length > 0 && `(${(r.secondary || []).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", ")})`
                                   ].filter(Boolean).join(" · ")}
                                 </p>
                                 {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", margin: 0 }}>{r.tip}</p>}
@@ -605,7 +607,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                                     letterSpacing: "0.06em",
                                   }}
                                 >
-                                  {v === "front" ? "Front" : "Bak"}
+                                  {v === "front" ? t("common.front") : t("common.back_view")}
                                 </button>
                               ))}
                             </div>
@@ -626,8 +628,8 @@ export default function Report({ prefill, onPrefillConsumed }) {
                         )}
 
                         <div style={{ display: "flex", gap: 8, marginBottom: 12, fontSize: 12 }}>
-                          <Tag type="green" size="sm">Primær</Tag>
-                          <Tag type="blue" size="sm">Sekundær</Tag>
+                          <Tag type="green" size="sm">{t("report.legendPrimary")}</Tag>
+                          <Tag type="blue" size="sm">{t("report.legendSecondary")}</Tag>
                         </div>
                       </div>
                     );
@@ -635,7 +637,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
 
                   {recs && recs.length === 0 && (
                     <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", marginTop: 12 }}>
-                      Ingen anbefalinger tilgjengelig.
+                      {t("report.noRecs")}
                     </p>
                   )}
                 </div>
@@ -643,7 +645,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
 
               {sessionCount === 0 && (
                 <p style={{ color: "var(--cds-text-secondary)", fontSize: 14, marginTop: 16 }}>
-                  Ingen økter funnet for valgte filter.
+                  {t("report.noSessions")}
                 </p>
               )}
             </>
@@ -663,7 +665,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               }}
             >
-              Disse bør du legge inn i programmet →
+              {t("report.toCta")}
             </button>
           </StickyCta>
         )}

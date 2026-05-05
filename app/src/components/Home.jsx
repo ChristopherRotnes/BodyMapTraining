@@ -3,13 +3,14 @@ import { format, parseISO, startOfISOWeek, addDays, getISOWeek } from "date-fns"
 import { nb } from "date-fns/locale";
 import { InlineLoading } from "@carbon/react";
 import { ArrowRight } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
 import { extractMuscles, logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
-const DAY_LABELS = ["M", "T", "O", "T", "F", "L", "S"];
+const WEEK_DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
 function formatSessionDate(isoDate) {
   const raw = format(parseISO(isoDate), "EEEE d. MMMM", { locale: nb });
@@ -33,6 +34,7 @@ function countUniqueMuscles(sessions) {
 }
 
 export default function Home({ onShowHistoryWithDate }) {
+  const { t } = useTranslation();
   const { onShowLogger } = useNav();
   const [lastSession, setLastSession] = useState(undefined);
   const [weekSessions, setWeekSessions] = useState(undefined);
@@ -60,8 +62,8 @@ export default function Home({ onShowHistoryWithDate }) {
   }
 
   useEffect(() => {
-    fetchLastSession().then(setLastSession).catch(() => setLastSession(null)); // home renders empty state on failure
-    fetchThisWeekSessions().then(setWeekSessions).catch(() => setWeekSessions([])); // home renders empty state on failure
+    fetchLastSession().then(setLastSession).catch(() => setLastSession(null));
+    fetchThisWeekSessions().then(setWeekSessions).catch(() => setWeekSessions([]));
   }, []);
 
   useEffect(() => {
@@ -76,12 +78,12 @@ export default function Home({ onShowHistoryWithDate }) {
   const isToday = lastSession?.session_date === format(today, "yyyy-MM-dd");
 
   const weekStart = startOfISOWeek(today);
-  const weekDays = DAY_LABELS.map((label, i) => {
+  const weekDays = WEEK_DAY_KEYS.map((key, i) => {
     const date = format(addDays(weekStart, i), "yyyy-MM-dd");
     const sessions = weekSessions?.filter(s => s.session_date === date) ?? [];
     const count = sessions.reduce((sum, s) => sum + (s.session_exercises?.length ?? 0), 0);
     const names = sessions.map(s => s.gym_calendar?.name).filter(Boolean);
-    return { label, date, count, names };
+    return { label: t(`home.weekStrip.${key}`), date, count, names };
   });
   const maxWeekCount = Math.max(...weekDays.map(d => d.count), 1);
 
@@ -102,8 +104,8 @@ export default function Home({ onShowHistoryWithDate }) {
             {formatTodayEyebrow(today)}
           </div>
           <div style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 64, lineHeight: 0.9, letterSpacing: "-0.025em", marginBottom: 22, position: "relative" }}>
-            <div style={{ color: "var(--cds-text-primary)" }}>Tren.</div>
-            <div style={{ color: "var(--accent)" }}>I dag.</div>
+            <div style={{ color: "var(--cds-text-primary)" }}>{t("home.train")}</div>
+            <div style={{ color: "var(--accent)" }}>{t("home.today")}</div>
           </div>
           <button
             onClick={onShowLogger}
@@ -120,7 +122,7 @@ export default function Home({ onShowHistoryWithDate }) {
             onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
           >
-            <span>Logg ny økt</span>
+            <span>{t("home.logNew")}</span>
             <ArrowRight size={16} />
           </button>
         </div>
@@ -138,7 +140,7 @@ export default function Home({ onShowHistoryWithDate }) {
                       <div
                         role={count > 0 ? "button" : undefined}
                         tabIndex={count > 0 ? 0 : -1}
-                        aria-label={count > 0 ? `${label}: ${count} ${count === 1 ? "øvelse" : "øvelser"}` : undefined}
+                        aria-label={count > 0 ? `${label}: ${t("templatePicker.exerciseCount", { count })}` : undefined}
                         onClick={count > 0 ? () => onShowHistoryWithDate(date) : undefined}
                         onKeyDown={count > 0 ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onShowHistoryWithDate(date); } } : undefined}
                         onMouseEnter={count > 0 ? e => {
@@ -195,7 +197,7 @@ export default function Home({ onShowHistoryWithDate }) {
           </div>
           {weekSessions !== undefined && (
             <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--text-muted-wl)", marginTop: 8, letterSpacing: "0.06em" }}>
-              {`${weekSessionCount} ØKTE${weekSessionCount !== 1 ? "R" : ""} · ${weekMuscleCount} MUSKELGRUPPE${weekMuscleCount !== 1 ? "R" : ""}`}
+              {t("planlegger.weekSummary", { count: weekSessionCount, muscleCount: weekMuscleCount }).toUpperCase()}
             </div>
           )}
         </div>
@@ -203,19 +205,19 @@ export default function Home({ onShowHistoryWithDate }) {
         {/* Last session */}
         <div style={{ padding: "0 16px", marginBottom: 4 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <SectionLabel style={{ margin: 0 }}>{isToday ? "DAGENS ØKT" : "SISTE ØKT"}</SectionLabel>
+            <SectionLabel style={{ margin: 0 }}>{isToday ? t("home.todaySession") : t("home.lastSession")}</SectionLabel>
             <button
               onClick={() => onShowHistoryWithDate(lastSession?.session_date)}
               style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textTransform: "uppercase", padding: 0 }}
             >
-              SE ALLE →
+              {t("home.seeAll")}
             </button>
           </div>
         </div>
 
         {lastSession === undefined && (
           <div aria-live="polite" aria-busy="true" style={{ display: "flex", justifyContent: "center", padding: "16px 0 32px" }}>
-            <InlineLoading description="Laster siste økt…" />
+            <InlineLoading description={t("home.loading")} />
           </div>
         )}
 
@@ -228,7 +230,7 @@ export default function Home({ onShowHistoryWithDate }) {
             padding: 24, textAlign: "center",
             color: "var(--cds-text-secondary)", fontSize: 14,
           }}>
-            Ingen økter logget ennå. Logg din første økt!
+            {t("home.noSessions")}
           </div>
         )}
 
@@ -258,12 +260,12 @@ export default function Home({ onShowHistoryWithDate }) {
                 </div>
               ) : (
                 <div style={{ fontFamily: "var(--cond)", fontSize: 18, fontWeight: 600, color: "var(--cds-text-secondary)", marginBottom: 10 }}>
-                  Egentrening
+                  {t("home.ownTraining")}
                 </div>
               )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <AccentChip>{exCount} øvelser</AccentChip>
-                <AccentChip>{muscleCount} muskler</AccentChip>
+                <AccentChip>{t("history.exerciseCount", { count: exCount })}</AccentChip>
+                <AccentChip>{t("history.exerciseCount", { count: muscleCount })}</AccentChip>
               </div>
             </div>
           </div>

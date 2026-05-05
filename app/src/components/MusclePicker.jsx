@@ -1,8 +1,10 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { MUSCLES, SHAPES, BODY_PATH, PRIMARY_FILL, PRIMARY_HOVER, PRIMARY_STROKE, SEC_STROKE } from "../lib/bodymap.jsx";
 import { Tag } from "@carbon/react";
 
 function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
+  const { t } = useTranslation();
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
   const [hovered, setHovered] = React.useState(null);
@@ -31,7 +33,7 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
   return (
     <svg viewBox="0 0 160 360" xmlns="http://www.w3.org/2000/svg"
       role="group"
-      aria-label={view === "front" ? "Frontside muskler" : "Bakside muskler"}
+      aria-label={view === "front" ? t("musclePicker.frontLabel") : t("musclePicker.backLabel")}
       style={{ width: "100%", height: "auto", display: "block" }}>
       <defs>
         <filter id={`pick-glow-${view}-${instanceId}`} x="-60%" y="-60%" width="220%" height="220%">
@@ -60,8 +62,12 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
           const isSec = sSet.has(id);
           const isHov = hovered === id;
           const isFoc = focused === id;
-          const label = MUSCLES[id]?.label ?? id;
-          const stateLabel = isPrimary ? "primær" : isSec ? "sekundær" : "ikke valgt";
+          const label = t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label ?? id });
+          const stateLabel = isPrimary
+            ? t("musclePicker.statePrimary")
+            : isSec
+              ? t("musclePicker.stateSecondary")
+              : t("musclePicker.stateNotSelected");
 
           let fill, stroke, filter;
           if (isPrimary) {
@@ -113,6 +119,8 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
 }
 
 export default function MusclePicker({ primary = [], secondary = [], onChange, instanceId = "0" }) {
+  const { t } = useTranslation();
+
   const toggle = (id) => {
     const isPrimary = primary.includes(id);
     const isSec = secondary.includes(id);
@@ -134,10 +142,10 @@ export default function MusclePicker({ primary = [], secondary = [], onChange, i
   return (
     <div>
       <div style={{ display: "flex", gap: 4, marginBottom: 8, flexWrap: "wrap" }}>
-        <Tag type="green" size="sm">Primær ({primary.length})</Tag>
-        <Tag type="blue" size="sm">Sekundær ({secondary.length})</Tag>
+        <Tag type="green" size="sm">{t("musclePicker.primaryCount", { count: primary.length })}</Tag>
+        <Tag type="blue" size="sm">{t("musclePicker.secondaryCount", { count: secondary.length })}</Tag>
         <span id={helpId} style={{ fontSize: 11, color: "var(--cds-text-secondary)", alignSelf: "center", marginLeft: 4 }}>
-          Klikk muskel: av → primær → sekundær → av. Piltaster navigerer, mellomrom/enter velger.
+          {t("musclePicker.helpText")}
         </span>
       </div>
       <div aria-describedby={helpId} style={{ display: "flex", gap: 8 }}>

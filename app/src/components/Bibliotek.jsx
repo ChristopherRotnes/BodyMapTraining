@@ -4,6 +4,7 @@ import {
   TextInput, Modal,
 } from "@carbon/react";
 import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
@@ -14,14 +15,15 @@ import { logDevError } from "../lib/utils";
 import ExerciseForm from "./ExerciseForm";
 
 export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
+  const { t } = useTranslation();
 
   const [tabIndex, setTabIndex] = useState(initialTab);
   const [exSearch, setExSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(exSearch), 200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedSearch(exSearch), 200);
+    return () => clearTimeout(timer);
   }, [exSearch]);
 
   const [exercises, setExercises] = useState([]);
@@ -84,7 +86,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const handleDeleteExercise = async (id) => {
     const ex = exercises.find(e => e.id === id);
     const affectedTemplates = await fetchTemplateNamesUsingExercise(id).catch(() => []);
-    setConfirmDelete({ type: "exercise", id, name: ex?.name || "øvelsen", affectedTemplates });
+    setConfirmDelete({ type: "exercise", id, name: ex?.name || "", affectedTemplates });
   };
 
   const handleSaveNewTemplate = async () => {
@@ -103,7 +105,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
 
   const handleDeleteTemplate = (id) => {
     const tpl = templates.find(t => t.id === id);
-    setConfirmDelete({ type: "template", id, name: tpl?.name || "malen" });
+    setConfirmDelete({ type: "template", id, name: tpl?.name || "" });
   };
 
   const executeDelete = async () => {
@@ -126,15 +128,15 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   };
 
   const tabLabels = [
-    `Øvelser${!exLoading ? ` (${exercises.length})` : ""}`,
-    `Maler${!tplLoading ? ` (${templates.length})` : ""}`,
+    `${t("bibliotek.tabExercises")}${!exLoading ? ` (${exercises.length})` : ""}`,
+    `${t("bibliotek.tabTemplates")}${!tplLoading ? ` (${templates.length})` : ""}`,
   ];
 
   return (
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
-        <SectionLabel>BIBLIOTEK</SectionLabel>
-        <PageHeading>Dine byggklosser.</PageHeading>
+        <SectionLabel>{t("bibliotek.sectionLabel")}</SectionLabel>
+        <PageHeading>{t("bibliotek.heading")}</PageHeading>
 
         {/* Pill tab strip */}
         <div
@@ -144,7 +146,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
             if (e.key === "ArrowRight") setTabIndex(1);
           }}
           role="tablist"
-          aria-label="Bibliotek-seksjoner"
+          aria-label={t("bibliotek.sectionLabel")}
         >
           {tabLabels.map((label, i) => (
             <button
@@ -170,25 +172,25 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
           ))}
         </div>
 
-        {/* ── ØVELSER ── */}
+        {/* ── EXERCISES ── */}
         {tabIndex === 0 && (
           <div role="tabpanel">
             {exError && (
-              <InlineNotification kind="error" title="Feil:" subtitle={exError} hideCloseButton style={{ marginBottom: 16 }} />
+              <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={exError} hideCloseButton style={{ marginBottom: 16 }} />
             )}
 
             {!showNewEx && (
               <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
                 style={{ marginBottom: 16 }}>
-                Ny øvelse
+                {t("bibliotek.newExercise")}
               </Button>
             )}
 
-            {/* Snarvei carousel — template shortcuts */}
+            {/* Shortcut carousel — template shortcuts */}
             {!tplLoading && templates.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-muted-wl)", marginBottom: 8 }}>
-                  SNARVEIER
+                  {t("bibliotek.shortcuts")}
                 </p>
                 <div style={{ overflowX: "auto", display: "flex", gap: 8, paddingBottom: 8, scrollbarWidth: "none" }}>
                   {templates.map(tpl => {
@@ -211,7 +213,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                           {tpl.name}
                         </div>
                         <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {exCount} ØV
+                          {t("bibliotek.exerciseCount", { count: exCount })}
                         </div>
                       </button>
                     );
@@ -228,7 +230,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                   type="search"
                   id="exercise-search"
                   name="exercise-search"
-                  placeholder="Søk øvelse…"
+                  placeholder={t("bibliotek.searchPlaceholder")}
                   value={exSearch}
                   onChange={e => setExSearch(e.target.value)}
                   style={{
@@ -254,10 +256,10 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
             )}
 
             {exLoading ? (
-              <InlineLoading description="Laster øvelser…" status="active" />
+              <InlineLoading description={t("bibliotek.loadingExercises")} status="active" />
             ) : filteredExercises.length === 0 && !showNewEx ? (
               <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
-                {exSearch.trim() ? "Ingen øvelser matcher søket." : "Ingen øvelser lagt til ennå."}
+                {exSearch.trim() ? t("bibliotek.noSearchResults") : t("bibliotek.noExercises")}
               </p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -274,7 +276,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                       <div style={{
                         background: "var(--surface-card)",
                         border: "1px solid var(--border-subtle-wl)",
-                        borderLeft: "3px solid var(--border-subtle-wl)",
+                        borderInlineStart: "3px solid var(--border-subtle-wl)",
                         padding: "10px 12px",
                         display: "flex", alignItems: "center", gap: 8,
                         borderRadius: "0 var(--r-accent) var(--r-accent) 0",
@@ -285,7 +287,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                           </div>
                           <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                             {(ex.primary_muscles || []).slice(0, 4).map(id => (
-                              <AccentChip key={id}>{MUSCLES[id]?.label || id}</AccentChip>
+                              <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
                             ))}
                             {(ex.secondary_muscles || []).slice(0, 3).map(id => (
                               <span key={id} style={{
@@ -296,11 +298,11 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                                 color: "#78a9ff",
                                 fontFamily: "var(--cds-font-mono)", fontSize: 11, letterSpacing: "0.06em",
                               }}>
-                                {MUSCLES[id]?.label || id}
+                                {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                               </span>
                             ))}
                             {!(ex.primary_muscles?.length) && !(ex.secondary_muscles?.length) && (
-                              <span style={{ fontSize: 11, color: "var(--text-muted-wl)" }}>Ingen muskler</span>
+                              <span style={{ fontSize: 11, color: "var(--text-muted-wl)" }}>{t("bibliotek.noMuscles")}</span>
                             )}
                           </div>
                         </div>
@@ -309,9 +311,9 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                             {ex.default_sets}×{ex.default_reps}
                           </span>
                         )}
-                        <Button kind="ghost" hasIconOnly renderIcon={EditIcon} iconDescription="Rediger" size="sm"
+                        <Button kind="ghost" hasIconOnly renderIcon={EditIcon} iconDescription={t("common.edit")} size="sm"
                           onClick={() => { setEditingEx(ex); setShowNewEx(false); }} />
-                        <Button kind="ghost" hasIconOnly renderIcon={TrashCan} iconDescription="Slett" size="sm"
+                        <Button kind="ghost" hasIconOnly renderIcon={TrashCan} iconDescription={t("common.delete")} size="sm"
                           onClick={() => handleDeleteExercise(ex.id)} />
                       </div>
                     )}
@@ -322,16 +324,16 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
           </div>
         )}
 
-        {/* ── MALER ── */}
+        {/* ── TEMPLATES ── */}
         {tabIndex === 1 && (
           <div role="tabpanel">
             {tplError && (
-              <InlineNotification kind="error" title="Feil:" subtitle={tplError} hideCloseButton style={{ marginBottom: 16 }} />
+              <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={tplError} hideCloseButton style={{ marginBottom: 16 }} />
             )}
 
             {!showNewTpl && (
               <Button kind="primary" renderIcon={Add} onClick={() => setShowNewTpl(true)} style={{ marginBottom: 12 }}>
-                Ny mal
+                {t("bibliotek.newTemplate")}
               </Button>
             )}
 
@@ -339,29 +341,29 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", padding: 16, marginBottom: 12 }}>
                 <TextInput
                   id="new-tpl-name"
-                  labelText="Navn på mal"
+                  labelText={t("bibliotek.templateNameLabel")}
                   value={newTplName}
                   onChange={(e) => setNewTplName(e.target.value)}
-                  placeholder="f.eks. CrossFit - Anna - mandag"
+                  placeholder={t("bibliotek.templateNamePlaceholder")}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveNewTemplate()}
                   style={{ marginBottom: 12 }}
                 />
                 <div style={{ display: "flex", gap: 8 }}>
                   <Button kind="secondary" size="sm" onClick={() => { setShowNewTpl(false); setNewTplName(""); }}>
-                    Avbryt
+                    {t("common.cancel")}
                   </Button>
                   <Button kind="primary" size="sm" disabled={!newTplName.trim() || savingTpl} onClick={handleSaveNewTemplate}>
-                    {savingTpl ? "Oppretter…" : "Opprett og legg til øvelser"}
+                    {savingTpl ? t("bibliotek.creating") : t("bibliotek.createTemplate")}
                   </Button>
                 </div>
               </div>
             )}
 
             {tplLoading ? (
-              <InlineLoading description="Laster maler…" status="active" />
+              <InlineLoading description={t("bibliotek.loadingTemplates")} status="active" />
             ) : templates.length === 0 && !showNewTpl ? (
               <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
-                Ingen maler opprettet ennå.
+                {t("bibliotek.noTemplates")}
               </p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -392,14 +394,14 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                           {tpl.name}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {exCount} ØV · {muscleCount} MUSKLER{usedAt ? ` · SIST ${usedAt}` : ""}
+                          {t("bibliotek.exerciseCount", { count: exCount })} · {muscleCount} MUS{usedAt ? ` · ${usedAt}` : ""}
                         </div>
                       </div>
                       <Button kind="ghost" hasIconOnly renderIcon={ChevronRight}
-                        iconDescription="Rediger mal" size="sm"
+                        iconDescription={t("bibliotek.deleteTemplateTitle")} size="sm"
                         onClick={() => onEditTemplate(tpl)} />
                       <Button kind="ghost" hasIconOnly renderIcon={TrashCan}
-                        iconDescription="Slett mal" size="sm"
+                        iconDescription={t("bibliotek.deleteTemplateTitle")} size="sm"
                         onClick={() => handleDeleteTemplate(tpl.id)} />
                     </div>
                   );
@@ -413,18 +415,18 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
       <Modal
         open={!!confirmDelete}
         size="sm"
-        modalHeading={confirmDelete?.type === "exercise" ? "Slett øvelse" : "Slett mal"}
-        primaryButtonText="Slett"
-        secondaryButtonText="Avbryt"
+        modalHeading={confirmDelete?.type === "exercise" ? t("bibliotek.deleteExerciseTitle") : t("bibliotek.deleteTemplateTitle")}
+        primaryButtonText={t("common.delete")}
+        secondaryButtonText={t("common.cancel")}
         danger
         onRequestClose={() => setConfirmDelete(null)}
         onRequestSubmit={executeDelete}
       >
-        <p>Er du sikker på at du vil slette «{confirmDelete?.name}»? Dette kan ikke angres.</p>
+        <p>{t("bibliotek.deleteConfirm", { name: confirmDelete?.name })}</p>
         {confirmDelete?.affectedTemplates?.length > 0 && (
           <p style={{ marginTop: 8, color: "var(--cds-support-error)", fontSize: 13 }}>
-            Øvelsen brukes i {confirmDelete.affectedTemplates.length === 1 ? "malen" : "malene"}{" "}
-            <strong>{confirmDelete.affectedTemplates.join(", ")}</strong> og vil bli fjernet derfra.
+            {t("bibliotek.usedInTemplates", { count: confirmDelete.affectedTemplates.length })}{" "}
+            <strong>{confirmDelete.affectedTemplates.join(", ")}</strong> {t("bibliotek.exerciseRemovedWarning")}
           </p>
         )}
       </Modal>

@@ -112,6 +112,28 @@ export function buildMuscleMapFromSession(session) {
   return map;
 }
 
+// Returns ISO week string e.g. "2026-W19" for a given Date.
+export function toWeekIso(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+// Returns the Monday Date for a given ISO week string e.g. "2026-W19".
+export function weekIsoToMonday(weekIso) {
+  const [yearStr, weekStr] = weekIso.split("-W");
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(weekStr, 10);
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const day = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - (day - 1) + (week - 1) * 7);
+  return monday;
+}
+
 // Builds muscle-ID → exercise-name map from a recommendations array.
 export function buildRecMuscleMap(recs) {
   const map = {};

@@ -13,10 +13,9 @@ import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, Chevron
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
+import { useTranslation } from "react-i18next";
 
 const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
-
-const DAY_HEADERS = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
 
 function calHeatColor(count) {
   if (!count) return "var(--surface-card)";
@@ -28,6 +27,16 @@ function calHeatColor(count) {
 }
 
 function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, today }) {
+  const { t } = useTranslation();
+  const DAY_HEADERS = [
+    t("history.days.mon"),
+    t("history.days.tue"),
+    t("history.days.wed"),
+    t("history.days.thu"),
+    t("history.days.fri"),
+    t("history.days.sat"),
+    t("history.days.sun"),
+  ];
   const todayStr = format(today, "yyyy-MM-dd");
   const selectedStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
   const firstDOW = (new Date(year, month, 1).getDay() + 6) % 7;
@@ -83,7 +92,7 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
             return (
               <button
                 key={dateStr}
-                aria-label={`${dateStr}: ${count} ${count === 1 ? "økt" : "økter"}`}
+                aria-label={`${dateStr}: ${t("history.sessionCount", { count })}`}
                 aria-pressed={isSelected}
                 aria-current={isToday ? "date" : undefined}
                 onClick={() => onDayClick(dateStr)}
@@ -129,63 +138,9 @@ function sessionMuscleIds(session) {
   );
 }
 
-function heroMotivation(count) {
-  if (count < 1)  return null;
-  if (count === 1)  return "god start!";
-  if (count === 2)  return "to for to!";
-  if (count === 3)  return "tre på rad!";
-  if (count === 4)  return "fire! fint.";
-  if (count === 5)  return "fem. solid.";
-  if (count === 6)  return "seks. i rute.";
-  if (count === 7)  return "syv. nesten daglig.";
-  if (count === 8)  return "åtte. kroppen takker.";
-  if (count === 9)  return "ni. ett til!";
-  if (count === 10) return "tosifret!";
-  if (count === 11) return "elleve. du mener det.";
-  if (count === 12) return "tolv. tre per uke.";
-  if (count === 13) return "tretten. heldig kropp.";
-  if (count === 14) return "fjorten. halvveis til 28.";
-  if (count === 15) return "femten. meget bra.";
-  if (count === 16) return "seksten. du er maskinen.";
-  if (count === 17) return "sytten. ett per muskel!";
-  if (count === 18) return "atten. kortet tjener inn.";
-  if (count === 19) return "nitten. ett til!";
-  if (count === 20) return "tjue. dette er en vane.";
-  if (count === 21) return "tjueen. vanedannende.";
-  if (count === 22) return "tjueto. ingen stopper deg.";
-  if (count === 23) return "Jordan-nummer.";
-  if (count === 24) return "tjuefire. Kobe-territorium.";
-  if (count === 25) return "kvartmål!";
-  if (count === 26) return "tjueseks. halvveis til 52.";
-  if (count === 27) return "tjuesyv. over Kobe.";
-  if (count === 28) return "tjueåtte. én per dag?";
-  if (count === 29) return "tjueni. nesten 30!";
-  if (count === 30) return "tredve. legendarisk.";
-  if (count === 31) return "trettieen. hver dag.";
-  if (count === 32) return "Rocky-modus.";
-  if (count === 33) return "trettire. halvtredjes.";
-  if (count === 34) return "trettfire. dedikert.";
-  if (count === 35) return "trettiofem. femgangen!";
-  if (count === 36) return "seksgangen squared.";
-  if (count === 37) return "trettisyv. dette er deg.";
-  if (count === 38) return "trettåtte. bevisst.";
-  if (count === 39) return "trettini. nesten firti!";
-  if (count === 40) return "FIRTI. Arnold nikker.";
-  if (count === 41) return "over 40. egen klasse.";
-  if (count === 42) return "svaret på alt.";
-  if (count === 43) return "førtitre. hvem gjør det?";
-  if (count === 44) return "førtfire. dobbel innsats.";
-  if (count === 45) return "førtiofem. fire-og-halv timer.";
-  if (count === 46) return "ikke normalt. kompliment.";
-  if (count === 47) return "førtisyv. legen er stolt.";
-  if (count === 48) return "én og en halv per dag.";
-  if (count === 49) return "ett til: femti-klubben!";
-  if (count === 50) return "FEMTI. ikke virkelig.";
-  return "over 50. ring legen.";
-}
-
 
 export default function History({ initialDate }) {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(
@@ -377,7 +332,7 @@ export default function History({ initialDate }) {
       logDevError("History/save", err);
       const msg = err?.message?.includes("unique") || err?.code === "23505"
         ? "Denne gymtimen har allerede en økt lagret."
-        : "Lagring feilet. Prøv igjen.";
+        : t("common.saveFailed");
       setEditError(msg);
     } finally {
       setEditSaving(false);
@@ -453,18 +408,19 @@ export default function History({ initialDate }) {
   return (
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
-        <SectionLabel>HISTORIKK</SectionLabel>
+        <SectionLabel>{t("history.sectionLabel")}</SectionLabel>
         <PageHeading style={{ minHeight: 72 }}>
           {muscleFilter.length > 0 && selectedDate ? (() => {
             const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
             const count = filteredSessions.filter(s => s.session_date === selectedDateStr).length;
             const total = sessions.filter(s => s.session_date === selectedDateStr).length;
             const dateLabel = format(selectedDate, "d. MMMM", { locale: nb });
-            return <>{count} av {total} {total === 1 ? "økt" : "økter"} <span style={{ color: "var(--accent)" }}>den {dateLabel}</span></>;
+            const sessionLabel = total === 1 ? t("common.session") : t("common.sessions");
+            return <>{t("history.filterWithDate", { count, total, sessionLabel, date: dateLabel })}</>;
           })() : muscleFilter.length > 0 ? (
-            <>{currentMonthCount} {currentMonthCount === 1 ? "økt" : "økter"} i {format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb })} <span style={{ color: "var(--accent)" }}>med disse filtrene</span></>
+            <>{t("history.filteredMonth", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb }) })}</>
           ) : (
-            <>{currentMonthCount} {currentMonthCount === 1 ? "økt" : "økter"} i {format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb })}.{heroMotivation(currentMonthCount) && <> <span style={{ color: "var(--accent)" }}>{heroMotivation(currentMonthCount)}</span></>}</>
+            <>{t("history.monthCount", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb }) })}{currentMonthCount >= 1 && <> <span style={{ color: "var(--accent)" }}>{t(`history.heroMotivation.${currentMonthCount}`, { defaultValue: t("history.heroMotivation.over50") })}</span></>}</>
           )}
         </PageHeading>
 
@@ -492,7 +448,7 @@ export default function History({ initialDate }) {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {item.label}
+                  {t(`muscles.${item.id}`, { defaultValue: item.label })}
                 </button>
               );
             })}
@@ -501,7 +457,7 @@ export default function History({ initialDate }) {
             onClick={() => setMuscleFilter([])}
             style={{ background: "none", border: "none", padding: "0 16px", cursor: "pointer", fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", opacity: muscleFilter.length > 0 ? 1 : 0, pointerEvents: muscleFilter.length > 0 ? "auto" : "none" }}
           >
-            Nullstill filter
+            {t("common.resetFilter")}
           </button>
         </div>
 
@@ -512,11 +468,11 @@ export default function History({ initialDate }) {
         ) : (
           <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "12px", marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription="Forrige måned" onClick={goPrevMonth} />
+              <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription={t("history.prevMonth")} onClick={goPrevMonth} />
               <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 {format(new Date(viewYear, viewMonth, 1), "MMMM yyyy", { locale: nb }).replace(/^\w/, c => c.toUpperCase())}
               </span>
-              <Button kind="ghost" size="sm" renderIcon={ChevronRight} hasIconOnly iconDescription="Neste måned" onClick={goNextMonth} disabled={atCurrentMonth} />
+              <Button kind="ghost" size="sm" renderIcon={ChevronRight} hasIconOnly iconDescription={t("history.nextMonth")} onClick={goNextMonth} disabled={atCurrentMonth} />
             </div>
             <MonthGrid
               year={viewYear}
@@ -527,11 +483,11 @@ export default function History({ initialDate }) {
               today={today}
             />
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10 }}>
-              <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>VOLUM 1</span>
+              <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>{t("history.volumeLegendMin")}</span>
               {["--heat-1","--heat-2","--heat-3","--heat-4","--heat-5"].map(v => (
                 <div key={v} style={{ width: 10, height: 10, background: `var(${v})` }} />
               ))}
-              <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>5+</span>
+              <span style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)", letterSpacing: "0.08em" }}>{t("history.volumeLegendMax")}</span>
             </div>
           </div>
         )}
@@ -562,15 +518,15 @@ export default function History({ initialDate }) {
               const musIds = sessionMuscleIdMap.get(session.id) ?? new Set();
               const isFilterMatch = muscleFilter.length > 0 && muscleFilter.some(id => musIds.has(id));
               const matchedLabels = isFilterMatch
-                ? muscleFilter.filter(id => musIds.has(id)).map(id => MUSCLES[id]?.label || id)
+                ? muscleFilter.filter(id => musIds.has(id)).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id }))
                 : [];
-              const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => MUSCLES[id]?.label || id);
+              const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id }));
               const sessionTime = session.gym_calendar?.start_time
                 ? new Date(session.gym_calendar.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" })
                 : new Date(session.created_at).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
               const sessionTitle = session.gym_calendar
                 ? `${sessionTime} – ${session.gym_calendar.name}`
-                : `${sessionTime} – Egentrening`;
+                : `${sessionTime} – ${t("history.ownTraining")}`;
 
               return (
                 <div key={session.id} style={{ marginBottom: 4, opacity: muscleFilter.length > 0 && !isFilterMatch ? 0.45 : 1 }}>
@@ -582,7 +538,7 @@ export default function History({ initialDate }) {
                       width: "100%", display: "flex", alignItems: "center", gap: 8,
                       background: "var(--surface-card)",
                       border: "1px solid var(--border-subtle-wl)",
-                      borderLeft: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)",
+                      borderInlineStart: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)",
                       borderBottom: isExpanded ? "none" : "1px solid var(--border-subtle-wl)",
                       padding: "10px 14px", cursor: "pointer", textAlign: "left",
                     }}
@@ -592,7 +548,7 @@ export default function History({ initialDate }) {
                     </span>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                       <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
-                        {exCount} øvelser
+                        {t("history.exerciseCount", { count: exCount })}
                       </span>
                       {isFilterMatch
                         ? matchedLabels.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)
@@ -603,7 +559,7 @@ export default function History({ initialDate }) {
                   </button>
 
                   {isExpanded && (
-                    <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--border-subtle-wl)", borderTop: "none", borderLeft: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)", padding: "16px 14px", marginBottom: 0 }}>
+                    <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--border-subtle-wl)", borderTop: "none", borderInlineStart: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)", padding: "16px 14px", marginBottom: 0 }}>
 
                       {/* Gym class tag (read) or selector (edit) */}
                       {isEditing ? (
@@ -654,9 +610,9 @@ export default function History({ initialDate }) {
 
                       <div style={{ height: 68, marginBottom: 16, overflow: "hidden" }}>
                         {hoveredMuscle ? (
-                          <div style={{ borderLeft: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
+                          <div style={{ borderInlineStart: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
                             <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
-                              {MUSCLES[hoveredMuscle]?.label}
+                              {t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}
                             </div>
                             <div style={{ display: "flex", gap: 24, alignItems: "baseline", overflow: "hidden" }}>
                               <div style={{ flexShrink: 0 }}>
@@ -664,7 +620,7 @@ export default function History({ initialDate }) {
                                   {(sessionMuscleMap[hoveredMuscle] || []).length}
                                 </span>
                                 <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                                  {(sessionMuscleMap[hoveredMuscle] || []).length === 1 ? "ØVELSE" : "ØVELSER"}
+                                  {t("common.exercises")}
                                 </span>
                               </div>
                               <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>
@@ -674,20 +630,20 @@ export default function History({ initialDate }) {
                           </div>
                         ) : (
                           <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
-                            Hold musepeker over kroppen for detaljer
+                            {t("history.hoverHint")}
                           </div>
                         )}
                       </div>
 
                       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-                        <Tag type="green" size="sm">Primær ({sessionMuscles.primary.length})</Tag>
-                        <Tag type="blue" size="sm">Sekundær ({sessionMuscles.secondary.length})</Tag>
+                        <Tag type="green" size="sm">{t("history.primaryCount", { count: sessionMuscles.primary.length })}</Tag>
+                        <Tag type="blue" size="sm">{t("history.secondaryCount", { count: sessionMuscles.secondary.length })}</Tag>
                       </div>
 
                       {/* Exercise list */}
                       <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
                         <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                          Øvelser
+                          {t("common.exercises")}
                         </p>
 
                         {isEditing ? (
@@ -719,12 +675,12 @@ export default function History({ initialDate }) {
                               }}
                               style={{ width: "100%" }}
                             >
-                              Legg til øvelse manuelt
+                              {t("muscleMap.addManual")}
                             </Button>
                           </>
                         ) : (
                           (session.session_exercises || []).map(ex => {
-                            const muscleLabels = (ex.muscle_activations || []).map(ma => MUSCLES[ma.muscle_id]?.label || ma.muscle_id).join(", ");
+                            const muscleLabels = (ex.muscle_activations || []).map(ma => t(`muscles.${ma.muscle_id}`, { defaultValue: MUSCLES[ma.muscle_id]?.label || ma.muscle_id })).join(", ");
                             return (
                               <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--border-subtle-wl)", color: "var(--cds-text-primary)" }}>
                                 <span>
@@ -747,7 +703,7 @@ export default function History({ initialDate }) {
                       {!isEditing && (
                         <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
                           <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                            Muskelgrupper
+                            {t("history.muscleGroups")}
                           </p>
                           {sessionMuscles.primary.map(id => {
                             const exNames = (sessionMuscleMap[id] || []).join(", ");
@@ -756,10 +712,10 @@ export default function History({ initialDate }) {
                                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
                                 <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>
                                   {exNames ? (
-                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
-                                  ) : MUSCLES[id]?.label || id}
+                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</DefinitionTooltip>
+                                  ) : t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                                 </span>
-                                <Tag type="green" size="sm">Primær</Tag>
+                                <Tag type="green" size="sm">{t("common.primary")}</Tag>
                               </div>
                             );
                           })}
@@ -770,10 +726,10 @@ export default function History({ initialDate }) {
                                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
                                 <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>
                                   {exNames ? (
-                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{MUSCLES[id]?.label || id}</DefinitionTooltip>
-                                  ) : MUSCLES[id]?.label || id}
+                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</DefinitionTooltip>
+                                  ) : t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
                                 </span>
-                                <Tag type="blue" size="sm">Sekundær</Tag>
+                                <Tag type="blue" size="sm">{t("common.secondary")}</Tag>
                               </div>
                             );
                           })}
@@ -784,25 +740,25 @@ export default function History({ initialDate }) {
                       {isEditing && (
                         <>
                           {analyzeError && (
-                            <InlineNotification kind="error" title="Feil:" subtitle={analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
+                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
                           )}
                           {editError && (
-                            <InlineNotification kind="error" title="Feil:" subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
+                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
                           )}
                           <input ref={fileRef} id="session-image-upload" name="session-image-upload" type="file" accept="image/*" style={{ display: "none" }}
                             onChange={(e) => { if (e.target.files[0]) reanalyze(e.target.files[0]); e.target.value = ""; }} />
                           <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                             <Button kind="secondary" renderIcon={analyzing ? Renew : Camera} disabled={analyzing} onClick={() => fileRef.current?.click()}>
-                              {analyzing ? "Analyserer…" : "Re-analyser"}
+                              {analyzing ? t("history.analyzing") : t("history.reanalyze")}
                             </Button>
-                            <Button kind="ghost" onClick={cancelEdit}>Avbryt</Button>
+                            <Button kind="ghost" onClick={cancelEdit}>{t("common.cancel")}</Button>
                             <Button
                               kind="primary"
                               disabled={editSaving || hasEditErrors}
                               onClick={saveEdit}
                               style={{ marginLeft: "auto" }}
                             >
-                              {editSaving ? "Lagrer…" : "Lagre"}
+                              {editSaving ? t("common.saving") : t("common.save")}
                             </Button>
                           </div>
                         </>
@@ -811,7 +767,7 @@ export default function History({ initialDate }) {
                       {/* Read mode: edit button (hidden when any session is in edit mode) */}
                       {!editMode && (
                         <Button kind="ghost" renderIcon={EditIcon} onClick={() => enterEditMode(session)}>
-                          Rediger økt
+                          {t("history.editSession")}
                         </Button>
                       )}
                     </div>
@@ -824,7 +780,7 @@ export default function History({ initialDate }) {
 
         {!loading && sessions.length === 0 && (
           <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
-            Ingen økter lagret ennå.
+            {t("history.noSessions")}
           </p>
         )}
 

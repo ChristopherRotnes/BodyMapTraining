@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { Book } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
 import { fetchTemplates } from "../lib/db";
 import { logDevError } from "../lib/utils";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
 export default function TemplatePicker({ onBack, onSelectTemplate }) {
+  const { t } = useTranslation();
   const { onShowBibliotek } = useNav();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,26 +25,26 @@ export default function TemplatePicker({ onBack, onSelectTemplate }) {
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <BackButton onClick={onBack} />
-        <PageTitle>Velg mal</PageTitle>
+        <PageTitle>{t("templatePicker.title")}</PageTitle>
 
         <p style={{ fontSize: 14, color: "var(--cds-text-secondary)", marginBottom: 20 }}>
-          Velg en mal for å starte en økt med forhåndsutfylte øvelser.
+          {t("templatePicker.description")}
         </p>
 
         {error && (
-          <InlineNotification kind="error" title="Feil:" subtitle={error} hideCloseButton
+          <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={error} hideCloseButton
             style={{ marginBottom: 16 }} />
         )}
 
         {loading ? (
-          <InlineLoading description="Laster maler…" status="active" />
+          <InlineLoading description={t("templatePicker.loading")} status="active" />
         ) : templates.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <p style={{ fontSize: 14, color: "var(--cds-text-secondary)", marginBottom: 16 }}>
-              Ingen maler opprettet ennå.
+              {t("templatePicker.noTemplates")}
             </p>
             <Button kind="primary" renderIcon={Book} onClick={onShowBibliotek}>
-              Gå til biblioteket
+              {t("templatePicker.goToLibrary")}
             </Button>
           </div>
         ) : (
@@ -76,8 +78,8 @@ export default function TemplatePicker({ onBack, onSelectTemplate }) {
                     {tpl.name}
                   </span>
                   <span style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
-                    {exCount} {exCount === 1 ? "øvelse" : "øvelser"}
-                    {usedAt ? ` · Sist brukt ${usedAt}` : ""}
+                    {t("templatePicker.exerciseCount", { count: exCount })}
+                    {usedAt ? ` · ${t("templatePicker.lastUsed", { date: usedAt })}` : ""}
                   </span>
                 </button>
               );

@@ -1,3 +1,4 @@
+import './lib/i18n.js';
 import './styles/carbon.scss';
 import './styles/carbon-tokens.css';
 import './styles/app.css';

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Button } from "@carbon/react";
+import { useTranslation } from "react-i18next";
 import { BodySVG, useIsMobile } from "../lib/bodymap.jsx";
 
 // Renders a front+back body map pair: side-by-side on desktop, toggled on mobile.
 // Manages its own mobile view state so parents don't need to.
 export default function BodyPanel({ primary, secondary, muscleMap, marginBottom = 16, onHover, hovered }) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [mobileView, setMobileView] = useState("front");
 
@@ -15,7 +17,7 @@ export default function BodyPanel({ primary, secondary, muscleMap, marginBottom 
           {["front", "back"].map(v => (
             <Button key={v} kind={mobileView === v ? "primary" : "ghost"} size="sm"
               onClick={() => setMobileView(v)}>
-              {v === "front" ? "Front" : "Bak"}
+              {v === "front" ? t("bodyPanel.front") : t("bodyPanel.back")}
             </Button>
           ))}
         </div>

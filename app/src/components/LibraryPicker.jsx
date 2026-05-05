@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, TextInput } from "@carbon/react";
+import { useTranslation } from "react-i18next";
 
 // Searchable picker that shows library exercises and lets the user add one to a list.
 // Props:
@@ -7,6 +8,7 @@ import { Button, TextInput } from "@carbon/react";
 //   onAdd(exercise)  — called when user clicks an exercise
 //   onClose()        — called when user dismisses the picker
 export default function LibraryPicker({ libraryExercises, onAdd, onClose }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const filtered = query.trim()
     ? libraryExercises.filter(e => e.name.toLowerCase().includes(query.toLowerCase()))
@@ -21,16 +23,16 @@ export default function LibraryPicker({ libraryExercises, onAdd, onClose }) {
     }}>
       <TextInput
         id="library-picker-search"
-        labelText="Søk i øvelsesbiblioteket"
+        labelText={t("libraryPicker.searchLabel")}
         value={query}
         onChange={e => setQuery(e.target.value)}
-        placeholder="Skriv for å filtrere…"
+        placeholder={t("libraryPicker.searchPlaceholder")}
         style={{ marginBottom: 8 }}
         autoFocus
       />
       <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2, marginBottom: 12 }}>
         {filtered.length === 0 ? (
-          <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", padding: "8px 0" }}>Ingen treff.</p>
+          <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", padding: "8px 0" }}>{t("libraryPicker.noResults")}</p>
         ) : (
           filtered.map(ex => (
             <button
@@ -59,7 +61,7 @@ export default function LibraryPicker({ libraryExercises, onAdd, onClose }) {
           ))
         )}
       </div>
-      <Button kind="secondary" size="sm" onClick={onClose}>Lukk</Button>
+      <Button kind="secondary" size="sm" onClick={onClose}>{t("libraryPicker.close")}</Button>
     </div>
   );
 }

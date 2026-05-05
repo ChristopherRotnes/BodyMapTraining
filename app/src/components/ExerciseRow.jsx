@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Checkbox, Button } from "@carbon/react";
 import { TrashCan } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
 import { isInvalidNum } from "../lib/utils";
 
 export default function ExerciseRow({
@@ -11,6 +12,7 @@ export default function ExerciseRow({
   validateNumbers = false,
   autoFocusName = false,
 }) {
+  const { t } = useTranslation();
   const [editingName, setEditingName] = useState(autoFocusName);
 
   const bg = layer === "layer-02" ? "var(--cds-layer-02)" : "var(--cds-layer-01)";
@@ -46,7 +48,7 @@ export default function ExerciseRow({
             autoFocus
             id={`ex-name-${exercise.id}`}
             name={`ex-name-${exercise.id}`}
-            aria-label="Øvelsenavn"
+            aria-label={t("exerciseRow.nameAriaLabel")}
             value={exercise.name}
             onChange={(e) => onChange({ name: e.target.value, standardName: e.target.value })}
             onBlur={() => setEditingName(false)}
@@ -71,9 +73,9 @@ export default function ExerciseRow({
             {exercise.name?.trim() ? (
               exercise.name
             ) : nameInvalid ? (
-              <span style={{ color: "var(--cds-support-error)" }}>Påkrevd</span>
+              <span style={{ color: "var(--cds-support-error)" }}>{t("exerciseRow.nameRequired")}</span>
             ) : (
-              <span style={{ color: "var(--cds-text-secondary)" }}>Klikk for å skrive øvelse…</span>
+              <span style={{ color: "var(--cds-text-secondary)" }}>{t("exerciseRow.namePlaceholder")}</span>
             )}
           </div>
         )}
@@ -92,7 +94,9 @@ export default function ExerciseRow({
                 placeholder="–"
                 id={`ex-${field}-${exercise.id}`}
                 name={`ex-${field}-${exercise.id}`}
-                aria-label={field === "sets" ? `Sett for ${exercise.name || "øvelse"}` : `Reps for ${exercise.name || "øvelse"}`}
+                aria-label={field === "sets"
+                  ? t("exerciseRow.setsLabel", { name: exercise.name || t("common.exercises") })
+                  : t("exerciseRow.repsLabel", { name: exercise.name || t("common.exercises") })}
                 aria-invalid={isFieldInvalid || undefined}
                 aria-describedby={isFieldInvalid ? errorId : undefined}
                 value={exercise[field] || ""}
@@ -110,14 +114,14 @@ export default function ExerciseRow({
                 }}
               />
               <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                {field === "sets" ? "sett" : "reps"}
+                {field === "sets" ? t("common.sets") : t("common.reps")}
               </span>
               {isFieldInvalid && (
                 <span
                   id={errorId}
                   style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
                 >
-                  Ugyldig antall – skriv inn 1 til 99
+                  {t("exerciseRow.invalidNumber")}
                 </span>
               )}
             </div>
@@ -129,7 +133,7 @@ export default function ExerciseRow({
         kind="ghost"
         hasIconOnly
         renderIcon={TrashCan}
-        iconDescription="Slett øvelse"
+        iconDescription={t("exerciseRow.deleteExercise")}
         size="sm"
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
       />

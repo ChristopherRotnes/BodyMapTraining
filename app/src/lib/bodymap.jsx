@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export const EX_DB = [
   { kw: ["benkpress","bench press","chest press","push up","pushup","armhevinger","brystpress","flies","fly","pec deck"], p: ["chest"], s: ["shoulders_front","triceps"] },
@@ -122,6 +123,7 @@ function Shape({ sh, i, fill, stroke, strokeWidth = "0.8", strokeDasharray }) {
 }
 
 export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {}, onHover, hovered, gaps = [] }) {
+  const { t } = useTranslation();
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
   const wrapRef = React.useRef();
@@ -169,7 +171,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
       onKeyDown={e => { if (e.key === "Escape") { setTooltip(null); setFocused(null); if (onHover) onHover(null); } }}>
       <svg viewBox="0 0 160 375" xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label={`Treningsfrekvenskart, ${view === "front" ? "fremside" : "bakside"}`}
+        aria-label={t("bodymap.freqMapLabel", { view: view === "front" ? t("bodymap.front") : t("bodymap.back") })}
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
@@ -191,12 +193,12 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
             const isFocused = focused === id;
             const { primary = 0, secondary = 0 } = counts[id] || {};
             const isTrained = primary > 0 || secondary > 0;
-            const label = MUSCLES[id]?.label ?? id;
+            const label = t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label ?? id });
             const ariaLabel = primary > 0
-              ? `${label} – primær: ${primary} ${primary === 1 ? "økt" : "økter"}`
+              ? t("bodymap.ariaPrimary", { count: primary, muscle: label })
               : secondary > 0
-                ? `${label} – sekundær: ${secondary} ${secondary === 1 ? "økt" : "økter"}`
-                : `${label} – ikke trent`;
+                ? t("bodymap.ariaSecondary", { count: secondary, muscle: label })
+                : t("bodymap.ariaNotTrained", { muscle: label });
 
             let fill, stroke;
             if (primary > 0) {
@@ -260,7 +262,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
           minWidth: 130,
         }}>
           <div style={{ fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "1px", marginBottom: 4, fontFamily: "var(--cds-font-mono)" }}>
-            {MUSCLES[tooltip.id]?.label?.toUpperCase()}
+            {t(`muscles.${tooltip.id}`, { defaultValue: MUSCLES[tooltip.id]?.label })?.toUpperCase()}
           </div>
           {(() => {
             const { primary = 0, secondary = 0 } = counts[tooltip.id] || {};
@@ -268,20 +270,20 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
             return (
               <>
                 <div style={{ fontSize: 12, color: "var(--cds-text-primary)" }}>
-                  Primær: {primary} {primary === 1 ? "økt" : "økter"}
+                  {t("bodymap.primaryLabel")}: {primary} {primary === 1 ? t("common.session") : t("common.sessions")}
                 </div>
                 {secondary > 0 && (
                   <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
-                    Sekundær: {secondary} {secondary === 1 ? "økt" : "økter"}
+                    {t("bodymap.secondaryLabel")}: {secondary} {secondary === 1 ? t("common.session") : t("common.sessions")}
                   </div>
                 )}
                 {volumeMap[tooltip.id] > 0 && (
                   <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
-                    Totalt: {volumeMap[tooltip.id]} sett
+                    {t("bodymap.totalLabel")}: {volumeMap[tooltip.id]} {t("common.sets")}
                   </div>
                 )}
                 {primary === 0 && secondary === 0 && (
-                  <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>Ikke trent</div>
+                  <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>{t("bodymap.notTrained")}</div>
                 )}
                 {exNames.length > 0 && (
                   <div style={{ marginTop: 6, borderTop: "1px solid var(--cds-border-subtle-01)", paddingTop: 5 }}>
@@ -300,6 +302,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
 }
 
 export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hovered, gaps = [] }) {
+  const { t } = useTranslation();
   const pSet = new Set(primary);
   const sSet = new Set(secondary);
   const [tooltip, setTooltip] = React.useState(null);
@@ -346,7 +349,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
       onKeyDown={e => { if (e.key === "Escape") { setTooltip(null); setFocused(null); if (onHover) onHover(null); } }}>
       <svg viewBox="0 0 160 375" xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label={`Muskelkart, ${view === "front" ? "fremside" : "bakside"}. Primære: ${[...pSet].map(id => MUSCLES[id]?.label).filter(Boolean).join(", ") || "ingen"}.`}
+        aria-label={`${t("bodymap.mapLabel", { view: view === "front" ? t("bodymap.front") : t("bodymap.back") })}. ${[...pSet].map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label })).filter(Boolean).join(", ") || t("common.none")}.`}
         style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
           <pattern id={`sec-stripe-${view}`} patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45 0 0)">
@@ -369,8 +372,8 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
             if (!isPrimary && !isSec) return null;
             const isHovered = onHover ? id === hovered : tooltip?.id === id;
             const isFocused = focused === id;
-            const label = MUSCLES[id]?.label ?? id;
-            const ariaLabel = `${label} – ${isPrimary ? "primær" : "sekundær"}`;
+            const label = t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label ?? id });
+            const ariaLabel = `${label} – ${isPrimary ? t("bodymap.primaryLabel") : t("bodymap.secondaryLabel")}`;
             const fill = isPrimary
               ? (isHovered ? PRIMARY_HOVER : PRIMARY_FILL)
               : `url(#sec-stripe-${view})`;
@@ -425,7 +428,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
           maxWidth: 160,
         }}>
           <div style={{ fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "1px", marginBottom: 5, fontFamily: "var(--cds-font-mono)" }}>
-            {MUSCLES[tooltip.id]?.label?.toUpperCase()}
+            {t(`muscles.${tooltip.id}`, { defaultValue: MUSCLES[tooltip.id]?.label })?.toUpperCase()}
           </div>
           {muscleMap[tooltip.id].map((ex, i) => (
             <div key={i} style={{ fontSize: 12, color: "var(--cds-text-primary)", padding: "2px 0", borderBottom: i < muscleMap[tooltip.id].length - 1 ? "1px solid var(--cds-border-subtle-01)" : "none" }}>
