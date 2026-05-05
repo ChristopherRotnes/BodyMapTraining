@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Button, InlineNotification, InlineLoading,
   TextInput, Modal,
@@ -17,6 +17,12 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
 
   const [tabIndex, setTabIndex] = useState(initialTab);
   const [exSearch, setExSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(exSearch), 200);
+    return () => clearTimeout(t);
+  }, [exSearch]);
 
   const [exercises, setExercises] = useState([]);
   const [exLoading, setExLoading] = useState(true);
@@ -45,9 +51,12 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
       .finally(() => setTplLoading(false));
   }, []);
 
-  const filteredExercises = exSearch.trim()
-    ? exercises.filter(e => e.name.toLowerCase().includes(exSearch.toLowerCase().trim()))
-    : exercises;
+  const filteredExercises = useMemo(
+    () => debouncedSearch.trim()
+      ? exercises.filter(e => e.name.toLowerCase().includes(debouncedSearch.toLowerCase().trim()))
+      : exercises,
+    [exercises, debouncedSearch]
+  );
 
   const handleSaveNewExercise = async (fields) => {
     setSavingEx(true);

@@ -125,6 +125,9 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
   const wrapRef = React.useRef();
+  const rafRef = React.useRef(null);
+
+  React.useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
 
   const handleEnter = (id, e) => {
     if (onHover) { onHover(id); return; }
@@ -134,9 +137,14 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   };
   const handleMove = (id, e) => {
     if (onHover) return;
-    const rect = wrapRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
+    if (rafRef.current) return;
+    const cx = e.clientX, cy = e.clientY;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const rect = wrapRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltip({ id, x: cx - rect.left, y: cy - rect.top });
+    });
   };
   const handleLeave = () => {
     if (onHover) { onHover(null); return; }
@@ -297,6 +305,9 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
   const wrapRef = React.useRef();
+  const rafRef = React.useRef(null);
+
+  React.useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
 
   const handleEnter = (id, e) => {
     if (onHover) { onHover(id); return; }
@@ -306,9 +317,14 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
   };
   const handleMove = (id, e) => {
     if (onHover) return;
-    const rect = wrapRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setTooltip({ id, x: e.clientX - rect.left, y: e.clientY - rect.top });
+    if (rafRef.current) return;
+    const cx = e.clientX, cy = e.clientY;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const rect = wrapRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltip({ id, x: cx - rect.left, y: cy - rect.top });
+    });
   };
   const handleLeave = () => {
     if (onHover) { onHover(null); return; }

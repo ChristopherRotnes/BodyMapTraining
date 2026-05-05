@@ -33,13 +33,16 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
   const firstDOW = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const cells = [];
-  for (let i = 0; i < firstDOW; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) {
-    const mm = String(month + 1).padStart(2, "0");
-    const dd = String(d).padStart(2, "0");
-    cells.push(`${year}-${mm}-${dd}`);
-  }
+  const cells = useMemo(() => {
+    const c = [];
+    for (let i = 0; i < firstDOW; i++) c.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const mm = String(month + 1).padStart(2, "0");
+      const dd = String(d).padStart(2, "0");
+      c.push(`${year}-${mm}-${dd}`);
+    }
+    return c;
+  }, [year, month, firstDOW, daysInMonth]);
 
   return (
     <div>
@@ -244,9 +247,19 @@ export default function History({ initialDate }) {
     if (initialDate) loadSession(initialDate);
   }, []);
 
-  const filteredSessions = muscleFilter.length === 0 ? sessions
-    : sessions.filter(s => muscleFilter.some(id => sessionMuscleIds(s).has(id)));
-  const filteredTrainedSet = new Set(filteredSessions.map(s => s.session_date));
+  const sessionMuscleIdMap = useMemo(
+    () => new Map(sessions.map(s => [s.id, sessionMuscleIds(s)])),
+    [sessions]
+  );
+  const filteredSessions = useMemo(
+    () => muscleFilter.length === 0 ? sessions
+      : sessions.filter(s => muscleFilter.some(id => (sessionMuscleIdMap.get(s.id) ?? new Set()).has(id))),
+    [sessions, muscleFilter, sessionMuscleIdMap]
+  );
+  const filteredTrainedSet = useMemo(
+    () => new Set(filteredSessions.map(s => s.session_date)),
+    [filteredSessions]
+  );
 
   const sessionCountMap = useMemo(() => {
     const map = {};
@@ -426,7 +439,7 @@ export default function History({ initialDate }) {
       : [...muscleFilter, id];
     setMuscleFilter(newFilter);
     if (!selectedDate && newFilter.length > 0) {
-      const matching = sessions.filter(s => newFilter.some(mid => sessionMuscleIds(s).has(mid)));
+      const matching = sessions.filter(s => newFilter.some(mid => (sessionMuscleIdMap.get(s.id) ?? new Set()).has(mid)));
       const todayStr = format(today, "yyyy-MM-dd");
       const dates = matching.map(s => s.session_date).sort();
       const target = dates.includes(todayStr) ? todayStr : dates[dates.length - 1];
@@ -537,8 +550,8 @@ export default function History({ initialDate }) {
 
             {[...daySessions].sort((a, b) => {
               if (!muscleFilter.length) return 0;
-              const aMatch = muscleFilter.some(id => sessionMuscleIds(a).has(id));
-              const bMatch = muscleFilter.some(id => sessionMuscleIds(b).has(id));
+              const aMatch = muscleFilter.some(id => (sessionMuscleIdMap.get(a.id) ?? new Set()).has(id));
+              const bMatch = muscleFilter.some(id => (sessionMuscleIdMap.get(b.id) ?? new Set()).has(id));
               return aMatch === bMatch ? 0 : aMatch ? -1 : 1;
             }).map((session) => {
               const isEditing = editMode && selectedSession?.id === session.id;
@@ -546,7 +559,7 @@ export default function History({ initialDate }) {
               const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
               const sessionMuscleMap = isEditing ? buildMuscleMapFromExercises(editExercises) : buildMuscleMapFromSession(session);
               const exCount = (session.session_exercises || []).filter(e => e.name).length;
-              const musIds = sessionMuscleIds(session);
+              const musIds = sessionMuscleIdMap.get(session.id) ?? new Set();
               const isFilterMatch = muscleFilter.length > 0 && muscleFilter.some(id => musIds.has(id));
               const matchedLabels = isFilterMatch
                 ? muscleFilter.filter(id => musIds.has(id)).map(id => MUSCLES[id]?.label || id)
