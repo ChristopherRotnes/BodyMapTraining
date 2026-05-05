@@ -3,7 +3,7 @@ import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { ChevronLeft, ChevronRight, Add, Close, TrashCan } from "@carbon/icons-react";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
 import { buildMuscleMapFromExercises } from "../lib/utils";
-import { toWeekIso, weekIsoToMonday } from "../lib/utils";
+import { toWeekIso } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import { logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, StickyCta, AccentChip } from "./PageShell";
