@@ -117,7 +117,7 @@ export function BackButton({ onClick }) {
 }
 
 export default function PageShell({ children }) {
-  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowSettings } = useNav();
+  const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowSettings, onShowPlanlegger } = useNav();
 
   return (
     <div style={{ background: "var(--bg-canvas)", minHeight: "100vh" }}>
@@ -164,7 +164,7 @@ export default function PageShell({ children }) {
             <NavBtn ariaLabel="Bibliotek" onClick={onShowBibliotek} active={currentView === "bibliotek"}>
               <Book size={20} />
             </NavBtn>
-            <NavBtn ariaLabel="Gymtimer">
+            <NavBtn ariaLabel="Planlegg uke" onClick={onShowPlanlegger} active={currentView === "planlegger"}>
               <EventSchedule size={20} />
             </NavBtn>
             <NavBtn ariaLabel="Innstillinger" onClick={onShowSettings} active={currentView === "settings"}>
