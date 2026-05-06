@@ -239,6 +239,7 @@
     "confirmDelete": "Remove the entire week plan?",
     "removeWeek": "Remove week",
     "savePlan": "Save plan",
+    "planSaved": "Plan saved",
     "selectTemplate": "Select template",
     "noTemplates": "No templates created yet.",
     "loadingPlan": "Loading plan…",

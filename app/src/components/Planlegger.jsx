@@ -207,6 +207,7 @@ export default function Planlegger() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
@@ -358,6 +359,8 @@ export default function Planlegger() {
         .map(([dow, tpl]) => ({ day_of_week: parseInt(dow, 10), template_id: tpl.id }));
       await saveWeekPlan(weekIso, asgn);
       setSavedAssignments({ ...assignments });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
     } catch (e) {
       logDevError("Planlegger/saveWeekPlan", e);
       setSaveError(e.message);
@@ -592,10 +595,14 @@ export default function Planlegger() {
               kind="primary"
               size="md"
               onClick={handleSave}
-              disabled={saving || deleting}
+              disabled={saving || saveSuccess || deleting}
               style={{ flex: 1 }}
             >
-              {saving ? <InlineLoading description={t("common.saving")} status="active" /> : t("planlegger.savePlan")}
+              {saving
+                ? <InlineLoading description={t("common.saving")} status="active" />
+                : saveSuccess
+                  ? <InlineLoading description={t("planlegger.planSaved")} status="finished" />
+                  : t("planlegger.savePlan")}
             </Button>
           </div>
         </StickyCta>

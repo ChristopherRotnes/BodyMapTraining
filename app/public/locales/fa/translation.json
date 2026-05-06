@@ -239,6 +239,7 @@
     "confirmDelete": "کل برنامه هفتگی حذف شود؟",
     "removeWeek": "حذف هفته",
     "savePlan": "ذخیره برنامه",
+    "planSaved": "برنامه ذخیره شد",
     "selectTemplate": "انتخاب قالب",
     "noTemplates": "هنوز قالبی ایجاد نشده.",
     "loadingPlan": "در حال بارگذاری برنامه…",

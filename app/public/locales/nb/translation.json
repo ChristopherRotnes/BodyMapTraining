@@ -239,6 +239,7 @@
     "confirmDelete": "Fjerne hele ukeplanen?",
     "removeWeek": "Fjern uke",
     "savePlan": "Lagre plan",
+    "planSaved": "Plan lagret",
     "selectTemplate": "Velg mal",
     "noTemplates": "Ingen maler opprettet ennå.",
     "loadingPlan": "Laster plan…",

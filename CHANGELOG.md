@@ -2,6 +2,13 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.0-rc.3] — 2026-05-06
+
+### Fixed
+- **Planlegger save feedback** — "Lagre plan" button now cycles through a spinner then a green checkmark ("Plan lagret") for 2.5 s after a successful save, so users know the plan was stored (#142)
+
+---
+
 ## [1.2.0-rc.2] — 2026-05-06
 
 ### Added
