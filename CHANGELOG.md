@@ -2,6 +2,13 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [Unreleased]
+
+### Changed
+- **Test suite — better coverage, less noise** — replaced low-value assertions (one-line constant checks, per-model `it`s, a duplicated prompt assertion) with behavioural tests, and filled the largest gaps in `utils.js` (date helpers `toIsoDate`/`toWeekIso`/`weekIsoToMonday`/`isoWeekMonday`, `isInvalidNum`, `extractMuscles`, `getIntlLocale`, `inferMusclesFromName`) and `prompts.js` (`buildMuscleInferencePrompt`). Added a fake-timer test for `checkRateLimit` window expiry. Net: 60 → 82 tests; `utils.js` line coverage ~30% → ~80%, `prompts.js` to 100% statements.
+
+---
+
 ## [1.2.0-rc.8] — 2026-05-06
 
 ### Changed

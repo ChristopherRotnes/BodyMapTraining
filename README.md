@@ -42,6 +42,16 @@ cd api && npm install
 
 `app/.env.test` is committed with placeholder values — no setup needed. It lets the Vitest test runner import `supabase.js` without crashing (unit tests make no real Supabase calls).
 
+Run the test suite from `app/`:
+
+```bash
+npm test           # one-shot
+npm run test:ci    # one-shot with v8 coverage
+npm run test:watch # watch mode
+```
+
+Tests live next to the modules they cover under `app/src/lib/__tests__/` and `app/api/__tests__/`. The suite is intentionally pure-logic — reducers, date helpers, validators, prompt builders, the Claude/JWT proxy guards — so it runs in milliseconds and needs no DOM or live Supabase.
+
 Add the following to Supabase **Authentication → URL Configuration → Additional redirect URLs**:
 
 | URL | Purpose |

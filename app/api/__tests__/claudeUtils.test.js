@@ -8,23 +8,11 @@ import {
 } from '../claudeUtils.js';
 
 describe('ALLOWED_MODELS', () => {
-  it('allows claude-sonnet-4-6', () => {
-    expect(ALLOWED_MODELS.has('claude-sonnet-4-6')).toBe(true);
+  it('contains exactly the two production model IDs', () => {
+    expect([...ALLOWED_MODELS].sort()).toEqual(['claude-opus-4-5', 'claude-sonnet-4-6']);
   });
 
-  it('allows claude-opus-4-5', () => {
-    expect(ALLOWED_MODELS.has('claude-opus-4-5')).toBe(true);
-  });
-
-  it('rejects unknown models', () => {
-    expect(ALLOWED_MODELS.has('gpt-4')).toBe(false);
-    expect(ALLOWED_MODELS.has('claude-3-opus')).toBe(false);
-    expect(ALLOWED_MODELS.has('')).toBe(false);
-  });
-});
-
-describe('MAX_TOKENS_LIMIT', () => {
-  it('is 2000', () => {
+  it('caps max_tokens at 2000', () => {
     expect(MAX_TOKENS_LIMIT).toBe(2000);
   });
 });
@@ -32,27 +20,29 @@ describe('MAX_TOKENS_LIMIT', () => {
 describe('checkRateLimit', () => {
   beforeEach(() => {
     clearRateLimitMap();
+    vi.useRealTimers();
   });
 
-  it('allows the first request', () => {
-    expect(checkRateLimit('user1')).toBe(true);
-  });
-
-  it('allows up to 10 requests within a window', () => {
+  it('allows up to 10 requests within a window then blocks the 11th', () => {
     for (let i = 0; i < 10; i++) {
-      expect(checkRateLimit('user2')).toBe(true);
+      expect(checkRateLimit('user1')).toBe(true);
     }
-  });
-
-  it('blocks the 11th request within a window', () => {
-    for (let i = 0; i < 10; i++) checkRateLimit('user3');
-    expect(checkRateLimit('user3')).toBe(false);
+    expect(checkRateLimit('user1')).toBe(false);
   });
 
   it('rate limits each user independently', () => {
     for (let i = 0; i < 10; i++) checkRateLimit('userA');
     expect(checkRateLimit('userA')).toBe(false);
     expect(checkRateLimit('userB')).toBe(true);
+  });
+
+  it('allows new requests after the window expires', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    for (let i = 0; i < 10; i++) checkRateLimit('user2');
+    expect(checkRateLimit('user2')).toBe(false);
+    vi.advanceTimersByTime(61_000);
+    expect(checkRateLimit('user2')).toBe(true);
   });
 });
 

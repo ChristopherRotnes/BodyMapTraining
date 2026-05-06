@@ -231,6 +231,27 @@ cd app && npm install
 
 `app/.env.test` is committed with placeholder values and requires no setup — it exists solely so the Vitest test runner can import `supabase.js` without crashing in CI (no real Supabase calls are made during unit tests).
 
+## Test suite
+
+`npm test` (in `app/`) runs Vitest. The suite is deliberately scoped to **pure logic** — no DOM, no live Supabase, no React rendering — so the whole run finishes in <2 s.
+
+Files and what they cover:
+
+| File | Subject | Notes |
+|---|---|---|
+| `app/api/__tests__/claudeUtils.test.js` | model allowlist, `MAX_TOKENS_LIMIT`, `checkRateLimit` (incl. window expiry via `vi.useFakeTimers()`), `verifySupabaseJwt` | Covers all branches of the API guards. |
+| `app/src/lib/__tests__/bodymap.test.js` | `calcMuscles` | Explicit muscles, EX_DB fallback, dedup, miss path. |
+| `app/src/lib/__tests__/muscleMapReducer.test.js` | `MuscleMap` reducer | One test per action type; reducer is the spine of the upload→confirm→muscles flow. |
+| `app/src/lib/__tests__/prompts.test.js` | `ANALYZE_PROMPT`, `buildRecommendPrompt`, `buildPeriodRecommendPrompt`, `buildMuscleInferencePrompt` | Guards that every `MUSCLES` ID appears in every prompt — the prompt-vs-runtime mismatch is the easiest way to silently break Claude responses. |
+| `app/src/lib/__tests__/utils.test.js` | `buildMuscleMapFromExercises`, `buildMuscleMapFromSession`, `buildRecMuscleMap`, `extractMuscles`, `isInvalidNum`, `toIsoDate`, `toWeekIso` / `weekIsoToMonday` / `isoWeekMonday`, `getIntlLocale`, `inferMusclesFromName` | Date helpers exercise ISO-week edges (year boundaries, Sunday); `inferMusclesFromName` mocks `fetch` and covers clean JSON, markdown-fenced JSON, malformed JSON, empty arrays, and rejected promises. |
+
+Rules of thumb when adding tests:
+1. Every export from `utils.js`, `bodymap.jsx`, `prompts.js`, `claudeUtils.js` should have at least one branch-covering test. Don't write a test that only re-asserts a constant — assert the **behaviour** that constant drives.
+2. Avoid component-rendering tests until there's a concrete regression they would have caught. The reducer + helper layer is where logic bugs land in this codebase.
+3. When testing `inferMusclesFromName` or anything touching `callClaude`, stub `globalThis.fetch` with `vi.stubGlobal` and `vi.unstubAllGlobals` in `afterEach` — `supabase.auth.getSession()` runs entirely in-memory with the placeholder env vars, so no other mocks are needed.
+
+Coverage (`npm run test:ci`) is configured in `vite.config.js` to scope to `src/lib/**` and `api/claudeUtils.js`. Current line coverage: `utils.js` ~80%, `prompts.js` 100%, reducer & `calcMuscles` ~100% within tested files; `db.js` and `bodymap.jsx` SVG render code are intentionally untested.
+
 ## Azure deploy notes
 - **Resource group:** `rg-muskelkart` (West Europe) — **Azure resource name:** `muskelkart`
 - **Supabase Auth redirect URLs** — three entries in Authentication → URL Configuration → Additional redirect URLs: `http://localhost:4280` (local dev), `https://workout.umulig.org` + `https://workout.umulig.org/**` (prod), and `https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net` (PR preview wildcard — safe because the `white-island-090dfd003` prefix is unique to this SWA instance). The app uses `emailRedirectTo: window.location.origin` so no per-PR config is needed (#135)

@@ -1,14 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { MUSCLES } from '../bodymap.jsx';
-import { ANALYZE_PROMPT, buildRecommendPrompt, buildPeriodRecommendPrompt } from '../prompts.js';
+import {
+  ANALYZE_PROMPT,
+  buildRecommendPrompt,
+  buildPeriodRecommendPrompt,
+  buildMuscleInferencePrompt,
+} from '../prompts.js';
 
 const allIds = Object.keys(MUSCLES);
 
 describe('prompts muscle ID list', () => {
-  it('ANALYZE_PROMPT contains every muscle ID from MUSCLES', () => {
-    for (const id of allIds) {
-      expect(ANALYZE_PROMPT).toContain(id);
-    }
+  it('ANALYZE_PROMPT contains every muscle ID from MUSCLES in canonical order', () => {
+    expect(ANALYZE_PROMPT).toContain(allIds.join(', '));
   });
 
   it('buildRecommendPrompt contains every muscle ID from MUSCLES', () => {
@@ -25,8 +28,11 @@ describe('prompts muscle ID list', () => {
     }
   });
 
-  it('muscle ID list in ANALYZE_PROMPT matches Object.keys(MUSCLES) exactly', () => {
-    const expected = allIds.join(', ');
-    expect(ANALYZE_PROMPT).toContain(expected);
+  it('buildMuscleInferencePrompt embeds the input name and every muscle ID', () => {
+    const prompt = buildMuscleInferencePrompt('Markløft');
+    expect(prompt).toContain('Markløft');
+    for (const id of allIds) {
+      expect(prompt).toContain(id);
+    }
   });
 });
