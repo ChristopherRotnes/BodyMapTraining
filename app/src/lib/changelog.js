@@ -2,6 +2,15 @@
 // Keep in sync with CHANGELOG.md and package.json when releasing.
 export const CHANGELOG = [
   {
+    version: "1.1.0",
+    date: "2026-05-06",
+    items: [
+      "Språkstøtte — velg mellom Norsk, English og فارسی (RTL) i innstillinger",
+      "Planlegger — legg opp treningsuken med maler og se projisert muskeldekning",
+      "Innstillingssiden er omstrukturert — språk og tema øverst, utlogging nederst",
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-05-03",
     items: [
