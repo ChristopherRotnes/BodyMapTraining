@@ -23,7 +23,8 @@
     "front": "Front",
     "back_view": "Bak",
     "saveFailed": "Lagring feilet. Prøv igjen.",
-    "add": "Legg til"
+    "add": "Legg til",
+    "discard": "Forkast"
   },
   "muscles": {
     "chest": "Bryst",
@@ -151,7 +152,8 @@
     "savingError": "Lagring feilet",
     "progressLabel": "Fremgang",
     "primaryTag": "Primær",
-    "secondaryTag": "Sekundær"
+    "secondaryTag": "Sekundær",
+    "confirmLabel": "Bekreft økt"
   },
   "history": {
     "sectionLabel": "HISTORIKK",
@@ -163,11 +165,9 @@
     "primaryCount": "Primær ({{count}})",
     "secondaryCount": "Sekundær ({{count}})",
     "reanalyze": "Re-analyser",
+    "reuploadPhoto": "Last opp nytt bilde",
     "analyzing": "Analyserer…",
     "editSession": "Rediger økt",
-    "shareWithColleagues": "Del med andre instruktører",
-    "shareOn": "Delt",
-    "shareOff": "Privat",
     "classHistory": "Kolleger i denne klassen",
     "classHistoryLoading": "Henter kollegaøkter…",
     "classHistoryError": "Kunne ikke hente kollegaøkter",
@@ -228,7 +228,10 @@
     "usedInTemplates_one": "Øvelsen brukes i malen",
     "usedInTemplates_other": "Øvelsen brukes i malene",
     "exerciseRemovedWarning": "og vil bli fjernet derfra.",
-    "exerciseCount": "{{count}} ØV"
+    "exerciseCount": "{{count}} ØV",
+    "searchTemplates": "Søk i maler…",
+    "showMore": "Vis {{count}} til",
+    "seeAll": "Se alle"
   },
   "planlegger": {
     "heading": "Planlegg uken",
@@ -292,7 +295,8 @@
     "languagePersian": "فارسی",
     "myGym": "Min gym",
     "myGymMembership": "Sporty Thon Senter Ski",
-    "myGymFutureHint": "Fremtidig: velg gym og se felles økthistorikk med andre instruktører."
+    "myGymFutureHint": "Fremtidig: velg gym og se felles økthistorikk med andre instruktører.",
+    "dataSharingNote": "Alle økter du logger er synlige for andre instruktører ved samme treningssenter. Dette er nødvendig for å gi deg innsikt i hva kollegene dine trener, og er en del av tjenestens formål."
   },
   "report": {
     "heroMuscles_one": "{{count}} muskel",
@@ -319,6 +323,8 @@
     "noSessions": "Ingen økter funnet for valgte filter.",
     "saveRecError": "Kunne ikke lagre øvelsen. Prøv igjen.",
     "fetchRecError": "Kunne ikke hente anbefalinger. Prøv igjen.",
+    "allMusclesPrimary": "Alle 17 muskelgrupper er trent i perioden. Bra jobba!",
+    "allMusclesSecondaryNote": "Alle primærmuskelgrupper er trent. Disse er bare trent sekundært:",
     "toCta": "Disse bør du legge inn i programmet →",
     "period": "PERIODE",
     "activeDays": "AKTIVE DAGER",
@@ -356,7 +362,9 @@
     "defaultSets": "Standard sett",
     "defaultReps": "Standard reps",
     "saveExercise": "Lagre øvelse",
-    "noMusclesWarning": "Ingen muskler valgt — klikk på figuren for å registrere"
+    "noMusclesWarning": "Ingen muskler valgt — klikk på figuren for å registrere",
+    "headerNew": "Ny øvelse",
+    "headerEdit": "Rediger øvelse"
   },
   "libraryPicker": {
     "searchLabel": "Søk i øvelsesbiblioteket",
@@ -398,6 +406,8 @@
     "manual": "Manuelt",
     "saveChanges": "Lagre endringer i malen",
     "useSession": "Bruk økt",
-    "saveTemplate": "Lagre mal"
+    "saveTemplate": "Lagre mal",
+    "stepIndicator": "Steg 2 av 3 — Tilpass øvelser",
+    "nameLabel": "Navn på mal"
   }
 }

@@ -23,7 +23,8 @@
     "front": "Front",
     "back_view": "Back",
     "saveFailed": "Saving failed. Try again.",
-    "add": "Add"
+    "add": "Add",
+    "discard": "Discard"
   },
   "muscles": {
     "chest": "Chest",
@@ -151,7 +152,8 @@
     "savingError": "Saving failed",
     "progressLabel": "Progress",
     "primaryTag": "Primary",
-    "secondaryTag": "Secondary"
+    "secondaryTag": "Secondary",
+    "confirmLabel": "Confirm session"
   },
   "history": {
     "sectionLabel": "HISTORY",
@@ -163,11 +165,9 @@
     "primaryCount": "Primary ({{count}})",
     "secondaryCount": "Secondary ({{count}})",
     "reanalyze": "Re-analyze",
+    "reuploadPhoto": "Upload new photo",
     "analyzing": "Analyzing…",
     "editSession": "Edit session",
-    "shareWithColleagues": "Share with other instructors",
-    "shareOn": "Shared",
-    "shareOff": "Private",
     "classHistory": "Colleagues in this class",
     "classHistoryLoading": "Loading colleague sessions…",
     "classHistoryError": "Could not load colleague sessions",
@@ -228,7 +228,10 @@
     "usedInTemplates_one": "The exercise is used in the template",
     "usedInTemplates_other": "The exercise is used in the templates",
     "exerciseRemovedWarning": "and will be removed from it.",
-    "exerciseCount": "{{count}} EX"
+    "exerciseCount": "{{count}} EX",
+    "searchTemplates": "Search templates…",
+    "showMore": "Show {{count}} more",
+    "seeAll": "See all"
   },
   "planlegger": {
     "heading": "Plan the week",
@@ -292,7 +295,8 @@
     "languagePersian": "فارسی",
     "myGym": "My gym",
     "myGymMembership": "Sporty Thon Senter Ski",
-    "myGymFutureHint": "Coming soon: choose your gym and see shared session history with other instructors."
+    "myGymFutureHint": "Coming soon: choose your gym and see shared session history with other instructors.",
+    "dataSharingNote": "All sessions you log are visible to other instructors at the same gym. This is necessary to give you insight into what your colleagues are training, and is part of the service's purpose."
   },
   "report": {
     "heroMuscles_one": "{{count}} muscle",
@@ -319,6 +323,8 @@
     "noSessions": "No sessions found for selected filter.",
     "saveRecError": "Could not save exercise. Try again.",
     "fetchRecError": "Could not fetch recommendations. Try again.",
+    "allMusclesPrimary": "All 17 muscle groups trained this period. Great work!",
+    "allMusclesSecondaryNote": "All primary muscles trained. These are secondary only:",
     "toCta": "Add these to your program →",
     "period": "PERIOD",
     "activeDays": "ACTIVE DAYS",
@@ -356,7 +362,9 @@
     "defaultSets": "Default sets",
     "defaultReps": "Default reps",
     "saveExercise": "Save exercise",
-    "noMusclesWarning": "No muscles selected — click the figure to register"
+    "noMusclesWarning": "No muscles selected — click the figure to register",
+    "headerNew": "New exercise",
+    "headerEdit": "Edit exercise"
   },
   "libraryPicker": {
     "searchLabel": "Search exercise library",
@@ -398,6 +406,8 @@
     "manual": "Manually",
     "saveChanges": "Save template changes",
     "useSession": "Use session",
-    "saveTemplate": "Save template"
+    "saveTemplate": "Save template",
+    "stepIndicator": "Step 2 of 3 — Adjust exercises",
+    "nameLabel": "Template name"
   }
 }

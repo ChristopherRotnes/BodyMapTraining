@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  Button, Tag, InlineNotification,
+  Button, Tag, InlineNotification, TextInput,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Save } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Save, Edit } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import PageShell, { PageTitle, BackButton } from "./PageShell";
+import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
 import { calcMuscles } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
@@ -132,42 +132,40 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <BackButton onClick={onBack} />
-        <PageTitle>{mode === "edit" ? t("templateEditor.titleEdit") : t("templateEditor.titleUse")}</PageTitle>
 
-        {/* Editable template name */}
-        <div style={{ marginBottom: 20 }}>
-          {editingTitle ? (
-            <input
-              autoFocus
-              id="template-name"
-              name="template-name"
-              value={templateName}
-              onChange={e => setTemplateName(e.target.value)}
-              onBlur={() => setEditingTitle(false)}
-              onKeyDown={e => e.key === "Enter" && setEditingTitle(false)}
-              style={{
-                background: "transparent",
-                border: "none",
-                borderBottom: "2px solid var(--cds-interactive)",
-                color: "var(--cds-text-primary)",
-                fontFamily: "var(--cds-font-sans)",
-                fontSize: 18,
-                fontWeight: 600,
-                padding: "2px 0",
-                outline: "none",
-                width: "100%",
-              }}
-            />
-          ) : (
-            <span
-              onClick={() => setEditingTitle(true)}
-              style={{ cursor: "text", fontSize: 18, fontWeight: 600, color: "var(--cds-text-primary)" }}
-              title={t("templateEditor.clickToRename")}
-            >
-              {templateName}
-            </span>
+        <div style={{ background: "var(--cds-layer-02)", borderTop: "2px solid var(--accent)", padding: 16, marginBottom: 8 }}>
+          <SectionLabel renderIcon={Edit} style={{ margin: "0 0 16px -16px" }}>
+            {mode === "edit" ? t("templateEditor.titleEdit") : t("templateEditor.titleUse")}
+          </SectionLabel>
+
+          {mode === "use" && (
+            <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.06em", marginBottom: 16 }}>
+              {t("templateEditor.stepIndicator")}
+            </p>
           )}
-        </div>
+
+          {/* Editable template name */}
+          <div style={{ marginBottom: 20 }}>
+            {editingTitle ? (
+              <TextInput
+                id="template-name"
+                labelText={t("templateEditor.nameLabel")}
+                autoFocus
+                value={templateName}
+                onChange={e => setTemplateName(e.target.value)}
+                onBlur={() => setEditingTitle(false)}
+                onKeyDown={e => e.key === "Enter" && setEditingTitle(false)}
+              />
+            ) : (
+              <span
+                onClick={() => setEditingTitle(true)}
+                style={{ cursor: "text", fontSize: 18, fontWeight: 600, color: "var(--cds-text-primary)" }}
+                title={t("templateEditor.clickToRename")}
+              >
+                {templateName}
+              </span>
+            )}
+          </div>
 
         {/* ─── rest of TemplateSessionEditor content ─── */}
         <div>
@@ -229,40 +227,21 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
           {/* Action bar */}
           <div style={{ borderTop: "1px solid var(--cds-border-subtle-01)", paddingTop: 16 }}>
             {mode === "use" && (
-              <>
-                <button
-                  onClick={saveToTemplate}
-                  disabled={saving}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--cds-link-primary)",
-                    fontSize: 13,
-                    cursor: "pointer",
-                    padding: "0 0 14px 0",
-                    display: "block",
-                    textDecoration: "underline",
-                    fontFamily: "var(--cds-font-sans)",
-                  }}
-                >
-                  {saving ? t("common.saving") : saved ? t("common.saved") : t("templateEditor.saveChanges")}
-                </button>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button kind="secondary" renderIcon={ArrowLeft} onClick={onBack}>
-                    {t("common.back")}
-                  </Button>
-                  <Button kind="primary" renderIcon={ArrowRight} onClick={handleUseSession}
-                    disabled={!canProceed} style={{ flex: 1 }}>
-                    {t("templateEditor.useSession")}
-                  </Button>
-                </div>
-              </>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Button kind="ghost" renderIcon={ArrowLeft} onClick={onBack}>
+                  {t("common.cancel")}
+                </Button>
+                <Button kind="primary" renderIcon={ArrowRight} onClick={handleUseSession}
+                  disabled={!canProceed} style={{ flex: 1 }}>
+                  {t("templateEditor.useSession")}
+                </Button>
+              </div>
             )}
 
             {mode === "edit" && (
               <div style={{ display: "flex", gap: 8 }}>
-                <Button kind="secondary" renderIcon={ArrowLeft} onClick={onBack}>
-                  {t("common.back")}
+                <Button kind="ghost" renderIcon={ArrowLeft} onClick={onBack}>
+                  {t("common.cancel")}
                 </Button>
                 <Button kind="primary" renderIcon={Save} onClick={saveToTemplate}
                   disabled={saving || !canProceed} style={{ flex: 1 }}>
@@ -272,6 +251,7 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
             )}
           </div>
 
+        </div>
         </div>
 
       </div>

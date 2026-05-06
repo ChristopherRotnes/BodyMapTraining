@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Button, TextInput, InlineLoading } from "@carbon/react";
+import { Button, TextInput, InlineLoading, InlineNotification } from "@carbon/react";
+import { Add, Edit } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import MusclePicker from "./MusclePicker";
+import { SectionLabel } from "./PageShell";
 import { inferMusclesFromName } from "../lib/utils";
 
 export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
@@ -39,7 +41,10 @@ export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
   const noMuscles = !primary.length && !secondary.length;
 
   return (
-    <div style={{ background: "var(--cds-layer-02)", border: "1px solid var(--cds-border-strong-01)", padding: 16, marginBottom: 8 }}>
+    <div style={{ background: "var(--cds-layer-02)", borderTop: "2px solid var(--accent)", padding: 16, marginBottom: 8 }}>
+      <SectionLabel renderIcon={initial?.id ? Edit : Add} style={{ margin: "0 0 16px -16px" }}>
+        {initial?.id ? t("exerciseForm.headerEdit") : t("exerciseForm.headerNew")}
+      </SectionLabel>
       <TextInput
         id={`ex-form-name-${initial?.id || "new"}`}
         labelText={t("exerciseForm.nameLabel")}
@@ -89,12 +94,15 @@ export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
         </p>
       )}
       {!inferStatus && !aiInferred && noMuscles && name.trim() && (
-        <p style={{ marginTop: 6, fontSize: 11, fontFamily: "var(--cds-font-mono)", color: "var(--cds-support-error)" }}>
-          {t("exerciseForm.noMusclesWarning")}
-        </p>
+        <InlineNotification
+          kind="error"
+          title={t("exerciseForm.noMusclesWarning")}
+          hideCloseButton
+          style={{ marginTop: 8, marginBottom: 0 }}
+        />
       )}
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <Button kind="secondary" size="sm" onClick={onCancel}>{t("common.cancel")}</Button>
+        <Button kind="ghost" size="sm" onClick={onCancel}>{t("common.cancel")}</Button>
         <Button
           kind="primary"
           size="sm"

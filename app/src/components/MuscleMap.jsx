@@ -9,7 +9,7 @@ import {
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend, Close } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend, Close, Edit } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
@@ -497,6 +497,10 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
         {/* ── CONFIRM ── */}
         {step === "confirm" && (
+          <div style={{ background: "var(--cds-layer-02)", borderTop: "2px solid var(--accent)" }}>
+          <SectionLabel renderIcon={Edit} style={{ margin: "12px 16px 4px" }}>
+            {t("muscleMap.confirmLabel")}
+          </SectionLabel>
           <div className="fade-in" style={{ padding: "0 16px" }}>
 
             {/* Hero */}
@@ -665,6 +669,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                 <ArrowRight size={16} />
               </button>
             </StickyCta>
+          </div>
           </div>
         )}
 

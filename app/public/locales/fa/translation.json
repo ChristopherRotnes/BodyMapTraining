@@ -23,7 +23,8 @@
     "front": "جلو",
     "back_view": "پشت",
     "saveFailed": "ذخیره ناموفق بود. دوباره امتحان کنید.",
-    "add": "افزودن"
+    "add": "افزودن",
+    "discard": "لغو تغییرات"
   },
   "muscles": {
     "chest": "سینه",
@@ -151,7 +152,8 @@
     "savingError": "ذخیره ناموفق بود",
     "progressLabel": "پیشرفت",
     "primaryTag": "اولیه",
-    "secondaryTag": "ثانویه"
+    "secondaryTag": "ثانویه",
+    "confirmLabel": "تأیید جلسه"
   },
   "history": {
     "sectionLabel": "تاریخچه",
@@ -163,11 +165,9 @@
     "primaryCount": "اولیه ({{count}})",
     "secondaryCount": "ثانویه ({{count}})",
     "reanalyze": "تحلیل مجدد",
+    "reuploadPhoto": "آپلود عکس جدید",
     "analyzing": "در حال تحلیل…",
     "editSession": "ویرایش جلسه",
-    "shareWithColleagues": "اشتراک با مربیان دیگر",
-    "shareOn": "اشتراکی",
-    "shareOff": "خصوصی",
     "classHistory": "همکاران در این کلاس",
     "classHistoryLoading": "در حال بارگذاری جلسات همکاران…",
     "classHistoryError": "بارگذاری جلسات همکاران ممکن نشد",
@@ -228,7 +228,10 @@
     "usedInTemplates_one": "این تمرین در قالب استفاده شده",
     "usedInTemplates_other": "این تمرین در قالب‌ها استفاده شده",
     "exerciseRemovedWarning": "و از آن حذف خواهد شد.",
-    "exerciseCount": "{{count}} تمرین"
+    "exerciseCount": "{{count}} تمرین",
+    "searchTemplates": "جستجو در قالب‌ها…",
+    "showMore": "نمایش {{count}} بیشتر",
+    "seeAll": "مشاهده همه"
   },
   "planlegger": {
     "heading": "برنامه‌ریزی هفته",
@@ -292,7 +295,8 @@
     "languagePersian": "فارسی",
     "myGym": "باشگاه من",
     "myGymMembership": "Sporty Thon Senter Ski",
-    "myGymFutureHint": "به زودی: انتخاب باشگاه و مشاهده تاریخچه مشترک با سایر مربیان."
+    "myGymFutureHint": "به زودی: انتخاب باشگاه و مشاهده تاریخچه مشترک با سایر مربیان.",
+    "dataSharingNote": "تمام جلسات ثبت‌شده برای سایر مربیان در همان مرکز ورزشی قابل مشاهده است. این برای ارائه بینش درباره تمرین همکاران ضروری است."
   },
   "report": {
     "heroMuscles_one": "{{count}} عضله",
@@ -319,6 +323,8 @@
     "noSessions": "جلسه‌ای برای فیلتر انتخاب‌شده یافت نشد.",
     "saveRecError": "ذخیره تمرین ناموفق بود. دوباره امتحان کنید.",
     "fetchRecError": "دریافت پیشنهادها ناموفق بود. دوباره امتحان کنید.",
+    "allMusclesPrimary": "همه ۱۷ گروه عضلانی در این دوره تمرین شده. آفرین!",
+    "allMusclesSecondaryNote": "همه عضلات اولیه تمرین شده. اینها فقط ثانویه تمرین شده‌اند:",
     "toCta": "این‌ها را به برنامه‌ات اضافه کن →",
     "period": "دوره",
     "activeDays": "روزهای فعال",
@@ -356,7 +362,9 @@
     "defaultSets": "ست پیش‌فرض",
     "defaultReps": "تکرار پیش‌فرض",
     "saveExercise": "ذخیره تمرین",
-    "noMusclesWarning": "هیچ عضله‌ای انتخاب نشده — روی شکل کلیک کنید"
+    "noMusclesWarning": "هیچ عضله‌ای انتخاب نشده — روی شکل کلیک کنید",
+    "headerNew": "تمرین جدید",
+    "headerEdit": "ویرایش تمرین"
   },
   "libraryPicker": {
     "searchLabel": "جستجو در کتابخانه تمرین‌ها",
@@ -398,6 +406,8 @@
     "manual": "دستی",
     "saveChanges": "ذخیره تغییرات قالب",
     "useSession": "شروع جلسه",
-    "saveTemplate": "ذخیره قالب"
+    "saveTemplate": "ذخیره قالب",
+    "stepIndicator": "مرحله ۲ از ۳ — تنظیم تمرین‌ها",
+    "nameLabel": "نام قالب"
   }
 }
