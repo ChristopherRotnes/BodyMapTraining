@@ -12,7 +12,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
 7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session; edit mode supports library autocomplete — type an exercise name to get suggestions from your library; AI muscle inference fires automatically when you add a new exercise with no muscles assigned (tab or click away from the name field)
 8. **Library** — build a named exercise library with click-to-toggle muscle selection; AI muscle inference fires when you type an exercise name and leave the field — muscles are filled in automatically and marked "Muskler satt av AI"; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
-9. **Weekly planner** — see two body maps for the visible ISO week: "Trent denne uken" reflects muscles actually trained in logged sessions (with counters and chips for untrained muscles), and "Projisert dekning" shows the cumulative coverage of templates assigned to each day; assign templates per day, navigate between weeks, and the Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
+9. **Weekly planner** — assign templates to each day of the week; an "Ikke trent denne uken" chip row lists the muscles you have not yet trained in logged sessions for the visible ISO week (History-style mono pills); a live "Projisert dekning" heatmap body map shows projected cumulative muscle coverage from the assigned templates; a Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
 10. **Language** — switch between Norsk, English and فارسی (RTL) at any time from Settings; all UI strings, date formats, and month names update instantly
 11. **Settings** — language selector (top), theme toggle (dark/light) with live body map preview, contact, changelog, and account/sign-out (bottom)
 
@@ -84,7 +84,7 @@ app/
       Bibliotek.jsx                # Library page — exercise library CRUD + template CRUD (two tabs)
       TemplatePicker.jsx           # Template selection screen (recently used first)
       TemplateSessionEditor.jsx    # Edit/use a template with live body map; save-back or hand off to logger
-      Planlegger.jsx               # Weekly training planner — trained-this-week + projected heatmaps, assign templates
+      Planlegger.jsx               # Weekly training planner — untrained-this-week chip list + projected heatmap, assign templates
       Settings.jsx                 # Settings view — theme toggle, account, changelog, contact
       PageShell.jsx                # Shared nav shell (6-icon header: camera/history/report/library/planner/settings)
       Home.jsx                     # Landing page — last session summary + quick-nav

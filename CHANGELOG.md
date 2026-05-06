@@ -2,6 +2,13 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.0-rc.8] — 2026-05-06
+
+### Changed
+- **Planlegger — simpler "Ikke trent denne uken" chip list** — replaces the dual body-map / counters UI introduced in rc.7. The planner now shows a single `flexWrap: wrap` row of mono pill chips (History-style: `var(--r-pill)`, `var(--border-subtle-wl)`, `var(--text-muted-wl)`, `var(--cds-font-mono)` 11px) listing the muscle groups not yet trained in logged sessions for the visible ISO week. When all 17 are trained, a single mono message replaces the chip row. The "Projisert dekning" heatmap and Forslag card are unchanged; the second body map, mono counters, and `AccentChip` row are removed. Translation keys `trainedThisWeek` / `trainedCount` / `weekSessionCount` removed; `notTrainedThisWeek` and `allMusclesTrained` added in nb/en/fa. `weekSessions` state and `fetchSessionsForWeek(weekIso)` helper retained — the chip list is derived via `extractMuscles` across the week's sessions. (#143)
+
+---
+
 ## [1.2.0-rc.7] — 2026-05-06
 
 ### Added
