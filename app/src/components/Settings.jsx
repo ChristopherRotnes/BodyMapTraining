@@ -43,6 +43,23 @@ export default function Settings() {
     <PageShell>
       <PageHeading>{t("settings.heading")}</PageHeading>
 
+      <SectionLabel>{t("settings.language")}</SectionLabel>
+      <div style={{ padding: "0 16px 24px" }}>
+        <div style={cardStyle}>
+          <RadioButtonGroup
+            name="language-selector"
+            valueSelected={lang}
+            onChange={handleLangChange}
+            legendText=""
+            orientation="vertical"
+          >
+            <RadioButton labelText={t("settings.languageNorwegian")} value="nb" id="lang-nb" />
+            <RadioButton labelText={t("settings.languageEnglish")} value="en" id="lang-en" />
+            <RadioButton labelText={t("settings.languagePersian")} value="fa" id="lang-fa" />
+          </RadioButtonGroup>
+        </div>
+      </div>
+
       <SectionLabel>{t("settings.appearance")}</SectionLabel>
       <div style={{ padding: "0 16px 24px" }}>
         <div style={cardStyle}>
@@ -60,41 +77,6 @@ export default function Settings() {
           secondary={PREVIEW_SECONDARY}
           marginBottom={0}
         />
-      </div>
-
-      <SectionLabel>{t("settings.account")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
-          <p style={{
-            color: "var(--cds-text-secondary)",
-            fontFamily: "var(--cds-font-sans)",
-            fontSize: 14,
-            margin: "0 0 16px",
-          }}>
-            {userEmail}
-          </p>
-          <Button kind="danger" size="sm" onClick={() => supabase.auth.signOut()}>
-            {t("settings.signOut")}
-          </Button>
-        </div>
-      </div>
-
-      <SectionLabel>{t("settings.about")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
-          <p style={{
-            color: "var(--cds-text-secondary)",
-            fontFamily: "var(--cds-font-mono)",
-            fontSize: 13,
-            margin: "0 0 12px",
-            letterSpacing: "0.06em",
-          }}>
-            v{version}
-          </p>
-          <Button kind="ghost" size="sm" onClick={() => setChangelogOpen(true)}>
-            {t("settings.changelog")}
-          </Button>
-        </div>
       </div>
 
       <SectionLabel>{t("settings.contact")}</SectionLabel>
@@ -125,20 +107,38 @@ export default function Settings() {
         </div>
       </div>
 
-      <SectionLabel>{t("settings.language")}</SectionLabel>
+      <SectionLabel>{t("settings.about")}</SectionLabel>
+      <div style={{ padding: "0 16px 24px" }}>
+        <div style={cardStyle}>
+          <p style={{
+            color: "var(--cds-text-secondary)",
+            fontFamily: "var(--cds-font-mono)",
+            fontSize: 13,
+            margin: "0 0 12px",
+            letterSpacing: "0.06em",
+          }}>
+            v{version}
+          </p>
+          <Button kind="ghost" size="sm" onClick={() => setChangelogOpen(true)}>
+            {t("settings.changelog")}
+          </Button>
+        </div>
+      </div>
+
+      <SectionLabel>{t("settings.account")}</SectionLabel>
       <div style={{ padding: "0 16px 32px" }}>
         <div style={{ ...cardStyle, marginBottom: 0 }}>
-          <RadioButtonGroup
-            name="language-selector"
-            valueSelected={lang}
-            onChange={handleLangChange}
-            legendText=""
-            orientation="vertical"
-          >
-            <RadioButton labelText={t("settings.languageNorwegian")} value="nb" id="lang-nb" />
-            <RadioButton labelText={t("settings.languageEnglish")} value="en" id="lang-en" />
-            <RadioButton labelText={t("settings.languagePersian")} value="fa" id="lang-fa" />
-          </RadioButtonGroup>
+          <p style={{
+            color: "var(--cds-text-secondary)",
+            fontFamily: "var(--cds-font-sans)",
+            fontSize: 14,
+            margin: "0 0 16px",
+          }}>
+            {userEmail}
+          </p>
+          <Button kind="danger" size="sm" onClick={() => supabase.auth.signOut()}>
+            {t("settings.signOut")}
+          </Button>
         </div>
       </div>
 

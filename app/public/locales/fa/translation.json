@@ -196,7 +196,18 @@
       "50": "پنجاه. جدی؟",
       "over50": "بیشتر از ۵۰. با دکتر مشورت کن."
     },
-    "heroMotivationFallback": "{{count}} جلسه این ماه."
+    "heroMotivationFallback": "{{count}} جلسه این ماه.",
+    "gymClassLabel": "کلاس ورزشی",
+    "noClassSelected": "کلاسی انتخاب نشده",
+    "conflictWarningTitle": "جلسه موجود:",
+    "conflictWarningBody": "این کلاس از قبل یک جلسه ذخیره شده دارد ({{date}}). ذخیره جدید جایگزین آن می‌شود.",
+    "duplicateGymSession": "این کلاس از قبل یک جلسه ذخیره شده دارد.",
+    "reanalyzeServerError": "خطای سرور ({{status}}): پاسخ نامعتبر از سرور",
+    "reanalyzeServerErrorDetail": "خطای سرور ({{status}}): {{detail}}",
+    "reanalyzeServerErrorCode": "خطای سرور ({{status}})",
+    "reanalyzeInvalidJson": "پاسخ Claude معتبر نبود. دوباره امتحان کنید.",
+    "reanalyzeUnexpectedFormat": "فرمت پاسخ غیرمنتظره از Claude.",
+    "reanalyzeImageError": "نتوانستیم تصویر را تحلیل کنیم. با تصویر واضح‌تر دوباره امتحان کنید."
   },
   "bibliotek": {
     "sectionLabel": "کتابخانه",
@@ -246,6 +257,7 @@
     "loadingPlan": "در حال بارگذاری برنامه…",
     "removing": "در حال حذف…",
     "remove": "حذف",
+    "weekLabel": "هفته {{week}} · {{start}}–{{end}} {{month}}",
     "exerciseCount_one": "{{count}} تمرین",
     "exerciseCount_other": "{{count}} تمرین",
     "days": {

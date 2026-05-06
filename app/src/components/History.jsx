@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { nb } from "date-fns/locale";
 import { format, parseISO } from "date-fns";
+import i18n from "../lib/i18n";
+
+function getIntlLocale() {
+  const lang = i18n.language;
+  return lang === "nb" ? "no" : lang;
+}
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError } from "../lib/utils";
@@ -331,7 +336,7 @@ export default function History({ initialDate }) {
     } catch (err) {
       logDevError("History/save", err);
       const msg = err?.message?.includes("unique") || err?.code === "23505"
-        ? "Denne gymtimen har allerede en økt lagret."
+        ? t("history.duplicateGymSession")
         : t("common.saveFailed");
       setEditError(msg);
     } finally {
@@ -358,21 +363,23 @@ export default function History({ initialDate }) {
         }]
       });
       let data;
-      try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
+      try { data = await res.json(); } catch { throw new Error(t("history.reanalyzeServerError", { status: res.status })); }
       if (!res.ok) {
         const detail = data?.error?.message;
-        throw new Error(detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
+        throw new Error(detail
+          ? t("history.reanalyzeServerErrorDetail", { status: res.status, detail })
+          : t("history.reanalyzeServerErrorCode", { status: res.status }));
       }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
       let parsed;
       try { parsed = JSON.parse(text); } catch {
-        throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
+        throw new Error(t("history.reanalyzeInvalidJson"));
       }
-      if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
+      if (!Array.isArray(parsed)) throw new Error(t("history.reanalyzeUnexpectedFormat"));
       setEditExercises(parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true, sets: ex.sets ?? "1" })));
     } catch (err) {
       logDevError("History/reanalyse", err);
-      setAnalyzeError(err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde.");
+      setAnalyzeError(err.message || t("history.reanalyzeImageError"));
     } finally {
       setAnalyzing(false);
     }
@@ -414,13 +421,13 @@ export default function History({ initialDate }) {
             const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
             const count = filteredSessions.filter(s => s.session_date === selectedDateStr).length;
             const total = sessions.filter(s => s.session_date === selectedDateStr).length;
-            const dateLabel = format(selectedDate, "d. MMMM", { locale: nb });
+            const dateLabel = new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "long" }).format(selectedDate);
             const sessionLabel = total === 1 ? t("common.session") : t("common.sessions");
             return <>{t("history.filterWithDate", { count, total, sessionLabel, date: dateLabel })}</>;
           })() : muscleFilter.length > 0 ? (
-            <>{t("history.filteredMonth", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb }) })}</>
+            <>{t("history.filteredMonth", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: new Intl.DateTimeFormat(getIntlLocale(), { month: "long" }).format(new Date(viewYear, viewMonth, 1)) })}</>
           ) : (
-            <>{t("history.monthCount", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: format(new Date(viewYear, viewMonth, 1), "MMMM", { locale: nb }) })}{currentMonthCount >= 1 && <> <span style={{ color: "var(--accent)" }}>{t(`history.heroMotivation.${currentMonthCount}`, { defaultValue: t("history.heroMotivation.over50") })}</span></>}</>
+            <>{t("history.monthCount", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: new Intl.DateTimeFormat(getIntlLocale(), { month: "long" }).format(new Date(viewYear, viewMonth, 1)) })}{currentMonthCount >= 1 && <> <span style={{ color: "var(--accent)" }}>{t(`history.heroMotivation.${currentMonthCount}`, { defaultValue: t("history.heroMotivationFallback", { count: currentMonthCount }) })}</span></>}</>
           )}
         </PageHeading>
 
@@ -470,7 +477,7 @@ export default function History({ initialDate }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <Button kind="ghost" size="sm" renderIcon={ChevronLeft} hasIconOnly iconDescription={t("history.prevMonth")} onClick={goPrevMonth} />
               <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 12, color: "var(--cds-text-primary)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-                {format(new Date(viewYear, viewMonth, 1), "MMMM yyyy", { locale: nb }).replace(/^\w/, c => c.toUpperCase())}
+                {new Intl.DateTimeFormat(getIntlLocale(), { month: "long", year: "numeric" }).format(new Date(viewYear, viewMonth, 1)).replace(/^\w/, c => c.toUpperCase())}
               </span>
               <Button kind="ghost" size="sm" renderIcon={ChevronRight} hasIconOnly iconDescription={t("history.nextMonth")} onClick={goNextMonth} disabled={atCurrentMonth} />
             </div>
@@ -501,7 +508,7 @@ export default function History({ initialDate }) {
         {daySessions.length > 0 && (
           <div className="fade-in">
             <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 16, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-              {format(new Date(daySessions[0].session_date + "T12:00:00"), "EEEE d. MMMM yyyy", { locale: nb })}
+              {new Intl.DateTimeFormat(getIntlLocale(), { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(daySessions[0].session_date + "T12:00:00"))}
             </p>
 
             {[...daySessions].sort((a, b) => {
@@ -522,8 +529,8 @@ export default function History({ initialDate }) {
                 : [];
               const topMuscles = extractMuscles(session).primary.slice(0, 2).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id }));
               const sessionTime = session.gym_calendar?.start_time
-                ? new Date(session.gym_calendar.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" })
-                : new Date(session.created_at).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                ? new Date(session.gym_calendar.start_time).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" })
+                : new Date(session.created_at).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" });
               const sessionTitle = session.gym_calendar
                 ? `${sessionTime} – ${session.gym_calendar.name}`
                 : `${sessionTime} – ${t("history.ownTraining")}`;
@@ -567,14 +574,14 @@ export default function History({ initialDate }) {
                           <>
                             <Select
                               id="edit-gym-session"
-                              labelText="Gymtime"
+                              labelText={t("history.gymClassLabel")}
                               value={editGymSessionId}
                               onChange={(e) => setEditGymSessionId(e.target.value)}
                               style={{ marginBottom: editGymCalendarConflict ? 8 : 16 }}
                             >
-                              <SelectItem value="" text="Ingen time valgt" />
+                              <SelectItem value="" text={t("history.noClassSelected")} />
                               {editGymSessions.map(s => {
-                                const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                                const time = new Date(s.start_time).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" });
                                 const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
                                 return <SelectItem key={s.id} value={s.id} text={label} />;
                               })}
@@ -582,8 +589,8 @@ export default function History({ initialDate }) {
                             {editGymCalendarConflict && (
                               <InlineNotification
                                 kind="warning"
-                                title="Eksisterende økt:"
-                                subtitle={`Denne gymtimen har allerede en lagret økt (${editGymCalendarConflict.session_date}). Lagring erstatter den.`}
+                                title={t("history.conflictWarningTitle")}
+                                subtitle={t("history.conflictWarningBody", { date: editGymCalendarConflict.session_date })}
                                 hideCloseButton
                                 style={{ marginBottom: 16 }}
                               />

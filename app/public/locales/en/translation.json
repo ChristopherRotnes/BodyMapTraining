@@ -198,7 +198,18 @@
       "50": "FIFTY. seriously.",
       "over50": "over 50. call the doctor."
     },
-    "heroMotivationFallback": "{{count}} sessions this month."
+    "heroMotivationFallback": "{{count}} sessions this month.",
+    "gymClassLabel": "Gym class",
+    "noClassSelected": "No class selected",
+    "conflictWarningTitle": "Existing session:",
+    "conflictWarningBody": "This class already has a saved session ({{date}}). Saving will replace it.",
+    "duplicateGymSession": "This gym class already has a saved session.",
+    "reanalyzeServerError": "Server error ({{status}}): Invalid response from server",
+    "reanalyzeServerErrorDetail": "Server error ({{status}}): {{detail}}",
+    "reanalyzeServerErrorCode": "Server error ({{status}})",
+    "reanalyzeInvalidJson": "Claude's response was not valid JSON. Try again.",
+    "reanalyzeUnexpectedFormat": "Unexpected response format from Claude.",
+    "reanalyzeImageError": "Could not interpret the image. Try again with a clearer image."
   },
   "bibliotek": {
     "sectionLabel": "LIBRARY",
@@ -248,6 +259,7 @@
     "loadingPlan": "Loading plan…",
     "removing": "Removing…",
     "remove": "Remove",
+    "weekLabel": "WEEK {{week}} · {{start}}–{{end}} {{month}}",
     "exerciseCount_one": "{{count}} exercise",
     "exerciseCount_other": "{{count}} exercises",
     "days": {

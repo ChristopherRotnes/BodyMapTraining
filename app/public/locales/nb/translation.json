@@ -236,7 +236,19 @@
       "49": "ett til: femti-klubben!",
       "50": "FEMTI. ikke virkelig.",
       "over50": "over 50. ring legen."
-    }
+    },
+    "heroMotivationFallback": "{{count}} økter denne måneden.",
+    "gymClassLabel": "Gymtime",
+    "noClassSelected": "Ingen time valgt",
+    "conflictWarningTitle": "Eksisterende økt:",
+    "conflictWarningBody": "Denne gymtimen har allerede en lagret økt ({{date}}). Lagring erstatter den.",
+    "duplicateGymSession": "Denne gymtimen har allerede en økt lagret.",
+    "reanalyzeServerError": "Serverfeil ({{status}}): Ugyldig svar fra server",
+    "reanalyzeServerErrorDetail": "Serverfeil ({{status}}): {{detail}}",
+    "reanalyzeServerErrorCode": "Serverfeil ({{status}})",
+    "reanalyzeInvalidJson": "Svaret fra Claude var ikke gyldig JSON. Prøv igjen.",
+    "reanalyzeUnexpectedFormat": "Uventet svarformat fra Claude.",
+    "reanalyzeImageError": "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde."
   },
   "bibliotek": {
     "sectionLabel": "BIBLIOTEK",
@@ -286,6 +298,7 @@
     "loadingPlan": "Laster plan…",
     "removing": "Fjerner…",
     "remove": "Fjern",
+    "weekLabel": "UKE {{week}} · {{start}}–{{end}} {{month}}",
     "exerciseCount_one": "{{count}} øvelse",
     "exerciseCount_other": "{{count}} øvelser",
     "days": {

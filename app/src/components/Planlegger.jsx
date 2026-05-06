@@ -2,30 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { ChevronLeft, ChevronRight, Add, Close, TrashCan } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
+import i18n from "../lib/i18n";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
 import { buildMuscleMapFromExercises } from "../lib/utils";
 import { toWeekIso } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import { logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, StickyCta, AccentChip } from "./PageShell";
-
-function formatWeekLabel(monday) {
-  const sunday = new Date(monday);
-  sunday.setUTCDate(monday.getUTCDate() + 6);
-
-  const monthNames = ["JAN", "FEB", "MAR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DES"];
-  const startDay = monday.getUTCDate();
-  const endDay = sunday.getUTCDate();
-  const endMonth = monthNames[sunday.getUTCMonth()];
-
-  const d = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate()));
-  const dayOfWeek = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-
-  return `UKE ${week} · ${startDay}–${endDay} ${endMonth}`;
-}
 
 function TemplatePickerSheet({ templates, onSelect, onClose }) {
   const { t } = useTranslation();
@@ -115,8 +98,9 @@ function TemplatePickerSheet({ templates, onSelect, onClose }) {
 
 function DayRow({ dow, date, template, onAdd, onRemove }) {
   const { t } = useTranslation();
+  const locale = i18n.language === "nb" ? "no" : i18n.language;
   const dateLabel = date
-    ? date.toLocaleDateString("no-NO", { day: "numeric", month: "short", timeZone: "UTC" })
+    ? date.toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" })
     : "";
 
   const muscles = useMemo(() => {
@@ -242,7 +226,23 @@ export default function Planlegger() {
   }, [today, weekOffset]);
 
   const weekIso = useMemo(() => toWeekIso(monday), [monday]);
-  const weekLabel = useMemo(() => formatWeekLabel(monday), [monday]);
+  const weekLabel = useMemo(() => {
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+
+    const d = new Date(Date.UTC(monday.getUTCFullYear(), monday.getUTCMonth(), monday.getUTCDate()));
+    const dayOfWeek = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+
+    const locale = i18n.language === "nb" ? "no" : i18n.language;
+    const month = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" })
+      .format(sunday)
+      .toUpperCase();
+
+    return t("planlegger.weekLabel", { week, start: monday.getUTCDate(), end: sunday.getUTCDate(), month });
+  }, [monday, t]);
 
   const weekDates = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -472,19 +472,20 @@ export default function Planlegger() {
               </div>
             )}
 
-            {hoveredMuscle && projectedData.muscleMap[hoveredMuscle]?.length > 0 && (
-              <div style={{
-                margin: "0 16px 12px",
-                padding: "10px 14px",
-                background: "var(--accent-bg-08)",
-                border: "1px solid var(--accent-bg-30)",
-                fontSize: 13,
-                color: "var(--cds-text-primary)",
-              }}>
-                <span style={{ fontWeight: 600 }}>{t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}:</span>{" "}
-                {projectedData.muscleMap[hoveredMuscle].join(", ")}
-              </div>
-            )}
+            <div style={{ height: 48, margin: "0 16px 12px", overflow: "hidden" }}>
+              {hoveredMuscle && projectedData.muscleMap[hoveredMuscle]?.length > 0 && (
+                <div style={{
+                  padding: "10px 14px",
+                  background: "var(--accent-bg-08)",
+                  border: "1px solid var(--accent-bg-30)",
+                  fontSize: 13,
+                  color: "var(--cds-text-primary)",
+                }}>
+                  <span style={{ fontWeight: 600 }}>{t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}:</span>{" "}
+                  {projectedData.muscleMap[hoveredMuscle].join(", ")}
+                </div>
+              )}
+            </div>
 
             {/* Gaps card */}
             {showForslag && (
