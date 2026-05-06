@@ -262,7 +262,7 @@ export async function fetchSessionsByDate(dateStr) {
   const { data, error } = await supabase
     .from("sessions")
     .select(`
-      id, session_date, created_at,
+      id, session_date, created_at, visibility,
       gym_calendar_id, gym_calendar(name, start_time),
       session_exercises(
         id, name, standard_name, sets, reps, position,
@@ -373,6 +373,61 @@ export async function updateSession(sessionId, exercises, gymCalendarId, { repla
     })),
     p_replace: replace,
   });
+  if (error) throw error;
+}
+
+export async function updateSessionVisibility(sessionId, visibility) {
+  const { error } = await supabase
+    .from("sessions")
+    .update({ visibility })
+    .eq("id", sessionId);
+  if (error) throw error;
+}
+
+// ── CLASS HISTORY ─────────────────────────────────────────────────────
+
+export async function fetchClassHistory(gymCalendarId) {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from("sessions")
+    .select(`
+      id, session_date, trainer_id,
+      profiles(display_name),
+      session_exercises(
+        id, name, sets, reps,
+        muscle_activations(muscle_id, activation_type)
+      )
+    `)
+    .eq("gym_calendar_id", gymCalendarId)
+    .eq("visibility", "shared")
+    .neq("trainer_id", user?.id ?? "")
+    .order("session_date", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// ── PROFILES ──────────────────────────────────────────────────────────
+
+export async function fetchDisplayName() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.display_name ?? null;
+}
+
+export async function updateDisplayName(displayName) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  const trimmed = displayName.trim();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ display_name: trimmed || null })
+    .eq("id", user.id);
   if (error) throw error;
 }
 
