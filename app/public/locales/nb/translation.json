@@ -198,7 +198,7 @@
   },
   "bibliotek": {
     "sectionLabel": "BIBLIOTEK",
-    "heading": "Dine byggklosser.",
+    "heading": "Dine byggeklosser.",
     "tabExercises": "Øvelser",
     "tabTemplates": "Maler",
     "newExercise": "Ny øvelse",
@@ -331,12 +331,17 @@
     "deleteExercise": "Slett øvelse",
     "invalidNumber": "Ugyldig antall – skriv inn 1 til 99"
   },
+  "exercise": {
+    "inferring": "Analyserer muskler…",
+    "musclesAI": "Muskler satt av AI – verifiser"
+  },
   "exerciseForm": {
     "nameLabel": "Navn",
     "namePlaceholder": "f.eks. Knebøy",
     "defaultSets": "Standard sett",
     "defaultReps": "Standard reps",
-    "saveExercise": "Lagre øvelse"
+    "saveExercise": "Lagre øvelse",
+    "noMusclesWarning": "Ingen muskler valgt — klikk på figuren for å registrere"
   },
   "libraryPicker": {
     "searchLabel": "Søk i øvelsesbiblioteket",

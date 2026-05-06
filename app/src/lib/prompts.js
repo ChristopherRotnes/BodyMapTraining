@@ -34,6 +34,14 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 [{"name":"Øvelsesnavn","primary":["muscle_id"],"secondary":["muscle_id"],"tip":"${tipInstruction}"}]`;
 };
 
+// Prompt for inferring muscle groups from a single exercise name (text-only, cheap call).
+export const buildMuscleInferencePrompt = (name) =>
+  `Du er en personlig trener. Hvilke muskler trener øvelsen "${name}"?
+Bruk KUN disse muscle-ID-ene: ${MUSCLE_IDS}.
+Returner KUN JSON, ingen annen tekst, ingen backticks:
+{"primary":["muscle_id"],"secondary":["muscle_id"]}
+Hvis du er usikker, returner tomme arrays.`;
+
 // Prompt for period-report recommendations based on aggregated training history.
 export const buildPeriodRecommendPrompt = (periodDays, sessionCount, trainedLabels, untrainedLabels, lang = 'nb') => {
   const tipInstruction = TIP_LANG_INSTRUCTION[lang] || TIP_LANG_INSTRUCTION.nb;

@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { InlineLoading } from "@carbon/react";
+import { useTranslation } from "react-i18next";
 import ExerciseRow from "./ExerciseRow";
+import { inferMusclesFromName } from "../lib/utils";
 
 export default function ExerciseRowWithAutocomplete({
   exercise,
@@ -11,11 +14,18 @@ export default function ExerciseRowWithAutocomplete({
   libraryExercises,
   isNew,
 }) {
+  const { t } = useTranslation();
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [inferStatus, setInferStatus] = useState(null); // null | "active" | "finished"
+  const [aiInferred, setAiInferred] = useState(false);
   const containerRef = useRef();
   const blurTimer = useRef(null);
+  const finishTimer = useRef(null);
 
-  useEffect(() => () => { if (blurTimer.current) clearTimeout(blurTimer.current); }, []);
+  useEffect(() => () => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    if (finishTimer.current) clearTimeout(finishTimer.current);
+  }, []);
 
   const filtered =
     isNew && showSuggestions && exercise.name?.trim()
@@ -27,11 +37,15 @@ export default function ExerciseRowWithAutocomplete({
       : [];
 
   const handleChange = (updates) => {
-    if ("name" in updates) setShowSuggestions(true);
+    if ("name" in updates) {
+      setShowSuggestions(true);
+      if (aiInferred) setAiInferred(false);
+    }
     onChange(updates);
   };
 
   const handleSelect = (lib) => {
+    setAiInferred(false);
     onChange({
       name: lib.name,
       standardName: lib.name,
@@ -41,6 +55,25 @@ export default function ExerciseRowWithAutocomplete({
       secondary: lib.secondary_muscles || [],
     });
     setShowSuggestions(false);
+  };
+
+  const handleNameBlur = async () => {
+    if (!isNew) return;
+    if (exercise.primary?.length || exercise.secondary?.length) return;
+    if (aiInferred || inferStatus) return;
+
+    setInferStatus("active");
+    const result = await inferMusclesFromName(exercise.name);
+    if (result) {
+      onChange({ primary: result.primary, secondary: result.secondary });
+      setInferStatus("finished");
+      finishTimer.current = setTimeout(() => {
+        setInferStatus(null);
+        setAiInferred(true);
+      }, 1200);
+    } else {
+      setInferStatus(null);
+    }
   };
 
   const handleBlur = () => {
@@ -63,6 +96,7 @@ export default function ExerciseRowWithAutocomplete({
         layer={layer}
         validateNumbers={validateNumbers}
         autoFocusName={autoFocusName}
+        onNameBlur={handleNameBlur}
       />
       {filtered.length > 0 && (
         <div
@@ -97,33 +131,31 @@ export default function ExerciseRowWithAutocomplete({
                 textAlign: "left",
               }}
             >
-              <span
-                style={{
-                  fontSize: 13,
-                  fontFamily: "var(--cds-font-sans)",
-                  color: "var(--cds-text-primary)",
-                }}
-              >
+              <span style={{ fontSize: 13, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
                 {lib.name}
               </span>
               {(lib.default_sets || lib.default_reps) && (
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontFamily: "var(--cds-font-mono)",
-                    color: "var(--cds-text-secondary)",
-                  }}
-                >
-                  {[
-                    lib.default_sets && `${lib.default_sets}×`,
-                    lib.default_reps,
-                  ]
-                    .filter(Boolean)
-                    .join("")}
+                <span style={{ fontSize: 11, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)" }}>
+                  {[lib.default_sets && `${lib.default_sets}×`, lib.default_reps].filter(Boolean).join("")}
                 </span>
               )}
             </button>
           ))}
+        </div>
+      )}
+      {inferStatus === "active" && (
+        <div style={{ padding: "4px 12px" }}>
+          <InlineLoading description={t("exercise.inferring")} status="active" />
+        </div>
+      )}
+      {inferStatus === "finished" && (
+        <div style={{ padding: "4px 12px" }}>
+          <InlineLoading description={t("exercise.musclesAI")} status="finished" />
+        </div>
+      )}
+      {!inferStatus && aiInferred && (
+        <div style={{ padding: "2px 12px 6px", fontSize: 11, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)" }}>
+          {t("exercise.musclesAI")}
         </div>
       )}
     </div>

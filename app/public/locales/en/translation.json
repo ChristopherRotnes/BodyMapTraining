@@ -331,12 +331,17 @@
     "deleteExercise": "Delete exercise",
     "invalidNumber": "Invalid number – enter 1 to 99"
   },
+  "exercise": {
+    "inferring": "Analysing muscles…",
+    "musclesAI": "Muscles set by AI – please verify"
+  },
   "exerciseForm": {
     "nameLabel": "Name",
     "namePlaceholder": "e.g. Squat",
     "defaultSets": "Default sets",
     "defaultReps": "Default reps",
-    "saveExercise": "Save exercise"
+    "saveExercise": "Save exercise",
+    "noMusclesWarning": "No muscles selected — click the figure to register"
   },
   "libraryPicker": {
     "searchLabel": "Search exercise library",

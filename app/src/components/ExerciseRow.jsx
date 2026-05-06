@@ -11,6 +11,7 @@ export default function ExerciseRow({
   layer = "layer-01",
   validateNumbers = false,
   autoFocusName = false,
+  onNameBlur,
 }) {
   const { t } = useTranslation();
   const [editingName, setEditingName] = useState(autoFocusName);
@@ -51,7 +52,7 @@ export default function ExerciseRow({
             aria-label={t("exerciseRow.nameAriaLabel")}
             value={exercise.name}
             onChange={(e) => onChange({ name: e.target.value, standardName: e.target.value })}
-            onBlur={() => setEditingName(false)}
+            onBlur={() => { setEditingName(false); onNameBlur?.(); }}
             onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
             style={{
               width: "100%",

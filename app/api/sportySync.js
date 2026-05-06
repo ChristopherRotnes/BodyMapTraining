@@ -96,12 +96,15 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
 }
 
 // ── Timer trigger: 04:00, 11:00, and 14:00 UTC daily ─────────────────
-app.timer('sportySyncTimer', {
-  schedule: '0 4,11,14 * * *',
-  handler: async (myTimer, context) => {
-    await syncGymCalendar(context);
-  },
-});
+// Skipped locally — SWA CLI only supports HTTP triggers.
+if (process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
+  app.timer('sportySyncTimer', {
+    schedule: '0 4,11,14 * * *',
+    handler: async (myTimer, context) => {
+      await syncGymCalendar(context);
+    },
+  });
+}
 
 // ── HTTP trigger: health check ────────────────────────────────────────
 // GET /api/sporty-health  → returns most-recent gym_calendar row + count

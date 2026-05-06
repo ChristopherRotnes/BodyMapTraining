@@ -1,6 +1,7 @@
 import { EX_DB } from "./bodymap.jsx";
 import { supabase } from "./supabase";
 import i18n from "./i18n";
+import { CLAUDE_MODEL_TEXT, buildMuscleInferencePrompt } from "./prompts";
 
 export function getIntlLocale() {
   const lang = i18n.language;
@@ -141,6 +142,32 @@ export function weekIsoToMonday(weekIso) {
 }
 
 // Builds muscle-ID → exercise-name map from a recommendations array.
+// Infers primary/secondary muscle IDs for a given exercise name via Claude text API.
+// Returns { primary: string[], secondary: string[] } or null on failure/empty result.
+export async function inferMusclesFromName(name) {
+  const trimmed = name?.trim();
+  if (!trimmed) return null;
+  try {
+    const res = await callClaude({
+      model: CLAUDE_MODEL_TEXT,
+      max_tokens: 200,
+      messages: [{ role: "user", content: buildMuscleInferencePrompt(trimmed) }],
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text?.trim();
+    if (!raw) return null;
+    // Extract JSON robustly — handles accidental markdown code fences
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    const parsed = JSON.parse(match[0]);
+    const primary = Array.isArray(parsed.primary) ? parsed.primary : [];
+    const secondary = Array.isArray(parsed.secondary) ? parsed.secondary : [];
+    return (primary.length || secondary.length) ? { primary, secondary } : null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildRecMuscleMap(recs) {
   const map = {};
   (recs || []).forEach(r => {

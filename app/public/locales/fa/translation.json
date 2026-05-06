@@ -331,12 +331,17 @@
     "deleteExercise": "حذف تمرین",
     "invalidNumber": "عدد نامعتبر – عددی بین ۱ تا ۹۹ وارد کنید"
   },
+  "exercise": {
+    "inferring": "در حال تحلیل عضلات…",
+    "musclesAI": "عضلات توسط هوش مصنوعی تنظیم شد – لطفاً تأیید کنید"
+  },
   "exerciseForm": {
     "nameLabel": "نام",
     "namePlaceholder": "مثلاً اسکوات",
     "defaultSets": "ست پیش‌فرض",
     "defaultReps": "تکرار پیش‌فرض",
-    "saveExercise": "ذخیره تمرین"
+    "saveExercise": "ذخیره تمرین",
+    "noMusclesWarning": "هیچ عضله‌ای انتخاب نشده — روی شکل کلیک کنید"
   },
   "libraryPicker": {
     "searchLabel": "جستجو در کتابخانه تمرین‌ها",
