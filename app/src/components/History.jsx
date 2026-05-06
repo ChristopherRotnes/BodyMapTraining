@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, updateSessionVisibility, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory, fetchDisplayName } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
@@ -188,7 +188,7 @@ export default function History({ initialDate }) {
   const libraryCache = useRef(null);
   const [newExerciseIds, setNewExerciseIds] = useState(new Set());
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
-  const [editVisibility, setEditVisibility] = useState("shared");
+  const [myDisplayName, setMyDisplayName] = useState(null);
   const [classHistory, setClassHistory] = useState(new Map());
   const fileRef = useRef();
 
@@ -197,6 +197,7 @@ export default function History({ initialDate }) {
       .then(setSessions)
       .catch(e => logDevError("History/fetchSessions", e))
       .finally(() => setLoading(false));
+    fetchDisplayName().then(setMyDisplayName).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -302,7 +303,6 @@ export default function History({ initialDate }) {
     const exs = sessionExToEditFormat(session.session_exercises || []);
     setEditExercises(exs);
     setEditGymSessionId(session.gym_calendar_id || "");
-    setEditVisibility(session.visibility || "shared");
     setEditGymSessions([]);
     setEditError(null);
     setAnalyzeError(null);
@@ -345,7 +345,7 @@ export default function History({ initialDate }) {
     setEditError(null);
     try {
       const date = selectedSession.session_date;
-      await updateSession(selectedSession.id, editExercises, editGymSessionId || null, { replace: !!editGymCalendarConflict, visibility: editVisibility });
+      await updateSession(selectedSession.id, editExercises, editGymSessionId || null, { replace: !!editGymCalendarConflict });
       setEditMode(false);
       setSelectedSession(null);
       await loadSession(date);
@@ -621,18 +621,22 @@ export default function History({ initialDate }) {
                         )
                       )}
 
-                      {/* Visibility toggle (edit mode only) */}
-                      {isEditing && (
-                        <Toggle
-                          id={`visibility-${session.id}`}
-                          labelText={t("history.shareWithColleagues")}
-                          labelA={t("history.shareOff")}
-                          labelB={t("history.shareOn")}
-                          toggled={editVisibility === "shared"}
-                          onToggle={(checked) => setEditVisibility(checked ? "shared" : "private")}
-                          style={{ marginBottom: 16 }}
-                        />
-                      )}
+                      {/* Visibility toggle — always visible, auto-saves instantly */}
+                      <Toggle
+                        id={`visibility-${session.id}`}
+                        labelText={t("history.shareWithColleagues")}
+                        labelA={t("history.shareOff")}
+                        labelB={t("history.shareOn")}
+                        toggled={(session.visibility ?? "shared") === "shared"}
+                        onToggle={(checked) => {
+                          const vis = checked ? "shared" : "private";
+                          setDaySessions(prev => prev.map(s => s.id === session.id ? { ...s, visibility: vis } : s));
+                          updateSessionVisibility(session.id, vis).catch(() => {
+                            setDaySessions(prev => prev.map(s => s.id === session.id ? { ...s, visibility: session.visibility ?? "shared" } : s));
+                          });
+                        }}
+                        style={{ marginBottom: 24 }}
+                      />
 
                       {/* Body map */}
                       <BodyPanel
@@ -715,7 +719,13 @@ export default function History({ initialDate }) {
                             </Button>
                           </>
                         ) : (
-                          (session.session_exercises || []).map(ex => {
+                          <>
+                            {myDisplayName && (
+                              <p style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 13, color: "var(--cds-text-primary)", margin: "0 0 8px", borderInlineStart: "3px solid var(--accent)", paddingInlineStart: 8 }}>
+                                {myDisplayName}
+                              </p>
+                            )}
+                          {(session.session_exercises || []).map(ex => {
                             const muscleLabels = (ex.muscle_activations || []).map(ma => t(`muscles.${ma.muscle_id}`, { defaultValue: MUSCLES[ma.muscle_id]?.label || ma.muscle_id })).join(", ");
                             return (
                               <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--border-subtle-wl)", color: "var(--cds-text-primary)" }}>
@@ -731,7 +741,8 @@ export default function History({ initialDate }) {
                                 )}
                               </div>
                             );
-                          })
+                          })}
+                          </>
                         )}
                       </div>
 

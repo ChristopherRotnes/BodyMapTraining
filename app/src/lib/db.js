@@ -354,10 +354,10 @@ export async function deleteWeekPlan(weekIso) {
   if (error) throw error;
 }
 
-export async function updateSession(sessionId, exercises, gymCalendarId, { replace = false, visibility = 'shared' } = {}) {
+export async function updateSession(sessionId, exercises, gymCalendarId, { replace = false } = {}) {
   const enabledExercises = exercises.filter(e => e.enabled && e.name);
 
-  const { error: rpcError } = await supabase.rpc('update_session', {
+  const { error } = await supabase.rpc('update_session', {
     p_session_id: sessionId,
     p_gym_calendar_id: gymCalendarId || null,
     p_exercises: enabledExercises.map((e, i) => ({
@@ -373,13 +373,15 @@ export async function updateSession(sessionId, exercises, gymCalendarId, { repla
     })),
     p_replace: replace,
   });
-  if (rpcError) throw rpcError;
+  if (error) throw error;
+}
 
-  const { error: visError } = await supabase
+export async function updateSessionVisibility(sessionId, visibility) {
+  const { error } = await supabase
     .from("sessions")
     .update({ visibility })
     .eq("id", sessionId);
-  if (visError) throw visError;
+  if (error) throw error;
 }
 
 // ── CLASS HISTORY ─────────────────────────────────────────────────────
