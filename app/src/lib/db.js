@@ -369,3 +369,31 @@ export async function updateSession(sessionId, exercises, gymCalendarId, { repla
   });
   if (error) throw error;
 }
+
+// ── USER GYMS ─────────────────────────────────────────────────────────
+
+export const DEFAULT_SPORTY_BUSINESS_UNIT_ID = 8;
+
+export async function fetchMyGyms() {
+  const { data, error } = await supabase
+    .from("user_gyms")
+    .select("id, sporty_business_unit_id, role, created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function ensureGymMembership(buId = DEFAULT_SPORTY_BUSINESS_UNIT_ID) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("user_gyms")
+    .upsert(
+      { user_id: user.id, sporty_business_unit_id: buId },
+      { onConflict: "user_id,sporty_business_unit_id", ignoreDuplicates: true }
+    )
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
