@@ -33,10 +33,17 @@ describe('MuscleMap reducer', () => {
   });
 
   it('ANALYZE_SUCCESS sets exercises and moves to confirm', () => {
-    const exercises = [{ id: 0, name: 'Benkpress', enabled: true }];
+    const exercises = [{ id: 0, name: 'Benkpress', enabled: true, primary: ['chest'], secondary: ['triceps'] }];
     const result = reducer({ ...initialState, step: 'analyzing' }, { type: 'ANALYZE_SUCCESS', exercises });
     expect(result.step).toBe('confirm');
     expect(result.exercises).toEqual(exercises);
+  });
+
+  it('ANALYZE_SUCCESS filters out invalid muscle IDs', () => {
+    const exercises = [{ id: 0, name: 'Benkpress', enabled: true, primary: ['chest', 'invalid_muscle'], secondary: ['not_a_muscle'] }];
+    const result = reducer({ ...initialState, step: 'analyzing' }, { type: 'ANALYZE_SUCCESS', exercises });
+    expect(result.exercises[0].primary).toEqual(['chest']);
+    expect(result.exercises[0].secondary).toEqual([]);
   });
 
   it('ANALYZE_ERROR moves back to upload with error message', () => {
