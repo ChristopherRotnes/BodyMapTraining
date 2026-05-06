@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
-import { ChevronLeft, ChevronRight, Add, Close, TrashCan } from "@carbon/icons-react";
+import { ChevronLeft, ChevronRight, Add, Close, TrashCan, Checkmark } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
 import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale } from "../lib/utils";
@@ -601,7 +601,7 @@ export default function Planlegger() {
               {saving
                 ? <InlineLoading description={t("common.saving")} status="active" />
                 : saveSuccess
-                  ? <InlineLoading description={t("planlegger.planSaved")} status="finished" />
+                  ? <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Checkmark size={16} />{t("planlegger.planSaved")}</span>
                   : t("planlegger.savePlan")}
             </Button>
           </div>
