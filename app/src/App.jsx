@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
+import { ensureGymMembership } from "./lib/db";
 import { NavContext } from "./lib/NavContext";
 import Login from "./components/Login";
 import Home from "./components/Home";
@@ -22,9 +23,13 @@ function App() {
   const [reportPrefill, setReportPrefill] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) ensureGymMembership().catch(() => {});
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) ensureGymMembership().catch(() => {});
     });
     return () => subscription.unsubscribe();
   }, []);

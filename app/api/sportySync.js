@@ -1,5 +1,7 @@
 import { app } from '@azure/functions';
 
+// BU 8 is hardcoded for the single-gym MVP (Sporty Thon Senter Ski).
+// When multi-gym support lands, replace with a DB lookup via user_gyms.sporty_business_unit_id.
 const SPORTY_BASE_URL =
   'https://sporty.no/api/v1/businessunits/8/groupactivities';
 

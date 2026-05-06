@@ -274,7 +274,10 @@
     "language": "زبان",
     "languageNorwegian": "Norsk",
     "languageEnglish": "English",
-    "languagePersian": "فارسی"
+    "languagePersian": "فارسی",
+    "myGym": "باشگاه من",
+    "myGymMembership": "Sporty Thon Senter Ski",
+    "myGymFutureHint": "به زودی: انتخاب باشگاه و مشاهده تاریخچه مشترک با سایر مربیان."
   },
   "report": {
     "heroMuscles_one": "{{count}} عضله",

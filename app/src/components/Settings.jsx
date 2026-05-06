@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Toggle, Button, RadioButtonGroup, RadioButton } from "@carbon/react";
+import { Toggle, Button, RadioButtonGroup, RadioButton, Tag } from "@carbon/react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 import BodyPanel from "./BodyPanel";
@@ -77,6 +77,23 @@ export default function Settings() {
           secondary={PREVIEW_SECONDARY}
           marginBottom={0}
         />
+      </div>
+
+      <SectionLabel>{t("settings.myGym")}</SectionLabel>
+      <div style={{ padding: "0 16px 24px" }}>
+        <div style={cardStyle}>
+          <Tag type="green" size="md" style={{ marginBottom: 8 }}>
+            {t("settings.myGymMembership")}
+          </Tag>
+          <p style={{
+            color: "var(--cds-text-secondary)",
+            fontFamily: "var(--cds-font-sans)",
+            fontSize: 13,
+            margin: 0,
+          }}>
+            {t("settings.myGymFutureHint")}
+          </p>
+        </div>
       </div>
 
       <SectionLabel>{t("settings.contact")}</SectionLabel>
