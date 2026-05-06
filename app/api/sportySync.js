@@ -93,7 +93,7 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
   return { ok: true, upserted: rows.length };
 }
 
-// ── Timer trigger: 04:00 and 11:00 UTC daily ──────────────────────────
+// ── Timer trigger: 04:00, 11:00, and 14:00 UTC daily ─────────────────
 app.timer('sportySyncTimer', {
   schedule: '0 4,11,14 * * *',
   handler: async (myTimer, context) => {
@@ -108,6 +108,14 @@ app.http('sportySyncHealth', {
   route: 'sporty-health',
   authLevel: 'anonymous',
   handler: async (_request, context) => {
+    const expectedKey = process.env.SPORTY_SYNC_API_KEY;
+    if (!expectedKey || _request.headers.get('x-api-key') !== expectedKey) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

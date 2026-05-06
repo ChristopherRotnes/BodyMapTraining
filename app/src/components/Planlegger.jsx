@@ -4,10 +4,8 @@ import { ChevronLeft, ChevronRight, Add, Close, TrashCan } from "@carbon/icons-r
 import { useTranslation } from "react-i18next";
 import i18n from "../lib/i18n";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
-import { buildMuscleMapFromExercises } from "../lib/utils";
-import { toWeekIso } from "../lib/utils";
+import { buildMuscleMapFromExercises, toWeekIso, logDevError } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
-import { logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, StickyCta, AccentChip } from "./PageShell";
 
 function TemplatePickerSheet({ templates, onSelect, onClose }) {

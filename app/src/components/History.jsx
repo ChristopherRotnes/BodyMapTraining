@@ -224,8 +224,7 @@ export default function History({ initialDate }) {
   const sessionCountMap = useMemo(() => {
     const map = {};
     filteredSessions.forEach(s => {
-      const count = (s.session_exercises || []).length;
-      map[s.session_date] = (map[s.session_date] || 0) + count;
+      map[s.session_date] = (map[s.session_date] || 0) + 1;
     });
     return map;
   }, [filteredSessions]);

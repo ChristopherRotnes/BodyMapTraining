@@ -339,10 +339,12 @@ export async function saveWeekPlan(weekIso, assignments) {
 }
 
 export async function deleteWeekPlan(weekIso) {
+  const { data: { user } } = await supabase.auth.getUser();
   const { error } = await supabase
     .from("week_plans")
     .delete()
-    .eq("week_iso", weekIso);
+    .eq("week_iso", weekIso)
+    .eq("user_id", user.id);
   if (error) throw error;
 }
 

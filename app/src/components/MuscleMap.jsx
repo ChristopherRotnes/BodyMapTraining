@@ -66,8 +66,19 @@ export function reducer(state, action) {
       return { ...state, dragging: action.dragging };
     case "ANALYZE_START":
       return { ...state, step: "analyzing", error: null };
-    case "ANALYZE_SUCCESS":
-      return { ...state, step: "confirm", exercises: action.exercises };
+    case "ANALYZE_SUCCESS": {
+      const validIds = new Set(Object.keys(MUSCLES));
+      const clean = (arr) => (arr || []).filter(id => validIds.has(id));
+      return {
+        ...state,
+        step: "confirm",
+        exercises: action.exercises.map(e => ({
+          ...e,
+          primary: clean(e.primary),
+          secondary: clean(e.secondary),
+        })),
+      };
+    }
     case "ANALYZE_ERROR":
       return { ...state, step: "upload", error: action.error };
     case "UPDATE_EXERCISE":
@@ -593,6 +604,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                     autoFocusName={ex.id === editingId}
                     isNew={newExerciseIds.has(ex.id)}
                     libraryExercises={libraryExercises}
+                    validateNumbers
                     onChange={(updates) => dispatch({ type: "UPDATE_EXERCISE", id: ex.id, updates })}
                     onDelete={() => dispatch({ type: "DELETE_EXERCISE", id: ex.id })}
                   />
