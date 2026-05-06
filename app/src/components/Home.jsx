@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { format, startOfISOWeek, addDays } from "date-fns";
 import { InlineLoading } from "@carbon/react";
 import { ArrowRight } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
-import { extractMuscles, logDevError, getIntlLocale, toWeekIso } from "../lib/utils";
+import { extractMuscles, logDevError, getIntlLocale, toWeekIso, isoWeekMonday, toIsoDate } from "../lib/utils";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
@@ -74,11 +73,11 @@ export default function Home({ onShowHistoryWithDate }) {
 
   const today = new Date();
   const muscles = lastSession ? extractMuscles(lastSession) : null;
-  const isToday = lastSession?.session_date === format(today, "yyyy-MM-dd");
+  const isToday = lastSession?.session_date === toIsoDate(today);
 
-  const weekStart = startOfISOWeek(today);
+  const weekStart = isoWeekMonday(today);
   const weekDays = WEEK_DAY_KEYS.map((key, i) => {
-    const date = format(addDays(weekStart, i), "yyyy-MM-dd");
+    const date = toIsoDate(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i));
     const sessions = weekSessions?.filter(s => s.session_date === date) ?? [];
     const count = sessions.reduce((sum, s) => sum + (s.session_exercises?.length ?? 0), 0);
     const names = sessions.map(s => s.gym_calendar?.name).filter(Boolean);
@@ -131,7 +130,7 @@ export default function Home({ onShowHistoryWithDate }) {
             <div style={{ display: "flex", gap: 6, height: 56, alignItems: "flex-end" }}>
               {weekDays.map(({ label, count, date, names }, i) => {
                 const pct = count > 0 ? Math.max(count / maxWeekCount, 0.1) : 0;
-                const isCurrentDay = date === format(today, "yyyy-MM-dd");
+                const isCurrentDay = date === toIsoDate(today);
                 return (
                   <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, height: "100%" }}>
                     <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end" }}>

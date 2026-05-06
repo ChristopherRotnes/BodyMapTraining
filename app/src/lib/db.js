@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { startOfISOWeek, endOfISOWeek, format } from "date-fns";
+import { isoWeekMonday, toIsoDate } from "./utils";
 
 // ── EXERCISE LIBRARY ──────────────────────────────────────────────────
 
@@ -215,8 +215,10 @@ export async function fetchLastSession() {
 
 export async function fetchThisWeekSessions() {
   const today = new Date();
-  const weekStart = format(startOfISOWeek(today), "yyyy-MM-dd");
-  const weekEnd = format(endOfISOWeek(today), "yyyy-MM-dd");
+  const mon = isoWeekMonday(today);
+  const weekStart = toIsoDate(mon);
+  const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+  const weekEnd = toIsoDate(sun);
   const { data, error } = await supabase
     .from("sessions")
     .select(`

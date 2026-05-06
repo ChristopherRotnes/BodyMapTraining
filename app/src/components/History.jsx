@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { format, parseISO } from "date-fns";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale } from "../lib/utils";
+import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
@@ -36,8 +35,8 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
     t("history.days.sat"),
     t("history.days.sun"),
   ];
-  const todayStr = format(today, "yyyy-MM-dd");
-  const selectedStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const todayStr = toIsoDate(today);
+  const selectedStr = selectedDate ? toIsoDate(selectedDate) : null;
   const firstDOW = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -143,7 +142,7 @@ export default function History({ initialDate }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(
-    initialDate ? parseISO(initialDate + "T12:00:00") : undefined
+    initialDate ? new Date(initialDate + "T12:00:00") : undefined
   );
   const [daySessions, setDaySessions] = useState([]);
   const [expandedIds, setExpandedIds] = useState(new Set());
@@ -400,7 +399,7 @@ export default function History({ initialDate }) {
     setMuscleFilter(newFilter);
     if (!selectedDate && newFilter.length > 0) {
       const matching = sessions.filter(s => newFilter.some(mid => (sessionMuscleIdMap.get(s.id) ?? new Set()).has(mid)));
-      const todayStr = format(today, "yyyy-MM-dd");
+      const todayStr = toIsoDate(today);
       const dates = matching.map(s => s.session_date).sort();
       const target = dates.includes(todayStr) ? todayStr : dates[dates.length - 1];
       if (target) {
@@ -416,7 +415,7 @@ export default function History({ initialDate }) {
         <SectionLabel>{t("history.sectionLabel")}</SectionLabel>
         <PageHeading style={{ minHeight: 72 }}>
           {muscleFilter.length > 0 && selectedDate ? (() => {
-            const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
+            const selectedDateStr = toIsoDate(selectedDate);
             const count = filteredSessions.filter(s => s.session_date === selectedDateStr).length;
             const total = sessions.filter(s => s.session_date === selectedDateStr).length;
             const dateLabel = new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "long" }).format(selectedDate);

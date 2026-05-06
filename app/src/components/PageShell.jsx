@@ -166,11 +166,11 @@ export default function PageShell({ children }) {
             <NavBtn ariaLabel={t("nav.report")} onClick={onShowReport} active={currentView === "report"}>
               <Analytics size={20} />
             </NavBtn>
-            <NavBtn ariaLabel={t("nav.library")} onClick={onShowBibliotek} active={currentView === "bibliotek"}>
-              <Book size={20} />
-            </NavBtn>
             <NavBtn ariaLabel={t("nav.planner")} onClick={onShowPlanlegger} active={currentView === "planlegger"}>
               <EventSchedule size={20} />
+            </NavBtn>
+            <NavBtn ariaLabel={t("nav.library")} onClick={onShowBibliotek} active={currentView === "bibliotek"}>
+              <Book size={20} />
             </NavBtn>
             <NavBtn ariaLabel={t("nav.settings")} onClick={onShowSettings} active={currentView === "settings"}>
               <Settings size={20} />

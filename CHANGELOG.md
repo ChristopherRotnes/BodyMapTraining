@@ -2,6 +2,27 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.0-rc.6] — 2026-05-06
+
+### Changed
+- **Nav reorder** — Bibliotek and Planlegger swapped; new order: Camera → Historikk → Rapport → Planlegger → Bibliotek → Innstillinger (library now sits next to settings)
+
+---
+
+## [1.2.0-rc.5] — 2026-05-06
+
+### Changed
+- **Removed `date-fns` dependency** — replaced all usages (`format`, `parseISO`, `startOfISOWeek`, `endOfISOWeek`, `addDays`) with two small native helpers (`toIsoDate`, `isoWeekMonday`) added to `utils.js`; bundle and lockfile updated
+
+---
+
+## [1.2.0-rc.4] — 2026-05-06
+
+### Infrastructure
+- **Supabase redirect URL allowlist for PR previews** — added wildcard `https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net` to Supabase Authentication → URL Configuration; magic-link emails now redirect back to the correct PR preview environment automatically (#135)
+
+---
+
 ## [1.2.0-rc.3] — 2026-05-06
 
 ### Fixed

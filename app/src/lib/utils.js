@@ -129,6 +129,20 @@ export function toWeekIso(date) {
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
+// Returns the local-time Monday of the ISO week containing date.
+export function isoWeekMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - (day - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// Formats a Date as "yyyy-MM-dd" using local time getters.
+export function toIsoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 // Returns the Monday Date for a given ISO week string e.g. "2026-W19".
 export function weekIsoToMonday(weekIso) {
   const [yearStr, weekStr] = weekIso.split("-W");

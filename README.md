@@ -42,7 +42,14 @@ cd api && npm install
 
 `app/.env.test` is committed with placeholder values — no setup needed. It lets the Vitest test runner import `supabase.js` without crashing (unit tests make no real Supabase calls).
 
-Add `http://localhost:4280` to your Supabase project's allowed redirect URLs (Authentication → URL Configuration). (Rembember to add other urls you use either as dev, qa or prod)
+Add the following to Supabase **Authentication → URL Configuration → Additional redirect URLs**:
+
+| URL | Purpose |
+|---|---|
+| `http://localhost:4280` | Local dev (SWA emulator) |
+| `https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net` | Azure SWA PR previews (wildcard covers all PR numbers) |
+
+The app uses `emailRedirectTo: window.location.origin` so magic-link emails automatically point back to whichever environment the login was initiated from.
 
 ### Running
 
