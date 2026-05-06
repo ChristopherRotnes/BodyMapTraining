@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { isoWeekMonday, toIsoDate } from "./utils";
+import { toIsoDate, weekIsoToMonday, toWeekIso } from "./utils";
 
 // ── EXERCISE LIBRARY ──────────────────────────────────────────────────
 
@@ -213,12 +213,12 @@ export async function fetchLastSession() {
   return data;
 }
 
-export async function fetchThisWeekSessions() {
-  const today = new Date();
-  const mon = isoWeekMonday(today);
-  const weekStart = toIsoDate(mon);
-  const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
-  const weekEnd = toIsoDate(sun);
+export async function fetchSessionsForWeek(weekIso) {
+  const mon = weekIsoToMonday(weekIso);
+  const monLocal = new Date(mon.getUTCFullYear(), mon.getUTCMonth(), mon.getUTCDate());
+  const weekStart = toIsoDate(monLocal);
+  const sunLocal = new Date(monLocal.getFullYear(), monLocal.getMonth(), monLocal.getDate() + 6);
+  const weekEnd = toIsoDate(sunLocal);
   const { data, error } = await supabase
     .from("sessions")
     .select(`
@@ -226,7 +226,7 @@ export async function fetchThisWeekSessions() {
       gym_calendar(name),
       session_exercises(
         id, name,
-        muscle_activations(muscle_id)
+        muscle_activations(muscle_id, activation_type)
       )
     `)
     .gte("session_date", weekStart)
@@ -234,6 +234,10 @@ export async function fetchThisWeekSessions() {
     .order("session_date", { ascending: true });
   if (error) throw error;
   return data ?? [];
+}
+
+export async function fetchThisWeekSessions() {
+  return fetchSessionsForWeek(toWeekIso(new Date()));
 }
 
 export async function fetchSessionsForReport(fromDate, toDate) {

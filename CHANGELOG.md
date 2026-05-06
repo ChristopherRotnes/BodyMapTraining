@@ -2,6 +2,13 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.0-rc.7] — 2026-05-06
+
+### Added
+- **Planlegger — actual vs projected weekly coverage** — the planner page now renders a "Trent denne uken" body map above the existing "Projisert dekning" map. The new map highlights muscles trained in real logged sessions for the visible ISO week (primary as solid green, secondary as blue diagonal stripes), with mono counters (`N av 17 muskler trent · M økter denne uken`) and a wrap row of `AccentChip`s listing untrained muscles. Week navigation chevrons update both maps. Future weeks naturally show 0 trained. Translated to nb/en/fa (RTL safe). New `fetchSessionsForWeek(weekIso)` helper in `db.js` (replaces the previous one-purpose `fetchThisWeekSessions`, which now delegates to it). Also added `activation_type` to the muscle_activations select so `extractMuscles` works correctly. (#143)
+
+---
+
 ## [1.2.0-rc.6] — 2026-05-06
 
 ### Changed
