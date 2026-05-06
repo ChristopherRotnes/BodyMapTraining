@@ -10,8 +10,8 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
-7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session; edit mode supports library autocomplete — type an exercise name to get suggestions from your library
-8. **Library** — build a named exercise library with click-to-toggle muscle selection; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
+7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session; edit mode supports library autocomplete — type an exercise name to get suggestions from your library; AI muscle inference fires automatically when you add a new exercise with no muscles assigned (tab or click away from the name field)
+8. **Library** — build a named exercise library with click-to-toggle muscle selection; AI muscle inference fires when you type an exercise name and leave the field — muscles are filled in automatically and marked "Muskler satt av AI"; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
 9. **Weekly planner** — assign templates to each day of the week; a live heatmap body map shows projected cumulative muscle coverage; a Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
 10. **Language** — switch between Norsk, English and فارسی (RTL) at any time from Settings; all UI strings, date formats, and month names update instantly
 11. **Settings** — language selector (top), theme toggle (dark/light) with live body map preview, contact, changelog, and account/sign-out (bottom)
@@ -89,7 +89,7 @@ app/
                                    #   week_plans, week_plan_days
       bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG (onHover/hovered), calcMuscles, useIsMobile
       utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude, extractMuscles,
-                                   #   toWeekIso, weekIsoToMonday, getIntlLocale
+                                   #   toWeekIso, weekIsoToMonday, getIntlLocale, inferMusclesFromName
       prompts.js                   # Claude model IDs + prompt builders
       i18n.js                      # i18next init — nb/en/fa resources, fallbackLng, RTL direction wiring
   public/
