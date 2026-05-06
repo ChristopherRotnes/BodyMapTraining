@@ -142,8 +142,8 @@ export async function fetchGymSessionsByDate(dateStr) {
   const { data, error } = await supabase
     .from("gym_calendar")
     .select("id, name, start_time, end_time, instructor")
-    .gte("start_time", `${dateStr}T00:00:00+00:00`)
-    .lte("start_time", `${dateStr}T23:59:59+00:00`)
+    .gte("start_time", `${dateStr}T00:00:00+02:00`)
+    .lte("start_time", `${dateStr}T23:59:59+02:00`)
     .eq("cancelled", false)
     .order("start_time", { ascending: true });
   if (error) throw error;

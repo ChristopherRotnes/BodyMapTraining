@@ -72,15 +72,15 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
           let fill, stroke, filter;
           if (isPrimary) {
             fill = (isHov || isFoc) ? PRIMARY_HOVER : PRIMARY_FILL;
-            stroke = isFoc ? "#0f62fe" : PRIMARY_STROKE;
+            stroke = isFoc ? "var(--cds-interactive)" : PRIMARY_STROKE;
             filter = `url(#pick-glow-${view}-${instanceId})`;
           } else if (isSec) {
             fill = `url(#pick-sec-stripe-${view}-${instanceId})`;
-            stroke = isFoc ? "#0f62fe" : SEC_STROKE;
+            stroke = isFoc ? "var(--cds-interactive)" : SEC_STROKE;
             filter = `url(#pick-softglow-${view}-${instanceId})`;
           } else {
             fill = (isHov || isFoc) ? "rgba(128,128,128,0.25)" : "rgba(128,128,128,0.08)";
-            stroke = isFoc ? "#0f62fe" : "rgba(128,128,128,0.15)";
+            stroke = isFoc ? "var(--cds-interactive)" : "rgba(128,128,128,0.15)";
             filter = undefined;
           }
           const strokeWidth = isFoc ? "1.5" : "0.8";

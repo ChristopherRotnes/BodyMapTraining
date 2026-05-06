@@ -1,7 +1,7 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { EX_DB, MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, detectMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
+import { toBase64, detectMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Button, Select, SelectItem,
@@ -9,7 +9,7 @@ import {
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend, Close } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
@@ -26,12 +26,12 @@ const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 function getConfidenceColor(ex) {
-  if (ex.primary?.length || ex.secondary?.length) return "#42be65";
+  if (ex.primary?.length || ex.secondary?.length) return "var(--heat-4)";
   const txt = ((ex.name || "") + " " + (ex.standardName || "")).toLowerCase();
   for (const rule of EX_DB) {
-    if (rule.kw.some(k => txt.includes(k))) return "#f1c21b";
+    if (rule.kw.some(k => txt.includes(k))) return "var(--cds-support-warning)";
   }
-  return "#da1e28";
+  return "var(--cds-support-error)";
 }
 
 export const initialState = {
@@ -130,11 +130,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
   const [newExerciseIds, setNewExerciseIds] = useState(() => new Set());
   const [useTodayDate, setUseTodayDate] = useState(true);
 
-  const STEP_DEFS = [
+  const STEP_DEFS = useMemo(() => [
     { num: "01", label: t("muscleMap.stepSnap") },
     { num: "02", label: t("muscleMap.stepConfirm") },
     { num: "03", label: t("muscleMap.stepResult") },
-  ];
+  ], [t]);
 
   useEffect(() => {
     fetchLibraryExercises().then(setLibraryExercises).catch(() => {});
@@ -365,11 +365,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                         style={{
                           position: "absolute", top: 4, right: 4,
                           background: "var(--cds-layer-02)", border: "none",
-                          color: "#fff", width: 24, height: 24,
-                          fontSize: 16, lineHeight: "24px", textAlign: "center",
+                          color: "var(--cds-text-inverse)", width: 24, height: 24,
+                          display: "flex", alignItems: "center", justifyContent: "center",
                           padding: 0, cursor: "pointer",
                         }}>
-                        ×
+                        <Close size={16} />
                       </button>
                     </div>
                   ))}
@@ -578,7 +578,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               >
                 <SelectItem value="" text={t("muscleMap.selectGymOptional")} />
                 {gymSessions.map(s => {
-                  const time = new Date(s.start_time).toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+                  const time = new Intl.DateTimeFormat(getIntlLocale(), { hour: "2-digit", minute: "2-digit" }).format(new Date(s.start_time));
                   const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
                   return <SelectItem key={s.id} value={s.id} text={label} />;
                 })}

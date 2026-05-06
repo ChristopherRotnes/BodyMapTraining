@@ -4,6 +4,7 @@ export const ALLOWED_MODELS = new Set([
 ]);
 export const MAX_TOKENS_LIMIT = 2000;
 
+// Best-effort only: resets on cold start and is not shared across Azure Function instances.
 const rateLimitMap = new Map();
 const RATE_LIMIT_REQUESTS = 10;
 const RATE_LIMIT_WINDOW_MS = 60_000;
