@@ -4,10 +4,10 @@ import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
-  Button, Tag, InlineNotification, InlineLoading, DefinitionTooltip,
+  Button, Tag, InlineNotification, InlineLoading,
   Select, SelectItem, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
-import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
+import { Camera, Add, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
@@ -146,7 +146,7 @@ export default function History({ initialDate }) {
   );
   const [daySessions, setDaySessions] = useState([]);
   const [expandedIds, setExpandedIds] = useState(new Set());
-  const [selectedSession, setSelectedSession] = useState(null);
+
   const [loadingSession, setLoadingSession] = useState(false);
   const [today, setToday] = useState(() => new Date());
 
@@ -271,7 +271,6 @@ export default function History({ initialDate }) {
   const loadSession = async (dateStr) => {
     setLoadingSession(true);
     setDaySessions([]);
-    setSelectedSession(null);
     try {
       const results = await fetchSessionsByDate(dateStr);
       results.forEach(s => {

@@ -126,10 +126,17 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
   const { t } = useTranslation();
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
+  const [wrapWidth, setWrapWidth] = React.useState(200);
   const wrapRef = React.useRef();
   const rafRef = React.useRef(null);
 
   React.useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
+  React.useEffect(() => {
+    if (!wrapRef.current) return;
+    const ro = new ResizeObserver(entries => setWrapWidth(entries[0].contentRect.width));
+    ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   const handleEnter = (id, e) => {
     if (onHover) { onHover(id); return; }
@@ -253,7 +260,7 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
       {!onHover && tooltip && (
         <div style={{
           position: "absolute",
-          left: Math.min(tooltip.x + 10, (wrapRef.current?.offsetWidth || 200) - 150),
+          left: Math.min(tooltip.x + 10, wrapWidth - 150),
           top: Math.max(tooltip.y - 10, 4),
           background: "var(--cds-layer-02)",
           border: "1px solid var(--cds-border-subtle-01)",
@@ -307,10 +314,17 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
   const sSet = new Set(secondary);
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
+  const [wrapWidth, setWrapWidth] = React.useState(200);
   const wrapRef = React.useRef();
   const rafRef = React.useRef(null);
 
   React.useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
+  React.useEffect(() => {
+    if (!wrapRef.current) return;
+    const ro = new ResizeObserver(entries => setWrapWidth(entries[0].contentRect.width));
+    ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   const handleEnter = (id, e) => {
     if (onHover) { onHover(id); return; }
@@ -418,7 +432,7 @@ export function BodySVG({ view, primary, secondary, muscleMap = {}, onHover, hov
       {!onHover && tooltip && muscleMap[tooltip.id]?.length > 0 && (
         <div style={{
           position: "absolute",
-          left: Math.min(tooltip.x + 10, (wrapRef.current?.offsetWidth || 200) - 140),
+          left: Math.min(tooltip.x + 10, wrapWidth - 140),
           top: Math.max(tooltip.y - 10, 4),
           background: "var(--cds-layer-02)",
           border: "1px solid var(--cds-border-subtle-01)",

@@ -5,6 +5,7 @@ All notable changes to Workout Lens are documented here.
 ## [Unreleased]
 
 ### Added
+- **Email templates (#148)** — Supabase auth emails (magic link, invite, email confirmation) are now version-controlled in `supabase/templates/`. Branded with Workout Lens name, `workout.umulig.org` domain, magenta CTA button, and Carbon-matching dark colour scheme. Apply to the remote project with `supabase link` + `supabase config push`.
 - **Joint class history (#138)** — expanding a gym-linked session in History now shows a "Kolleger i denne klassen" panel listing co-instructor sessions for the same class slot. Display name (or "Instruktør" fallback) is shown as a header per colleague, with their exercise list below. Fetched lazily on first expand and cached per `gym_calendar_id`. New RLS policy on `sessions` allows same-gym users to read each other's sessions. `fetchClassHistory(gymCalendarId)` added to `db.js`.
 - **Display name (#141)** — `display_name text` column (max 50 chars) added to `profiles`. Settings → Konto section now has a `TextInput` to set/update a display name, with success/error feedback. Same-gym RLS policy on `profiles` allows co-instructors to read each other's `display_name`. `fetchDisplayName()` and `updateDisplayName()` added to `db.js`. Display name is shown next to colleague sessions in the joint class history view.
 - **GDPR transparency note** — Settings → Konto now shows an informational paragraph explaining that all logged sessions are visible to co-instructors at the same gym, in line with the app's purpose.

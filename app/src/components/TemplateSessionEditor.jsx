@@ -49,7 +49,6 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetchLibraryExercises().then(setLibraryExercises).catch(() => {}); // degrades silently to manual entry
@@ -100,14 +99,12 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
   const saveToTemplate = async () => {
     setSaving(true);
     setSaveError(null);
-    setSaved(false);
     try {
       const enabled = exercises.filter(e => e.enabled && e.name);
       if (templateName !== template.name) {
         await updateTemplateName(template.id, templateName);
       }
       await replaceTemplateExercises(template.id, enabled);
-      setSaved(true);
       if (mode === "edit") {
         setTimeout(onBack, 800);
       }

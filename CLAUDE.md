@@ -212,6 +212,25 @@ week_plan_days
 - History edit mode re-analyse uses a single image only (the new photo replaces the full exercise list); multi-image re-analysis is not supported in edit mode
 - Carbon `DatePicker` uses US date format (`MM/DD/YYYY`) in the confirm step — no Norwegian locale override applied yet
 
+## Email templates
+
+Supabase auth email templates are version-controlled in `supabase/templates/`. Three templates are defined:
+
+| File | Email type | Subject |
+|---|---|---|
+| `magic_link.html` | Magic link login | Sign in to Workout Lens |
+| `invite.html` | User invite | You have been invited to Workout Lens |
+| `confirmation.html` | Email confirmation | Confirm your Workout Lens account |
+
+Templates are referenced in `supabase/config.toml`. To apply them to the remote Supabase project:
+
+```powershell
+supabase link --project-ref kyolnraqudwrjjbtxhwx
+supabase config push
+```
+
+All templates use inline CSS only (no external stylesheets — email clients strip them). Colours match the app: `#161616` background, `#ee2c80` accent, `#262626` header. The `{{ .ConfirmationURL }}` and `{{ .SiteURL }}` variables are Supabase Go template syntax — do not change them.
+
 ## Local development
 
 ```powershell

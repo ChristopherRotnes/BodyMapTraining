@@ -58,12 +58,12 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   }, []);
 
   const filteredExercises = useMemo(() => {
-    const result = debouncedSearch.trim()
+    return debouncedSearch.trim()
       ? exercises.filter(e => e.name.toLowerCase().includes(debouncedSearch.toLowerCase().trim()))
       : exercises;
-    setExVisible(20);
-    return result;
   }, [exercises, debouncedSearch]);
+
+  useEffect(() => { setExVisible(20); }, [filteredExercises]);
 
   const filteredTemplates = useMemo(() => {
     const q = tplSearch.trim().toLowerCase();
