@@ -383,8 +383,21 @@ export const DEFAULT_SPORTY_BUSINESS_UNIT_ID = 8;
 export async function fetchMyGyms() {
   const { data, error } = await supabase
     .from("user_gyms")
-    .select("id, sporty_business_unit_id, role, created_at")
+    .select("id, sporty_business_unit_id, created_at")
     .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function fetchActiveRoles(buId = DEFAULT_SPORTY_BUSINESS_UNIT_ID) {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("roles")
+    .select("id, name, title, valid_from, valid_to, sporty_business_unit_id")
+    .eq("sporty_business_unit_id", buId)
+    .lte("valid_from", today)
+    .or(`valid_to.is.null,valid_to.gte.${today}`)
+    .order("valid_from", { ascending: true });
   if (error) throw error;
   return data || [];
 }
