@@ -2,9 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { ChevronLeft, ChevronRight, Add, Close, TrashCan } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import i18n from "../lib/i18n";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
-import { buildMuscleMapFromExercises, toWeekIso, logDevError } from "../lib/utils";
+import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import PageShell, { SectionLabel, PageHeading, StickyCta, AccentChip } from "./PageShell";
 
@@ -96,9 +95,8 @@ function TemplatePickerSheet({ templates, onSelect, onClose }) {
 
 function DayRow({ dow, date, template, onAdd, onRemove }) {
   const { t } = useTranslation();
-  const locale = i18n.language === "nb" ? "no" : i18n.language;
   const dateLabel = date
-    ? date.toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" })
+    ? date.toLocaleDateString(getIntlLocale(), { day: "numeric", month: "short", timeZone: "UTC" })
     : "";
 
   const muscles = useMemo(() => {
@@ -234,8 +232,7 @@ export default function Planlegger() {
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 
-    const locale = i18n.language === "nb" ? "no" : i18n.language;
-    const month = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" })
+    const month = new Intl.DateTimeFormat(getIntlLocale(), { month: "short", timeZone: "UTC" })
       .format(sunday)
       .toUpperCase();
 
@@ -261,8 +258,9 @@ export default function Planlegger() {
           enabled: true,
         }))
       );
-    const { primary, secondary } = calcMuscles(allExercises);
     const muscleMap = buildMuscleMapFromExercises(allExercises);
+    const primary = new Set(allExercises.flatMap(e => e.primary || []));
+    const secondary = new Set(allExercises.flatMap(e => (e.secondary || []).filter(id => !primary.has(id))));
 
     const counts = {};
     primary.forEach(id => { counts[id] = { primary: 1, secondary: 0 }; });

@@ -1,25 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { format, parseISO, startOfISOWeek, addDays, getISOWeek } from "date-fns";
-import { nb } from "date-fns/locale";
+import { format, startOfISOWeek, addDays } from "date-fns";
 import { InlineLoading } from "@carbon/react";
 import { ArrowRight } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
-import { extractMuscles, logDevError } from "../lib/utils";
+import { extractMuscles, logDevError, getIntlLocale, toWeekIso } from "../lib/utils";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
 const WEEK_DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
 function formatSessionDate(isoDate) {
-  const raw = format(parseISO(isoDate), "EEEE d. MMMM", { locale: nb });
+  const raw = new Intl.DateTimeFormat(getIntlLocale(), { weekday: "long", day: "numeric", month: "long" }).format(new Date(isoDate + "T12:00:00"));
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
 function formatTodayEyebrow(today) {
-  const day = format(today, "EEEE", { locale: nb });
-  const week = getISOWeek(today);
+  const day = new Intl.DateTimeFormat(getIntlLocale(), { weekday: "long" }).format(today);
+  const week = parseInt(toWeekIso(today).split("-W")[1], 10);
   return `${day.charAt(0).toUpperCase() + day.slice(1)} · uke ${week}`;
 }
 
@@ -98,8 +97,7 @@ export default function Home({ onShowHistoryWithDate }) {
       <div style={{ paddingBottom: 40 }}>
 
         {/* Hero card */}
-        <div style={{ margin: "0 16px 8px", padding: "22px 18px 20px", borderRadius: "var(--r-card)", background: "linear-gradient(135deg, #1a1014 0%, var(--surface-card) 60%)", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 80% 10%, var(--accent-bg-55) 0%, transparent 60%)", pointerEvents: "none" }} aria-hidden="true" />
+        <div style={{ margin: "0 16px 8px", padding: "22px 18px 20px", borderRadius: "var(--r-card)", background: "var(--surface-card)", position: "relative", overflow: "hidden" }}>
           <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", color: "var(--text-subdued-wl)", textTransform: "uppercase", marginBottom: 10, position: "relative" }}>
             {formatTodayEyebrow(today)}
           </div>
@@ -162,7 +160,7 @@ export default function Home({ onShowHistoryWithDate }) {
                           width: "100%",
                           height: count > 0 ? `${Math.round(pct * 100)}%` : 3,
                           minHeight: count > 0 ? 6 : 3,
-                          background: count > 0 ? "linear-gradient(to top, var(--accent), var(--accent-soft))" : "var(--border-subtle-wl)",
+                          background: count > 0 ? "var(--accent)" : "var(--border-subtle-wl)",
                           outline: isCurrentDay ? "1.5px solid var(--accent)" : "none",
                           outlineOffset: 2,
                           cursor: count > 0 ? "pointer" : "default",

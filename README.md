@@ -89,7 +89,7 @@ app/
                                    #   week_plans, week_plan_days
       bodymap.jsx                  # Shared: MUSCLES, SHAPES, BodySVG, HeatmapBodySVG (onHover/hovered), calcMuscles, useIsMobile
       utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude, extractMuscles,
-                                   #   toWeekIso, weekIsoToMonday
+                                   #   toWeekIso, weekIsoToMonday, getIntlLocale
       prompts.js                   # Claude model IDs + prompt builders
       i18n.js                      # i18next init — nb/en/fa resources, fallbackLng, RTL direction wiring
   public/

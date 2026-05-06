@@ -160,7 +160,6 @@ app.http('sportySyncHealth', {
       earliestRow: earliest?.start_time ?? null,
       latestRow: latest?.start_time ?? null,
       todayCount: todaySessions.length,
-      todaySessions,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },

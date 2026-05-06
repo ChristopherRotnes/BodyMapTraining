@@ -1,5 +1,11 @@
 import { EX_DB } from "./bodymap.jsx";
 import { supabase } from "./supabase";
+import i18n from "./i18n";
+
+export function getIntlLocale() {
+  const lang = i18n.language;
+  return lang === "nb" ? "no" : lang;
+}
 
 const _devErrors = [];
 

@@ -1,14 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { format, parseISO } from "date-fns";
-import i18n from "../lib/i18n";
-
-function getIntlLocale() {
-  const lang = i18n.language;
-  return lang === "nb" ? "no" : lang;
-}
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError } from "../lib/utils";
+import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, DefinitionTooltip,
@@ -81,7 +75,7 @@ function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, tod
             borderRadius: 0,
             background: calHeatColor(count),
             border: "1px solid var(--border-subtle-wl)",
-            outline: isSelected ? "3px solid #ffffff" : isToday ? "1px dashed var(--cds-text-secondary)" : undefined,
+            outline: isSelected ? "3px solid var(--cds-background)" : isToday ? "1px dashed var(--cds-text-secondary)" : undefined,
             outlineOffset: isSelected ? "-3px" : "-2px",
             display: "flex", alignItems: "center", justifyContent: "center",
           };
@@ -192,6 +186,7 @@ export default function History({ initialDate }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
   const [libraryExercises, setLibraryExercises] = useState([]);
+  const libraryCache = useRef(null);
   const [newExerciseIds, setNewExerciseIds] = useState(new Set());
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const fileRef = useRef();
@@ -298,9 +293,13 @@ export default function History({ initialDate }) {
     fetchGymSessionsByDate(session.session_date)
       .then(setEditGymSessions)
       .catch(() => setEditGymSessions([]));
-    fetchLibraryExercises()
-      .then(setLibraryExercises)
-      .catch(() => {});
+    if (libraryCache.current) {
+      setLibraryExercises(libraryCache.current);
+    } else {
+      fetchLibraryExercises()
+        .then(data => { libraryCache.current = data; setLibraryExercises(data); })
+        .catch(() => {});
+    }
   };
 
   const cancelEdit = () => {

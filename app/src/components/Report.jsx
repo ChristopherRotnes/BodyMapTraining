@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { subDays, format } from "date-fns";
-import { nb } from "date-fns/locale";
 import { fetchSessionsForReport, saveLibraryExercise } from "../lib/db";
 import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
-import { buildRecMuscleMap, callClaude, logDevError } from "../lib/utils";
+import { buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
@@ -71,13 +69,13 @@ export default function Report({ prefill, onPrefillConsumed }) {
   const [savingRec, setSavingRec] = useState(null);
   const [saveRecError, setSaveRecError] = useState(null);
 
-  const PERIODS = [
+  const PERIODS = useMemo(() => [
     { label: t("report.periods.7"), days: 7 },
     { label: t("report.periods.30"), days: 30 },
     { label: t("report.periods.90"), days: 90 },
-  ];
+  ], [t]);
 
-  const DAYS = [
+  const DAYS = useMemo(() => [
     { label: t("report.days.mon"), day: 1 },
     { label: t("report.days.tue"), day: 2 },
     { label: t("report.days.wed"), day: 3 },
@@ -85,7 +83,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
     { label: t("report.days.fri"), day: 5 },
     { label: t("report.days.sat"), day: 6 },
     { label: t("report.days.sun"), day: 0 },
-  ];
+  ], [t]);
 
   const initialPrefill = useRef(prefill);
   useEffect(() => {
@@ -94,14 +92,16 @@ export default function Report({ prefill, onPrefillConsumed }) {
     if (p.periodDays) setPeriodDays(p.periodDays);
     if (p.selectedDays) setSelectedDays(p.selectedDays);
     if (p.selectedTypes) setSelectedTypes(p.selectedTypes);
+    if (p.weekday !== undefined) setSelectedDays(new Set([p.weekday]));
+    if (p.sessionType) setSelectedTypes(new Set([p.sessionType]));
     onPrefillConsumed?.();
   }, []);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const to = format(new Date(), "yyyy-MM-dd");
-    const from = format(subDays(new Date(), periodDays - 1), "yyyy-MM-dd");
+    const to = new Date().toISOString().slice(0, 10);
+    const from = new Date(Date.now() - (periodDays - 1) * 86400_000).toISOString().slice(0, 10);
     fetchSessionsForReport(from, to)
       .then(setSessions)
       .catch(err => { logDevError("Report/fetchSessions", err); setError(err.message); })
@@ -388,7 +388,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                       </div>
                       {muscleLastDate[hoveredMuscle] && (
                         <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                          {t("report.lastDate")} {format(new Date(muscleLastDate[hoveredMuscle] + "T12:00:00"), "d. MMM", { locale: nb })}
+                          {t("report.lastDate")} {new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short" }).format(new Date(muscleLastDate[hoveredMuscle] + "T12:00:00"))}
                         </span>
                       )}
                     </div>
@@ -458,7 +458,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                       const countColor = primary > 0
                         ? "var(--cds-text-primary)"
                         : secondary > 0
-                        ? "#4589ff"
+                        ? "var(--cds-blue-40)"
                         : "var(--text-disabled-wl)";
                       const countLabel = primary > 0
                         ? String(primary)

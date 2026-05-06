@@ -5,6 +5,7 @@ import {
 } from "@carbon/react";
 import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
+import { getIntlLocale } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
@@ -295,7 +296,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                                 padding: "3px 10px",
                                 background: "rgba(69,137,255,.10)",
                                 border: "1px solid rgba(69,137,255,.25)",
-                                color: "#78a9ff",
+                                color: "var(--cds-blue-40)",
                                 fontFamily: "var(--cds-font-mono)", fontSize: 11, letterSpacing: "0.06em",
                               }}>
                                 {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
@@ -370,7 +371,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                 {templates.map(tpl => {
                   const exCount = tpl.session_template_exercises?.length || 0;
                   const usedAt = tpl.used_at
-                    ? new Date(tpl.used_at).toLocaleDateString("no-NO")
+                    ? new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short", year: "numeric" }).format(new Date(tpl.used_at))
                     : null;
                   const tplPrimary = [...new Set((tpl.session_template_exercises || []).flatMap(e => e.primary_muscles || []))];
                   const muscleCount = tplPrimary.length;

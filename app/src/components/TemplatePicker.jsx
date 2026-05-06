@@ -3,7 +3,7 @@ import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { Book } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchTemplates } from "../lib/db";
-import { logDevError } from "../lib/utils";
+import { logDevError, getIntlLocale } from "../lib/utils";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
@@ -52,7 +52,7 @@ export default function TemplatePicker({ onBack, onSelectTemplate }) {
             {templates.map(tpl => {
               const exCount = tpl.session_template_exercises?.length || 0;
               const usedAt = tpl.used_at
-                ? new Date(tpl.used_at).toLocaleDateString("no-NO")
+                ? new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short", year: "numeric" }).format(new Date(tpl.used_at))
                 : null;
               return (
                 <button

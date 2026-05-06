@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import ExerciseRow from "./ExerciseRow";
 
 export default function ExerciseRowWithAutocomplete({
@@ -13,6 +13,9 @@ export default function ExerciseRowWithAutocomplete({
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const containerRef = useRef();
+  const blurTimer = useRef(null);
+
+  useEffect(() => () => { if (blurTimer.current) clearTimeout(blurTimer.current); }, []);
 
   const filtered =
     isNew && showSuggestions && exercise.name?.trim()
@@ -41,7 +44,7 @@ export default function ExerciseRowWithAutocomplete({
   };
 
   const handleBlur = () => {
-    setTimeout(() => {
+    blurTimer.current = setTimeout(() => {
       if (
         containerRef.current &&
         !containerRef.current.contains(document.activeElement)
