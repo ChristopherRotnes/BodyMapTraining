@@ -13,7 +13,8 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; edit or re-analyse any saved session; edit mode supports library autocomplete — type an exercise name to get suggestions from your library
 8. **Library** — build a named exercise library with click-to-toggle muscle selection; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
 9. **Weekly planner** — assign templates to each day of the week; a live heatmap body map shows projected cumulative muscle coverage; a Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
-10. **Settings** — theme toggle (dark/light) with live body map preview, account info, changelog, and contact section
+10. **Language** — switch between Norsk, English and فارسی (RTL) at any time from Settings; all UI strings, date formats, and month names update instantly
+11. **Settings** — language selector (top), theme toggle (dark/light) with live body map preview, contact, changelog, and account/sign-out (bottom)
 
 ## Tech stack
 
@@ -90,6 +91,12 @@ app/
       utils.js                     # toBase64, getMediaType, buildMuscleMap*, isInvalidNum, callClaude, extractMuscles,
                                    #   toWeekIso, weekIsoToMonday
       prompts.js                   # Claude model IDs + prompt builders
+      i18n.js                      # i18next init — nb/en/fa resources, fallbackLng, RTL direction wiring
+  public/
+    locales/
+      nb/translation.json          # Norwegian strings (default)
+      en/translation.json          # English strings
+      fa/translation.json          # Persian strings (RTL)
     styles/
       carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
       app.css                      # Global resets and Carbon overrides
