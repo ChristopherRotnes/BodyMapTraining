@@ -427,7 +427,7 @@ export default function History({ initialDate }) {
           })() : muscleFilter.length > 0 ? (
             <>{t("history.filteredMonth", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: new Intl.DateTimeFormat(getIntlLocale(), { month: "long" }).format(new Date(viewYear, viewMonth, 1)) })}</>
           ) : (
-            <>{t("history.monthCount", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: new Intl.DateTimeFormat(getIntlLocale(), { month: "long" }).format(new Date(viewYear, viewMonth, 1)) })}{currentMonthCount >= 1 && <> <span style={{ color: "var(--accent)" }}>{t(`history.heroMotivation.${currentMonthCount}`, { defaultValue: t("history.heroMotivationFallback", { count: currentMonthCount }) })}</span></>}</>
+            <>{t("history.monthCount", { count: currentMonthCount, sessionLabel: currentMonthCount === 1 ? t("common.session") : t("common.sessions"), month: new Intl.DateTimeFormat(getIntlLocale(), { month: "long" }).format(new Date(viewYear, viewMonth, 1)) })}</>
           )}
         </PageHeading>
 

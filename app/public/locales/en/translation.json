@@ -184,21 +184,6 @@
       "sat": "Sa",
       "sun": "Su"
     },
-    "heroMotivation": {
-      "1":  "great start!",
-      "5":  "five. solid.",
-      "10": "double digits!",
-      "20": "twenty. this is a habit.",
-      "23": "Jordan number.",
-      "25": "quarter century!",
-      "30": "thirty. legendary.",
-      "32": "Rocky mode.",
-      "40": "FORTY. Arnold approves.",
-      "42": "the answer to everything.",
-      "50": "FIFTY. seriously.",
-      "over50": "over 50. call the doctor."
-    },
-    "heroMotivationFallback": "{{count}} sessions this month.",
     "gymClassLabel": "Gym class",
     "noClassSelected": "No class selected",
     "conflictWarningTitle": "Existing session:",
