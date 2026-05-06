@@ -4,6 +4,11 @@ All notable changes to Workout Lens are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Joint class history (#138)** — expanding a gym-linked session in History now shows a "Kolleger i denne klassen" panel listing co-instructor sessions for the same class slot. Display name (or "Instruktør" fallback) is shown as a header per colleague, with their exercise list below. Fetched lazily on first expand and cached per `gym_calendar_id`. New RLS policy on `sessions` allows same-gym users to read each other's shared sessions. `fetchClassHistory(gymCalendarId)` added to `db.js`.
+- **Session privacy (#139)** — `visibility` column added to `sessions` (default `'shared'`). History edit mode gains a Carbon `Toggle` ("Del med andre instruktører") that persists to `visibility = 'private'` on save. Private sessions are excluded from the cross-gym RLS policy and from `fetchClassHistory`. `updateSession` accepts a `visibility` option.
+- **Display name (#141)** — `display_name text` column (max 50 chars) added to `profiles`. Settings → Konto section now has a `TextInput` to set/update a display name, with success/error feedback. Same-gym RLS policy on `profiles` allows co-instructors to read each other's `display_name`. `fetchDisplayName()` and `updateDisplayName()` added to `db.js`. Display name is shown next to colleague sessions in the joint class history view.
+
 ### Changed
 - **Test suite — better coverage, less noise** — replaced low-value assertions (one-line constant checks, per-model `it`s, a duplicated prompt assertion) with behavioural tests, and filled the largest gaps in `utils.js` (date helpers `toIsoDate`/`toWeekIso`/`weekIsoToMonday`/`isoWeekMonday`, `isInvalidNum`, `extractMuscles`, `getIntlLocale`, `inferMusclesFromName`) and `prompts.js` (`buildMuscleInferencePrompt`). Added a fake-timer test for `checkRateLimit` window expiry. Net: 60 → 82 tests; `utils.js` line coverage ~30% → ~80%, `prompts.js` to 100% statements.
 

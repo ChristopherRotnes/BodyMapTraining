@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Toggle, Button, RadioButtonGroup, RadioButton, Tag } from "@carbon/react";
+import { Toggle, Button, RadioButtonGroup, RadioButton, Tag, TextInput, InlineNotification } from "@carbon/react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 import BodyPanel from "./BodyPanel";
 import ChangelogModal from "./ChangelogModal";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
+import { fetchDisplayName, updateDisplayName } from "../lib/db";
 import i18n from "../lib/i18n";
 import { version } from "../../package.json";
 
@@ -26,12 +27,31 @@ export default function Settings() {
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [lang, setLang] = useState(() => localStorage.getItem("wl-lang") || "nb");
+  const [displayName, setDisplayName] = useState("");
+  const [displayNameSaving, setDisplayNameSaving] = useState(false);
+  const [displayNameSaved, setDisplayNameSaved] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user?.email) setUserEmail(user.email);
     });
+    fetchDisplayName().then(name => { if (name) setDisplayName(name); }).catch(() => {});
   }, []);
+
+  async function handleDisplayNameSave() {
+    setDisplayNameSaving(true);
+    setDisplayNameSaved(false);
+    setDisplayNameError(null);
+    try {
+      await updateDisplayName(displayName);
+      setDisplayNameSaved(true);
+    } catch {
+      setDisplayNameError(t("settings.displayNameError"));
+    } finally {
+      setDisplayNameSaving(false);
+    }
+  }
 
   function handleLangChange(val) {
     setLang(val);
@@ -153,6 +173,33 @@ export default function Settings() {
           }}>
             {userEmail}
           </p>
+          <div style={{ marginBottom: 16 }}>
+            <TextInput
+              id="display-name"
+              labelText={t("settings.displayNameLabel")}
+              placeholder={t("settings.displayNamePlaceholder")}
+              value={displayName}
+              maxLength={50}
+              onChange={e => { setDisplayName(e.target.value); setDisplayNameSaved(false); }}
+            />
+            {displayNameSaved && (
+              <p style={{ fontSize: 12, color: "var(--cds-support-success)", marginTop: 4, fontFamily: "var(--cds-font-sans)" }}>
+                {t("settings.displayNameSaved")}
+              </p>
+            )}
+            {displayNameError && (
+              <InlineNotification kind="error" title={displayNameError} hideCloseButton style={{ marginTop: 8 }} />
+            )}
+            <Button
+              kind="secondary"
+              size="sm"
+              onClick={handleDisplayNameSave}
+              disabled={displayNameSaving}
+              style={{ marginTop: 8 }}
+            >
+              {displayNameSaving ? t("common.saving") : t("settings.displayNameSave")}
+            </Button>
+          </div>
           <Button kind="danger" size="sm" onClick={() => supabase.auth.signOut()}>
             {t("settings.signOut")}
           </Button>

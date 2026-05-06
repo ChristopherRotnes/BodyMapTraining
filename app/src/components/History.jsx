@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
 import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
-  Button, Tag, InlineNotification, DefinitionTooltip,
+  Button, Tag, Toggle, InlineNotification, InlineLoading, DefinitionTooltip,
   Select, SelectItem, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
 import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
@@ -188,6 +188,8 @@ export default function History({ initialDate }) {
   const libraryCache = useRef(null);
   const [newExerciseIds, setNewExerciseIds] = useState(new Set());
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
+  const [editVisibility, setEditVisibility] = useState("shared");
+  const [classHistory, setClassHistory] = useState(new Map());
   const fileRef = useRef();
 
   useEffect(() => {
@@ -236,11 +238,27 @@ export default function History({ initialDate }) {
     }
   }, [daySessions]);
 
+  const loadClassHistory = async (gymCalendarId) => {
+    setClassHistory(prev => new Map(prev).set(gymCalendarId, { loading: true, sessions: [], error: null }));
+    try {
+      const data = await fetchClassHistory(gymCalendarId);
+      setClassHistory(prev => new Map(prev).set(gymCalendarId, { loading: false, sessions: data, error: null }));
+    } catch {
+      setClassHistory(prev => new Map(prev).set(gymCalendarId, { loading: false, sessions: [], error: true }));
+    }
+  };
+
   const toggleExpand = (id) => {
     setExpandedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) { next.delete(id); setHoveredMuscle(null); }
-      else next.add(id);
+      else {
+        next.add(id);
+        const session = daySessions.find(s => s.id === id);
+        if (session?.gym_calendar_id && !classHistory.has(session.gym_calendar_id)) {
+          loadClassHistory(session.gym_calendar_id);
+        }
+      }
       return next;
     });
   };
@@ -284,6 +302,7 @@ export default function History({ initialDate }) {
     const exs = sessionExToEditFormat(session.session_exercises || []);
     setEditExercises(exs);
     setEditGymSessionId(session.gym_calendar_id || "");
+    setEditVisibility(session.visibility || "shared");
     setEditGymSessions([]);
     setEditError(null);
     setAnalyzeError(null);
@@ -326,7 +345,7 @@ export default function History({ initialDate }) {
     setEditError(null);
     try {
       const date = selectedSession.session_date;
-      await updateSession(selectedSession.id, editExercises, editGymSessionId || null, { replace: !!editGymCalendarConflict });
+      await updateSession(selectedSession.id, editExercises, editGymSessionId || null, { replace: !!editGymCalendarConflict, visibility: editVisibility });
       setEditMode(false);
       setSelectedSession(null);
       await loadSession(date);
@@ -602,6 +621,19 @@ export default function History({ initialDate }) {
                         )
                       )}
 
+                      {/* Visibility toggle (edit mode only) */}
+                      {isEditing && (
+                        <Toggle
+                          id={`visibility-${session.id}`}
+                          labelText={t("history.shareWithColleagues")}
+                          labelA={t("history.shareOff")}
+                          labelB={t("history.shareOn")}
+                          toggled={editVisibility === "shared"}
+                          onToggle={(checked) => setEditVisibility(checked ? "shared" : "private")}
+                          style={{ marginBottom: 16 }}
+                        />
+                      )}
+
                       {/* Body map */}
                       <BodyPanel
                         primary={sessionMuscles.primary}
@@ -739,6 +771,49 @@ export default function History({ initialDate }) {
                           })}
                         </div>
                       )}
+
+                      {/* Class history (read mode, gym-linked sessions only) */}
+                      {!isEditing && session.gym_calendar_id && (() => {
+                        const ch = classHistory.get(session.gym_calendar_id);
+                        if (!ch) return null;
+                        if (ch.loading) return (
+                          <div style={{ marginBottom: 12 }}>
+                            <InlineLoading description={t("history.classHistoryLoading")} />
+                          </div>
+                        );
+                        if (ch.error) return (
+                          <InlineNotification kind="error" title={t("history.classHistoryError")} hideCloseButton style={{ marginBottom: 12 }} />
+                        );
+                        if (!ch.sessions.length) return null;
+                        return (
+                          <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
+                            <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
+                              {t("history.classHistory")}
+                            </p>
+                            {ch.sessions.map(cs => {
+                              const name = cs.profiles?.display_name || t("history.classHistoryInstructor");
+                              const exs = (cs.session_exercises || []).filter(e => e.name);
+                              return (
+                                <div key={cs.id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: "1px solid var(--border-subtle-wl)" }}>
+                                  <p style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 13, color: "var(--cds-text-primary)", margin: "0 0 6px", borderInlineStart: "3px solid var(--accent)", paddingInlineStart: 8 }}>
+                                    {name}
+                                  </p>
+                                  {exs.map(ex => (
+                                    <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0", fontSize: 13, color: "var(--cds-text-secondary)" }}>
+                                      <span>{ex.name}</span>
+                                      {(ex.sets || ex.reps) && (
+                                        <span style={{ color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
+                                          {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {/* Edit mode actions */}
                       {isEditing && (

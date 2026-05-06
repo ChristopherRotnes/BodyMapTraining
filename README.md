@@ -14,7 +14,8 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 8. **Library** — build a named exercise library with click-to-toggle muscle selection; AI muscle inference fires when you type an exercise name and leave the field — muscles are filled in automatically and marked "Muskler satt av AI"; create session templates (e.g. "CrossFit - Anna - mandag") as reusable collections of library exercises
 9. **Weekly planner** — assign templates to each day of the week; an "Ikke trent denne uken" chip row lists the muscles you have not yet trained in logged sessions for the visible ISO week (History-style mono pills); a live "Projisert dekning" heatmap body map shows projected cumulative muscle coverage from the assigned templates; a Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
 10. **Language** — switch between Norsk, English and فارسی (RTL) at any time from Settings; all UI strings, date formats, and month names update instantly
-11. **Settings** — language selector (top), theme toggle (dark/light) with live body map preview, contact, changelog, and account/sign-out (bottom)
+11. **Settings** — language selector (top), theme toggle (dark/light) with live body map preview, contact, changelog, and account section: display name input + sign-out (bottom)
+12. **Joint class history** — when a gym-linked session is expanded in History, a "Kolleger i denne klassen" panel shows co-instructor sessions for the same class slot (display name + exercise list). Sessions default to shared; an edit-mode toggle marks them private to exclude them from the shared view
 
 ## Tech stack
 
