@@ -1,9 +1,9 @@
-project_id = "kyolnraqudwrjjbtxhwx"
+project_id = "your-project-id"
 
 [auth]
 enabled = true
-site_url = "https://white-island-090dfd003.7.azurestaticapps.net"
-additional_redirect_urls = ["https://white-island-090dfd003.7.azurestaticapps.net", "http://localhost:4280", "https://workout.umulig.org", "https://workout.umulig.org/**", "https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net"]
+site_url = "http://localhost:4280"
+additional_redirect_urls = ["http://localhost:4280", "https://workout.umulig.org", "https://workout.umulig.org/**", "https://<your-swa-subdomain>-*.westeurope.7.azurestaticapps.net"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 

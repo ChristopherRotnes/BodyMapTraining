@@ -2,10 +2,10 @@
 
 All notable changes to Workout Lens are documented here.
 
-## [Unreleased]
+## [1.2.0] — 2026-05-07
 
-### Added
-- **Open source housekeeping** — repository prepared for public release: added MIT `LICENSE`, `CONTRIBUTING.md`, and GitHub issue templates (feature + bug). `README.md` updated with contributing and license sections; instance-specific infrastructure IDs removed. `CLAUDE.md` stripped of internal deployment identifiers. `app/package.json` updated with `author`, `license`, and `repository` fields.
+### Open source
+- **Repository is now public** — MIT licensed, with `CONTRIBUTING.md`, GitHub issue templates (feature + bug), and all instance-specific infrastructure identifiers removed from the codebase.
 
 ### Fixed
 - **Gym class name deduplication** — `sportySync.js` now strips quoted annotations (e.g. `"SVART TRØYE"`) from class names before storing them, preventing duplicate filter chips in Report when sporty.no temporarily appends labels to existing class names. A one-time SQL migration cleaned all existing rows. Handles both straight (`"`) and curly (`"`) double quotes generically.
@@ -68,7 +68,7 @@ All notable changes to Workout Lens are documented here.
 ## [1.2.0-rc.4] — 2026-05-06
 
 ### Infrastructure
-- **Supabase redirect URL allowlist for PR previews** — added wildcard `https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net` to Supabase Authentication → URL Configuration; magic-link emails now redirect back to the correct PR preview environment automatically (#135)
+- **Supabase redirect URL allowlist for PR previews** — added wildcard `https://<your-swa-subdomain>-*.westeurope.7.azurestaticapps.net` to Supabase Authentication → URL Configuration; magic-link emails now redirect back to the correct PR preview environment automatically (#135)
 
 ---
 

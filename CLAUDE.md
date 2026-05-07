@@ -247,7 +247,7 @@ Supabase auth email templates are version-controlled in `supabase/templates/`. T
 Templates are referenced in `supabase/config.toml`. To apply them to the remote Supabase project:
 
 ```powershell
-supabase link --project-ref kyolnraqudwrjjbtxhwx
+supabase link --project-ref <your-project-ref>
 supabase config push
 ```
 
