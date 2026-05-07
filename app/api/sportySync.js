@@ -17,6 +17,11 @@ function buildSportyUrl(daysAhead = 10) {
   return `${SPORTY_BASE_URL}?period_start=${encodeURIComponent(start.toISOString())}&period_end=${encodeURIComponent(end.toISOString())}`;
 }
 
+// Strip quoted annotations like "SVART TRØYE" — handles straight and curly double quotes
+function normalizeName(name) {
+  return name.replace(/\s*["“”][^"“”]+["“”]\s*/g, '').trim();
+}
+
 function shiftRow(row, shiftMs) {
   if (!shiftMs) return row;
   return {
@@ -52,7 +57,7 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
 
   let rows = sportyData.map(item => ({
     sporty_id:  item.id,
-    name:       item.name,
+    name:       normalizeName(item.name),
     start_time: item.duration?.start ?? null,
     end_time:   item.duration?.end ?? null,
     instructor: item.instructors?.[0]?.name ?? null,
