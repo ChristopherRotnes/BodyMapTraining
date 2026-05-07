@@ -4,6 +4,9 @@ All notable changes to Workout Lens are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Gym class name deduplication** — `sportySync.js` now strips quoted annotations (e.g. `"SVART TRØYE"`) from class names before storing them, preventing duplicate filter chips in Report when sporty.no temporarily appends labels to existing class names. A one-time SQL migration cleaned all existing rows. Handles both straight (`"`) and curly (`"`) double quotes generically.
+
 ### Changed
 - **UI polish — post-#147 review (#147)** — ten UX fixes across History, Bibliotek, Planlegger, MuscleMap, TemplatePicker, and Login:
   - **History** — removed username display from exercise edit box; "Legg til øvelse manuelt" and "Last opp nytt bilde" unified as sibling ghost buttons below the exercise list; session header chips capped at 2 visible + `+N` overflow to prevent title overflow; library pre-fetched on mount so autocomplete is always ready; gym-class conflict warning wording clarified
