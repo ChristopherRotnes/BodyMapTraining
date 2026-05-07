@@ -6,3 +6,4 @@ files.zip
 .env.local
 .claude/
 design_handoff_workout_lens/
+supabase/.temp/

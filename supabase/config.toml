@@ -1,0 +1,52 @@
+project_id = "kyolnraqudwrjjbtxhwx"
+
+[auth]
+enabled = true
+site_url = "https://white-island-090dfd003.7.azurestaticapps.net"
+additional_redirect_urls = ["https://white-island-090dfd003.7.azurestaticapps.net", "http://localhost:4280", "https://workout.umulig.org", "https://workout.umulig.org/**", "https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = false
+max_frequency = "1m0s"
+otp_length = 8
+otp_expiry = 3600
+
+[auth.email.template.magic_link]
+subject = "Sign in to Workout Lens"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.invite]
+subject = "You have been invited to Workout Lens"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your Workout Lens account"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Workout Lens password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new Workout Lens email"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.email.template.reauthentication]
+subject = "Confirm your identity on Workout Lens"
+content_path = "./supabase/templates/reauthentication.html"

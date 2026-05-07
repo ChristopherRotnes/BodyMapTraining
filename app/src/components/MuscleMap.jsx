@@ -9,7 +9,7 @@ import {
   InlineNotification, InlineLoading,
   Tag, DefinitionTooltip,
 } from "@carbon/react";
-import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend, Close } from "@carbon/icons-react";
+import { Add, ArrowLeft, ArrowRight, Renew, Camera, AiRecommend, Close, Edit } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
@@ -119,7 +119,7 @@ export function reducer(state, action) {
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
 export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }) {
   const { t } = useTranslation();
-  const { onShowHome, onShowTemplatePicker, onShowReportWithPrefill } = useNav();
+  const { onShowHome, onShowTemplatePicker } = useNav();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { step, images, exercises, muscles, error, dragging, editingId,
           recs, loadingRecs, recsError, saving, saved, saveError,
@@ -427,16 +427,6 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               </button>
             </div>
 
-            {/* Tips callout */}
-            <div style={{
-              borderInlineStart: "3px solid var(--accent)",
-              background: "var(--accent-bg-08)",
-              padding: "10px 12px",
-              marginBottom: 14,
-            }}>
-              <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>{t("muscleMap.tipsHeading")}</p>
-              <p style={{ fontSize: 13, color: "var(--cds-text-secondary)" }}>{t("muscleMap.tipsBody")}</p>
-            </div>
 
             <div aria-live="polite" aria-atomic="true">
               {sizeError && (
@@ -497,6 +487,10 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
         {/* ── CONFIRM ── */}
         {step === "confirm" && (
+          <div style={{ background: "var(--cds-layer-02)", borderTop: "2px solid var(--accent)" }}>
+          <SectionLabel renderIcon={Edit} style={{ margin: "12px 16px 4px" }}>
+            {t("muscleMap.confirmLabel")}
+          </SectionLabel>
           <div className="fade-in" style={{ padding: "0 16px" }}>
 
             {/* Hero */}
@@ -666,6 +660,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               </button>
             </StickyCta>
           </div>
+          </div>
         )}
 
         {/* ── RESULTAT ── */}
@@ -775,43 +770,6 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   </div>
                 );
               })}
-            </div>
-
-            {/* Forward CTA → Periode-rapport */}
-            <div style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--border-subtle-wl)",
-              borderRadius: "var(--r-card)",
-              padding: "18px 16px",
-              marginBottom: 16,
-            }}>
-              <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", color: "var(--text-muted-wl)", textTransform: "uppercase", marginBottom: 8 }}>
-                {t("muscleMap.nextStep")}
-              </div>
-              <p style={{ fontSize: 14, color: "var(--cds-text-primary)", marginBottom: 14 }}>
-                {t("muscleMap.nextStepBody")}
-              </p>
-              <button
-                onClick={() => {
-                  const weekday = new Date(sessionDate + "T12:00:00").getDay();
-                  const gymSession = gymSessions.find(s => s.id === gymSessionId);
-                  onShowReportWithPrefill({ periodDays: 30, weekday, sessionType: gymSession?.name || "" });
-                }}
-                style={{
-                  width: "100%", padding: "12px 16px",
-                  background: "var(--accent)", color: "#fff",
-                  border: "none", borderRadius: "var(--r-pill)",
-                  fontFamily: "var(--cds-font-sans)", fontWeight: 600, fontSize: 14,
-                  cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}
-                onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"}
-                onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
-                onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-              >
-                <span>{t("muscleMap.analyzePeriod")}</span>
-                <ArrowRight size={16} />
-              </button>
             </div>
 
             {/* Recommendations */}

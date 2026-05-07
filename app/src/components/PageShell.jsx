@@ -28,7 +28,7 @@ function NavBtn({ onClick, ariaLabel, active, children }) {
   );
 }
 
-export function SectionLabel({ children, style }) {
+export function SectionLabel({ children, style, renderIcon: Icon }) {
   return (
     <p style={{
       fontFamily: "var(--cds-font-mono)",
@@ -43,15 +43,19 @@ export function SectionLabel({ children, style }) {
       paddingBottom: 8,
       margin: "16px 16px 12px",
       width: "fit-content",
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
       ...style,
     }}>
+      {Icon && <Icon size={14} />}
       {children}
     </p>
   );
 }
 
-export function PageTitle({ children }) {
-  return <SectionLabel>{children}</SectionLabel>;
+export function PageTitle({ children, renderIcon }) {
+  return <SectionLabel renderIcon={renderIcon}>{children}</SectionLabel>;
 }
 
 export function PageHeading({ children, style }) {

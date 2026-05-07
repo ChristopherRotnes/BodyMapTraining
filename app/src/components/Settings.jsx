@@ -173,6 +173,15 @@ export default function Settings() {
           }}>
             {userEmail}
           </p>
+          <p style={{
+            color: "var(--cds-text-secondary)",
+            fontFamily: "var(--cds-font-sans)",
+            fontSize: 13,
+            margin: "0 0 16px",
+            lineHeight: 1.5,
+          }}>
+            {t("settings.dataSharingNote")}
+          </p>
           <div style={{ marginBottom: 16 }}>
             <TextInput
               id="display-name"

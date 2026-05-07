@@ -23,7 +23,8 @@
     "front": "Front",
     "back_view": "Bak",
     "saveFailed": "Lagring feilet. Prøv igjen.",
-    "add": "Legg til"
+    "add": "Legg til",
+    "discard": "Forkast"
   },
   "muscles": {
     "chest": "Bryst",
@@ -110,7 +111,7 @@
     "dropzoneLabel": "Last opp treningsbilde",
     "dropzoneClick": "Trykk for å velge bilde",
     "dropzoneDrag": "eller dra og slipp · JPEG, PNG, WebP",
-    "useTemplate": "Mal",
+    "useTemplate": "Mine maler",
     "manualEntry": "Legg inn manuelt",
     "tipsHeading": "Tips",
     "tipsBody": "God belysning og hele tavla i bildet gir best resultat. Flere bilder støttes.",
@@ -151,7 +152,8 @@
     "savingError": "Lagring feilet",
     "progressLabel": "Fremgang",
     "primaryTag": "Primær",
-    "secondaryTag": "Sekundær"
+    "secondaryTag": "Sekundær",
+    "confirmLabel": "Bekreft økt"
   },
   "history": {
     "sectionLabel": "HISTORIKK",
@@ -163,11 +165,9 @@
     "primaryCount": "Primær ({{count}})",
     "secondaryCount": "Sekundær ({{count}})",
     "reanalyze": "Re-analyser",
+    "reuploadPhoto": "Last opp nytt bilde",
     "analyzing": "Analyserer…",
     "editSession": "Rediger økt",
-    "shareWithColleagues": "Del med andre instruktører",
-    "shareOn": "Delt",
-    "shareOff": "Privat",
     "classHistory": "Kolleger i denne klassen",
     "classHistoryLoading": "Henter kollegaøkter…",
     "classHistoryError": "Kunne ikke hente kollegaøkter",
@@ -193,8 +193,8 @@
     },
     "gymClassLabel": "Gymtime",
     "noClassSelected": "Ingen time valgt",
-    "conflictWarningTitle": "Eksisterende økt:",
-    "conflictWarningBody": "Denne gymtimen har allerede en lagret økt ({{date}}). Lagring erstatter den.",
+    "conflictWarningTitle": "Advarsel:",
+    "conflictWarningBody": "Denne gymtimen er allerede koblet til en økt fra {{date}}. Lagring fjerner den koblingen — den andre øvelsen beholder sine data.",
     "duplicateGymSession": "Denne gymtimen har allerede en økt lagret.",
     "reanalyzeServerError": "Serverfeil ({{status}}): Ugyldig svar fra server",
     "reanalyzeServerErrorDetail": "Serverfeil ({{status}}): {{detail}}",
@@ -207,9 +207,8 @@
     "sectionLabel": "BIBLIOTEK",
     "heading": "Dine byggeklosser.",
     "tabExercises": "Øvelser",
-    "tabTemplates": "Maler",
+    "tabTemplates": "Mine maler",
     "newExercise": "Ny øvelse",
-    "shortcuts": "SNARVEIER",
     "searchPlaceholder": "Søk øvelse…",
     "loadingExercises": "Laster øvelser…",
     "noExercises": "Ingen øvelser lagt til ennå.",
@@ -228,14 +227,16 @@
     "usedInTemplates_one": "Øvelsen brukes i malen",
     "usedInTemplates_other": "Øvelsen brukes i malene",
     "exerciseRemovedWarning": "og vil bli fjernet derfra.",
-    "exerciseCount": "{{count}} ØV"
+    "exerciseCount": "{{count}} ØV",
+    "searchTemplates": "Søk i maler…",
+    "showMore": "Vis {{count}} til"
   },
   "planlegger": {
     "heading": "Planlegg uken",
     "prevWeek": "Forrige uke",
     "nextWeek": "Neste uke",
     "notTrainedThisWeek": "Ikke trent denne uken",
-    "allMusclesTrained": "Alle 17 muskler er trent denne uken",
+    "allMusclesTrained": "Alle 17 muskler planlagt denne uken",
     "projectedCoverage": "Projisert dekning",
     "weekSummary_one": "{{count}} økt · {{muscleCount}} muskelgrupper",
     "weekSummary_other": "{{count}} økter · {{muscleCount}} muskelgrupper",
@@ -292,7 +293,8 @@
     "languagePersian": "فارسی",
     "myGym": "Min gym",
     "myGymMembership": "Sporty Thon Senter Ski",
-    "myGymFutureHint": "Fremtidig: velg gym og se felles økthistorikk med andre instruktører."
+    "myGymFutureHint": "Fremtidig: velg gym og se felles økthistorikk med andre instruktører.",
+    "dataSharingNote": "Alle økter du logger er synlige for andre instruktører ved samme treningssenter. Dette er nødvendig for å gi deg innsikt i hva kollegene dine trener, og er en del av tjenestens formål."
   },
   "report": {
     "heroMuscles_one": "{{count}} muskel",
@@ -319,6 +321,8 @@
     "noSessions": "Ingen økter funnet for valgte filter.",
     "saveRecError": "Kunne ikke lagre øvelsen. Prøv igjen.",
     "fetchRecError": "Kunne ikke hente anbefalinger. Prøv igjen.",
+    "allMusclesPrimary": "Alle 17 muskelgrupper er trent i perioden. Bra jobba!",
+    "allMusclesSecondaryNote": "Alle primærmuskelgrupper er trent. Disse er bare trent sekundært:",
     "toCta": "Disse bør du legge inn i programmet →",
     "period": "PERIODE",
     "activeDays": "AKTIVE DAGER",
@@ -356,7 +360,9 @@
     "defaultSets": "Standard sett",
     "defaultReps": "Standard reps",
     "saveExercise": "Lagre øvelse",
-    "noMusclesWarning": "Ingen muskler valgt — klikk på figuren for å registrere"
+    "noMusclesWarning": "Ingen muskler valgt — klikk på figuren for å registrere",
+    "headerNew": "Ny øvelse",
+    "headerEdit": "Rediger øvelse"
   },
   "libraryPicker": {
     "searchLabel": "Søk i øvelsesbiblioteket",
@@ -386,7 +392,10 @@
     "goToLibrary": "Gå til biblioteket",
     "lastUsed": "Sist brukt {{date}}",
     "exerciseCount_one": "{{count}} øvelse",
-    "exerciseCount_other": "{{count}} øvelser"
+    "exerciseCount_other": "{{count}} øvelser",
+    "step1": "Velg mal",
+    "step2": "Tilpass",
+    "step3": "Logg økt"
   },
   "templateEditor": {
     "titleEdit": "Rediger mal",
@@ -398,6 +407,7 @@
     "manual": "Manuelt",
     "saveChanges": "Lagre endringer i malen",
     "useSession": "Bruk økt",
-    "saveTemplate": "Lagre mal"
+    "saveTemplate": "Lagre mal",
+    "nameLabel": "Navn på mal"
   }
 }

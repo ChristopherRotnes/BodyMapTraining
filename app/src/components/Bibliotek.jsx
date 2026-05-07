@@ -5,14 +5,13 @@ import {
 } from "@carbon/react";
 import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { getIntlLocale } from "../lib/utils";
+import { logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
   fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
 } from "../lib/db";
 import { MUSCLES, BodySVG } from "../lib/bodymap.jsx";
-import { logDevError } from "../lib/utils";
 import ExerciseForm from "./ExerciseForm";
 
 export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
@@ -42,6 +41,9 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const [newTplName, setNewTplName] = useState("");
   const [savingTpl, setSavingTpl] = useState(false);
   const [showNewTpl, setShowNewTpl] = useState(false);
+  const [exVisible, setExVisible] = useState(20);
+  const [tplSearch, setTplSearch] = useState("");
+  const [tplVisible, setTplVisible] = useState(12);
 
   useEffect(() => {
     fetchLibraryExercises()
@@ -54,12 +56,18 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
       .finally(() => setTplLoading(false));
   }, []);
 
-  const filteredExercises = useMemo(
-    () => debouncedSearch.trim()
+  const filteredExercises = useMemo(() => {
+    return debouncedSearch.trim()
       ? exercises.filter(e => e.name.toLowerCase().includes(debouncedSearch.toLowerCase().trim()))
-      : exercises,
-    [exercises, debouncedSearch]
-  );
+      : exercises;
+  }, [exercises, debouncedSearch]);
+
+  useEffect(() => { setExVisible(20); }, [filteredExercises]);
+
+  const filteredTemplates = useMemo(() => {
+    const q = tplSearch.trim().toLowerCase();
+    return q ? templates.filter(t => t.name.toLowerCase().includes(q)) : templates;
+  }, [templates, tplSearch]);
 
   const handleSaveNewExercise = async (fields) => {
     setSavingEx(true);
@@ -180,49 +188,6 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={exError} hideCloseButton style={{ marginBottom: 16 }} />
             )}
 
-            {!showNewEx && (
-              <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
-                style={{ marginBottom: 16 }}>
-                {t("bibliotek.newExercise")}
-              </Button>
-            )}
-
-            {/* Shortcut carousel — template shortcuts */}
-            {!tplLoading && templates.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-muted-wl)", marginBottom: 8 }}>
-                  {t("bibliotek.shortcuts")}
-                </p>
-                <div style={{ overflowX: "auto", display: "flex", gap: 8, paddingBottom: 8, scrollbarWidth: "none" }}>
-                  {templates.map(tpl => {
-                    const exCount = tpl.session_template_exercises?.length || 0;
-                    return (
-                      <button
-                        key={tpl.id}
-                        onClick={() => onEditTemplate(tpl)}
-                        style={{
-                          flexShrink: 0,
-                          background: "var(--surface-card)",
-                          border: "1px solid var(--border-subtle-wl)",
-                          borderRadius: "var(--r-tile)",
-                          padding: "10px 14px",
-                          cursor: "pointer", textAlign: "left",
-                          minWidth: 110,
-                        }}
-                      >
-                        <div style={{ fontFamily: "var(--cond)", fontWeight: 600, fontSize: 14, color: "var(--cds-text-primary)", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 }}>
-                          {tpl.name}
-                        </div>
-                        <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {t("bibliotek.exerciseCount", { count: exCount })}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Search */}
             {!exLoading && exercises.length > 0 && (
               <div style={{ position: "relative", marginBottom: 12 }}>
@@ -248,6 +213,13 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               </div>
             )}
 
+            {!showNewEx && (
+              <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
+                style={{ marginBottom: 16 }}>
+                {t("bibliotek.newExercise")}
+              </Button>
+            )}
+
             {showNewEx && (
               <ExerciseForm
                 onSave={handleSaveNewExercise}
@@ -263,64 +235,80 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                 {exSearch.trim() ? t("bibliotek.noSearchResults") : t("bibliotek.noExercises")}
               </p>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {filteredExercises.map(ex => (
-                  <div key={ex.id}>
-                    {editingEx?.id === ex.id ? (
-                      <ExerciseForm
-                        initial={editingEx}
-                        onSave={(fields) => handleUpdateExercise(ex.id, fields)}
-                        onCancel={() => setEditingEx(null)}
-                        saving={savingEx}
-                      />
-                    ) : (
-                      <div style={{
-                        background: "var(--surface-card)",
-                        border: "1px solid var(--border-subtle-wl)",
-                        borderInlineStart: "3px solid var(--border-subtle-wl)",
-                        padding: "10px 12px",
-                        display: "flex", alignItems: "center", gap: 8,
-                        borderRadius: "0 var(--r-accent) var(--r-accent) 0",
-                      }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, marginBottom: 4, color: "var(--cds-text-primary)" }}>
-                            {ex.name}
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {filteredExercises.slice(0, exVisible).map(ex => (
+                    <div key={ex.id}>
+                      {editingEx?.id === ex.id ? (
+                        <ExerciseForm
+                          initial={editingEx}
+                          onSave={(fields) => handleUpdateExercise(ex.id, fields)}
+                          onCancel={() => setEditingEx(null)}
+                          saving={savingEx}
+                        />
+                      ) : (
+                        <div style={{
+                          background: "var(--surface-card)",
+                          border: "1px solid var(--border-subtle-wl)",
+                          borderInlineStart: "3px solid var(--border-subtle-wl)",
+                          padding: "10px 12px",
+                          display: "flex", alignItems: "center", gap: 8,
+                          borderRadius: "0 var(--r-accent) var(--r-accent) 0",
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, marginBottom: 4, color: "var(--cds-text-primary)" }}>
+                              {ex.name}
+                            </div>
+                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                              {(ex.primary_muscles || []).slice(0, 4).map(id => (
+                                <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
+                              ))}
+                              {(ex.secondary_muscles || []).slice(0, 3).map(id => (
+                                <span key={id} style={{
+                                  display: "inline-block", borderRadius: "var(--r-pill)",
+                                  padding: "3px 10px",
+                                  background: "rgba(69,137,255,.10)",
+                                  border: "1px solid rgba(69,137,255,.25)",
+                                  color: "var(--cds-blue-40)",
+                                  fontFamily: "var(--cds-font-mono)", fontSize: 11, letterSpacing: "0.06em",
+                                }}>
+                                  {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
+                                </span>
+                              ))}
+                              {!(ex.primary_muscles?.length) && !(ex.secondary_muscles?.length) && (
+                                <span style={{ fontSize: 11, color: "var(--text-muted-wl)" }}>{t("bibliotek.noMuscles")}</span>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                            {(ex.primary_muscles || []).slice(0, 4).map(id => (
-                              <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
-                            ))}
-                            {(ex.secondary_muscles || []).slice(0, 3).map(id => (
-                              <span key={id} style={{
-                                display: "inline-block", borderRadius: "var(--r-pill)",
-                                padding: "3px 10px",
-                                background: "rgba(69,137,255,.10)",
-                                border: "1px solid rgba(69,137,255,.25)",
-                                color: "var(--cds-blue-40)",
-                                fontFamily: "var(--cds-font-mono)", fontSize: 11, letterSpacing: "0.06em",
-                              }}>
-                                {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
-                              </span>
-                            ))}
-                            {!(ex.primary_muscles?.length) && !(ex.secondary_muscles?.length) && (
-                              <span style={{ fontSize: 11, color: "var(--text-muted-wl)" }}>{t("bibliotek.noMuscles")}</span>
-                            )}
-                          </div>
+                          {(ex.default_sets && ex.default_reps) && (
+                            <span style={{ fontSize: 11, color: "var(--text-muted-wl)", flexShrink: 0, fontFamily: "var(--cds-font-mono)" }}>
+                              {ex.default_sets}×{ex.default_reps}
+                            </span>
+                          )}
+                          <Button kind="ghost" hasIconOnly renderIcon={EditIcon} iconDescription={t("common.edit")} size="sm"
+                            onClick={() => { setEditingEx(ex); setShowNewEx(false); }} />
+                          <Button kind="ghost" hasIconOnly renderIcon={TrashCan} iconDescription={t("common.delete")} size="sm"
+                            onClick={() => handleDeleteExercise(ex.id)} />
                         </div>
-                        {(ex.default_sets && ex.default_reps) && (
-                          <span style={{ fontSize: 11, color: "var(--text-muted-wl)", flexShrink: 0, fontFamily: "var(--cds-font-mono)" }}>
-                            {ex.default_sets}×{ex.default_reps}
-                          </span>
-                        )}
-                        <Button kind="ghost" hasIconOnly renderIcon={EditIcon} iconDescription={t("common.edit")} size="sm"
-                          onClick={() => { setEditingEx(ex); setShowNewEx(false); }} />
-                        <Button kind="ghost" hasIconOnly renderIcon={TrashCan} iconDescription={t("common.delete")} size="sm"
-                          onClick={() => handleDeleteExercise(ex.id)} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {filteredExercises.length > exVisible && (
+                  <button
+                    onClick={() => setExVisible(v => v + 20)}
+                    style={{
+                      display: "block", width: "100%", marginTop: 8,
+                      background: "none", border: "1px solid var(--border-subtle-wl)",
+                      padding: "8px 0", cursor: "pointer",
+                      fontFamily: "var(--cds-font-mono)", fontSize: 12, letterSpacing: "0.06em",
+                      color: "var(--cds-text-secondary)",
+                    }}
+                  >
+                    {t("bibliotek.showMore", { count: Math.min(20, filteredExercises.length - exVisible) })}
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -360,19 +348,41 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               </div>
             )}
 
+            {!tplLoading && templates.length > 0 && (
+              <div style={{ position: "relative", marginBottom: 12 }}>
+                <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted-wl)", pointerEvents: "none" }} />
+                <input
+                  type="search"
+                  id="template-search"
+                  name="template-search"
+                  placeholder={t("bibliotek.searchTemplates")}
+                  value={tplSearch}
+                  onChange={e => { setTplSearch(e.target.value); setTplVisible(12); }}
+                  style={{
+                    width: "100%", boxSizing: "border-box",
+                    padding: "8px 12px 8px 34px",
+                    background: "var(--surface-card)",
+                    border: "1px solid var(--border-subtle-wl)",
+                    borderRadius: 8,
+                    color: "var(--cds-text-primary)",
+                    fontFamily: "var(--cds-font-sans)", fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+            )}
+
             {tplLoading ? (
               <InlineLoading description={t("bibliotek.loadingTemplates")} status="active" />
-            ) : templates.length === 0 && !showNewTpl ? (
+            ) : filteredTemplates.length === 0 && !showNewTpl ? (
               <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
-                {t("bibliotek.noTemplates")}
+                {tplSearch.trim() ? t("bibliotek.noSearchResults") : t("bibliotek.noTemplates")}
               </p>
             ) : (
+              <>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {templates.map(tpl => {
+                {filteredTemplates.slice(0, tplVisible).map(tpl => {
                   const exCount = tpl.session_template_exercises?.length || 0;
-                  const usedAt = tpl.used_at
-                    ? new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short", year: "numeric" }).format(new Date(tpl.used_at))
-                    : null;
                   const tplPrimary = [...new Set((tpl.session_template_exercises || []).flatMap(e => e.primary_muscles || []))];
                   const muscleCount = tplPrimary.length;
                   return (
@@ -395,7 +405,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                           {tpl.name}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {t("bibliotek.exerciseCount", { count: exCount })} · {muscleCount} MUS{usedAt ? ` · ${usedAt}` : ""}
+                          {t("bibliotek.exerciseCount", { count: exCount })} · {muscleCount} MUS
                         </div>
                       </div>
                       <Button kind="ghost" hasIconOnly renderIcon={ChevronRight}
@@ -408,6 +418,21 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                   );
                 })}
               </div>
+              {filteredTemplates.length > tplVisible && (
+                <button
+                  onClick={() => setTplVisible(v => v + 12)}
+                  style={{
+                    display: "block", width: "100%", marginTop: 8,
+                    background: "none", border: "1px solid var(--border-subtle-wl)",
+                    padding: "8px 0", cursor: "pointer",
+                    fontFamily: "var(--cds-font-mono)", fontSize: 12, letterSpacing: "0.06em",
+                    color: "var(--cds-text-secondary)",
+                  }}
+                >
+                  {t("bibliotek.showMore", { count: Math.min(12, filteredTemplates.length - tplVisible) })}
+                </button>
+              )}
+              </>
             )}
           </div>
         )}

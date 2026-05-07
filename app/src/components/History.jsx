@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, updateSessionVisibility, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory, fetchDisplayName } from "../lib/db";
-import { MUSCLES, PRIMARY_FILL, SEC_FILL, calcMuscles } from "../lib/bodymap.jsx";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
+import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
-  Button, Tag, Toggle, InlineNotification, InlineLoading, DefinitionTooltip,
+  Button, Tag, InlineNotification, InlineLoading,
   Select, SelectItem, AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
-import { Camera, Add, Edit as EditIcon, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
+import { Camera, Add, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
@@ -146,7 +146,7 @@ export default function History({ initialDate }) {
   );
   const [daySessions, setDaySessions] = useState([]);
   const [expandedIds, setExpandedIds] = useState(new Set());
-  const [selectedSession, setSelectedSession] = useState(null);
+
   const [loadingSession, setLoadingSession] = useState(false);
   const [today, setToday] = useState(() => new Date());
 
@@ -174,30 +174,29 @@ export default function History({ initialDate }) {
 
   const [muscleFilter, setMuscleFilter] = useState([]);
 
-  const [editMode, setEditMode] = useState(false);
-  const [editExercises, setEditExercises] = useState([]);
-  const [editingExId, setEditingExId] = useState(null);
-  const [editGymSessionId, setEditGymSessionId] = useState("");
-  const [editGymSessions, setEditGymSessions] = useState([]);
-  const [editGymCalendarConflict, setEditGymCalendarConflict] = useState(null);
-  const [editSaving, setEditSaving] = useState(false);
-  const [editError, setEditError] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeError, setAnalyzeError] = useState(null);
+  // Per-session edit state (Map<sessionId, editState>)
+  const [sessionEdits, setSessionEdits] = useState(new Map());
   const [libraryExercises, setLibraryExercises] = useState([]);
   const libraryCache = useRef(null);
-  const [newExerciseIds, setNewExerciseIds] = useState(new Set());
+  const uploadingForSession = useRef(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
-  const [myDisplayName, setMyDisplayName] = useState(null);
   const [classHistory, setClassHistory] = useState(new Map());
   const fileRef = useRef();
+
+  const patchSessionEdit = (id, patch) => setSessionEdits(prev => {
+    const next = new Map(prev);
+    next.set(id, { ...(next.get(id) || {}), ...patch });
+    return next;
+  });
 
   useEffect(() => {
     fetchSessions()
       .then(setSessions)
       .catch(e => logDevError("History/fetchSessions", e))
       .finally(() => setLoading(false));
-    fetchDisplayName().then(setMyDisplayName).catch(() => {});
+    fetchLibraryExercises()
+      .then(data => { libraryCache.current = data; setLibraryExercises(data); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -250,24 +249,29 @@ export default function History({ initialDate }) {
   };
 
   const toggleExpand = (id) => {
+    const isOpen = expandedIds.has(id);
     setExpandedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); setHoveredMuscle(null); }
-      else {
-        next.add(id);
-        const session = daySessions.find(s => s.id === id);
-        if (session?.gym_calendar_id && !classHistory.has(session.gym_calendar_id)) {
+      if (isOpen) { next.delete(id); setHoveredMuscle(null); }
+      else next.add(id);
+      return next;
+    });
+    if (isOpen) {
+      setSessionEdits(prev => { const m = new Map(prev); m.delete(id); return m; });
+    } else {
+      const session = daySessions.find(s => s.id === id);
+      if (session) {
+        initSessionEdit(session);
+        if (session.gym_calendar_id && !classHistory.has(session.gym_calendar_id)) {
           loadClassHistory(session.gym_calendar_id);
         }
       }
-      return next;
-    });
+    }
   };
 
   const loadSession = async (dateStr) => {
     setLoadingSession(true);
     setDaySessions([]);
-    setSelectedSession(null);
     try {
       const results = await fetchSessionsByDate(dateStr);
       results.forEach(s => {
@@ -291,26 +295,36 @@ export default function History({ initialDate }) {
   const handleSelect = (dateStr) => {
     if (!dateStr || !filteredTrainedSet.has(dateStr)) return;
     setSelectedDate(new Date(dateStr + "T12:00:00"));
-    setEditMode(false);
-    setSelectedSession(null);
     setHoveredMuscle(null);
     loadSession(dateStr);
   };
 
-  const enterEditMode = (session) => {
-    setExpandedIds(prev => { const next = new Set(prev); next.add(session.id); return next; });
-    setSelectedSession(session);
-    const exs = sessionExToEditFormat(session.session_exercises || []);
-    setEditExercises(exs);
-    setEditGymSessionId(session.gym_calendar_id || "");
-    setEditGymSessions([]);
-    setEditError(null);
-    setAnalyzeError(null);
-    setNewExerciseIds(new Set());
-    setEditMode(true);
+  const initSessionEdit = (session) => {
+    setSessionEdits(prev => {
+      if (prev.has(session.id)) return prev;
+      const next = new Map(prev);
+      next.set(session.id, {
+        exercises: sessionExToEditFormat(session.session_exercises || []),
+        gymSessionId: session.gym_calendar_id || "",
+        gymSessions: [],
+        gymConflict: null,
+        dirty: false,
+        newExIds: new Set(),
+        saving: false,
+        saveError: null,
+        analyzing: false,
+        analyzeError: null,
+      });
+      return next;
+    });
     fetchGymSessionsByDate(session.session_date)
-      .then(setEditGymSessions)
-      .catch(() => setEditGymSessions([]));
+      .then(gymSessions => setSessionEdits(prev => {
+        if (!prev.has(session.id)) return prev;
+        const next = new Map(prev);
+        next.set(session.id, { ...next.get(session.id), gymSessions });
+        return next;
+      }))
+      .catch(() => {});
     if (libraryCache.current) {
       setLibraryExercises(libraryCache.current);
     } else {
@@ -320,50 +334,44 @@ export default function History({ initialDate }) {
     }
   };
 
-  const cancelEdit = () => {
-    setEditMode(false);
-    setSelectedSession(null);
-    setEditingExId(null);
-    setEditError(null);
-    setAnalyzeError(null);
-    setEditGymCalendarConflict(null);
-    setNewExerciseIds(new Set());
+  const discardEdit = (session) => {
+    setSessionEdits(prev => {
+      const next = new Map(prev);
+      next.set(session.id, {
+        ...(next.get(session.id) || {}),
+        exercises: sessionExToEditFormat(session.session_exercises || []),
+        gymSessionId: session.gym_calendar_id || "",
+        gymConflict: null,
+        dirty: false,
+        newExIds: new Set(),
+        saveError: null,
+        analyzeError: null,
+      });
+      return next;
+    });
   };
 
-  useEffect(() => {
-    if (!editMode || !editGymSessionId || editGymSessionId === (selectedSession?.gym_calendar_id || "")) {
-      setEditGymCalendarConflict(null);
-      return;
-    }
-    checkGymCalendarConflict(editGymSessionId, selectedSession?.id)
-      .then(setEditGymCalendarConflict)
-      .catch(() => setEditGymCalendarConflict(null));
-  }, [editGymSessionId, editMode, selectedSession]);
-
-  const saveEdit = async () => {
-    setEditSaving(true);
-    setEditError(null);
+  const saveEdit = async (session) => {
+    const edit = sessionEdits.get(session.id);
+    if (!edit) return;
+    patchSessionEdit(session.id, { saving: true, saveError: null });
     try {
-      const date = selectedSession.session_date;
-      await updateSession(selectedSession.id, editExercises, editGymSessionId || null, { replace: !!editGymCalendarConflict });
-      setEditMode(false);
-      setSelectedSession(null);
-      await loadSession(date);
+      await updateSession(session.id, edit.exercises, edit.gymSessionId || null, { replace: !!edit.gymConflict });
+      setExpandedIds(prev => { const n = new Set(prev); n.delete(session.id); return n; });
+      setSessionEdits(prev => { const m = new Map(prev); m.delete(session.id); return m; });
+      await loadSession(session.session_date);
     } catch (err) {
       logDevError("History/save", err);
       const msg = err?.message?.includes("unique") || err?.code === "23505"
         ? t("history.duplicateGymSession")
         : t("common.saveFailed");
-      setEditError(msg);
-    } finally {
-      setEditSaving(false);
+      patchSessionEdit(session.id, { saving: false, saveError: msg });
     }
   };
 
-  const reanalyze = async (file) => {
+  const reanalyze = async (session, file) => {
     if (!file) return;
-    setAnalyzing(true);
-    setAnalyzeError(null);
+    patchSessionEdit(session.id, { analyzing: true, analyzeError: null });
     try {
       const mt = await detectMediaType(file);
       const b64 = await toBase64(file);
@@ -392,24 +400,16 @@ export default function History({ initialDate }) {
         throw new Error(t("history.reanalyzeInvalidJson"));
       }
       if (!Array.isArray(parsed)) throw new Error(t("history.reanalyzeUnexpectedFormat"));
-      setEditExercises(parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true, sets: ex.sets ?? "1" })));
+      patchSessionEdit(session.id, {
+        exercises: parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true, sets: ex.sets ?? "1" })),
+        dirty: true,
+        analyzing: false,
+      });
     } catch (err) {
       logDevError("History/reanalyse", err);
-      setAnalyzeError(err.message || t("history.reanalyzeImageError"));
-    } finally {
-      setAnalyzing(false);
+      patchSessionEdit(session.id, { analyzing: false, analyzeError: err.message || t("history.reanalyzeImageError") });
     }
   };
-
-  const editMuscles = useMemo(
-    () => editMode ? calcMuscles(editExercises.filter(e => e.enabled && e.name)) : null,
-    [editMode, editExercises]
-  );
-
-  const hasEditErrors = editMode && (
-    editExercises.some(e => e.enabled && !e.name?.trim()) ||
-    editExercises.some(e => isInvalidNum(e.sets) || isInvalidNum(e.reps))
-  );
 
   const toggleMuscleFilter = (id) => {
     const newFilter = muscleFilter.includes(id)
@@ -533,10 +533,15 @@ export default function History({ initialDate }) {
               const bMatch = muscleFilter.some(id => (sessionMuscleIdMap.get(b.id) ?? new Set()).has(id));
               return aMatch === bMatch ? 0 : aMatch ? -1 : 1;
             }).map((session) => {
-              const isEditing = editMode && selectedSession?.id === session.id;
               const isExpanded = expandedIds.has(session.id);
-              const sessionMuscles = isEditing ? editMuscles : extractMuscles(session);
-              const sessionMuscleMap = isEditing ? buildMuscleMapFromExercises(editExercises) : buildMuscleMapFromSession(session);
+              const edit = sessionEdits.get(session.id) || {};
+              const workExercises = edit.exercises;
+              const sessionMuscles = workExercises
+                ? calcMuscles(workExercises.filter(e => e.enabled && e.name))
+                : extractMuscles(session);
+              const sessionMuscleMap = workExercises
+                ? buildMuscleMapFromExercises(workExercises)
+                : buildMuscleMapFromSession(session);
               const exCount = (session.session_exercises || []).filter(e => e.name).length;
               const musIds = sessionMuscleIdMap.get(session.id) ?? new Set();
               const isFilterMatch = muscleFilter.length > 0 && muscleFilter.some(id => musIds.has(id));
@@ -569,74 +574,72 @@ export default function History({ initialDate }) {
                     <span style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {sessionTitle}
                     </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                      <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, maxWidth: "55%", overflow: "hidden" }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap", flexShrink: 0 }}>
                         {t("history.exerciseCount", { count: exCount })}
                       </span>
-                      {isFilterMatch
-                        ? matchedLabels.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)
-                        : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)
-                      }
+                      {isFilterMatch ? (() => {
+                        const visible = matchedLabels.slice(0, 2);
+                        const extra = matchedLabels.length - 2;
+                        return <>
+                          {visible.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)}
+                          {extra > 0 && <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap", flexShrink: 0 }}>+{extra}</span>}
+                        </>;
+                      })() : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)}
                       <ChevronDown size={16} style={{ color: "var(--text-muted-wl)", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
                     </div>
                   </button>
 
-                  {isExpanded && (
+                  {isExpanded && (() => {
+                    const isDirty = edit.dirty || false;
+                    const isSaving = edit.saving || false;
+                    const gymSessions = edit.gymSessions || [];
+                    const gymSessionId = edit.gymSessionId ?? (session.gym_calendar_id || "");
+                    const gymConflict = edit.gymConflict;
+                    const isAnalyzing = edit.analyzing || false;
+                    const hasErrors = workExercises && (
+                      workExercises.some(e => e.enabled && !e.name?.trim()) ||
+                      workExercises.some(e => isInvalidNum(e.sets) || isInvalidNum(e.reps))
+                    );
+                    return (
                     <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--border-subtle-wl)", borderTop: "none", borderInlineStart: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)", padding: "16px 14px", marginBottom: 0 }}>
 
-                      {/* Gym class tag (read) or selector (edit) */}
-                      {isEditing ? (
-                        editGymSessions.length > 0 && (
-                          <>
-                            <Select
-                              id="edit-gym-session"
-                              labelText={t("history.gymClassLabel")}
-                              value={editGymSessionId}
-                              onChange={(e) => setEditGymSessionId(e.target.value)}
-                              style={{ marginBottom: editGymCalendarConflict ? 8 : 16 }}
-                            >
-                              <SelectItem value="" text={t("history.noClassSelected")} />
-                              {editGymSessions.map(s => {
-                                const time = new Date(s.start_time).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" });
-                                const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
-                                return <SelectItem key={s.id} value={s.id} text={label} />;
-                              })}
-                            </Select>
-                            {editGymCalendarConflict && (
-                              <InlineNotification
-                                kind="warning"
-                                title={t("history.conflictWarningTitle")}
-                                subtitle={t("history.conflictWarningBody", { date: editGymCalendarConflict.session_date })}
-                                hideCloseButton
-                                style={{ marginBottom: 16 }}
-                              />
-                            )}
-                          </>
-                        )
-                      ) : (
-                        session.gym_calendar && (
-                          <div style={{ marginBottom: 12 }}>
-                            <Tag type="outline" size="sm">{session.gym_calendar.name}</Tag>
-                          </div>
-                        )
+                      {/* Gym class selector (always visible when options exist) */}
+                      {gymSessions.length > 0 ? (
+                        <>
+                          <Select
+                            id={`gym-session-${session.id}`}
+                            labelText={t("history.gymClassLabel")}
+                            value={gymSessionId}
+                            onChange={(e) => {
+                              const newId = e.target.value;
+                              patchSessionEdit(session.id, { gymSessionId: newId, gymConflict: null, dirty: true });
+                              if (newId && newId !== (session.gym_calendar_id || "")) {
+                                checkGymCalendarConflict(newId, session.id)
+                                  .then(c => patchSessionEdit(session.id, { gymConflict: c }))
+                                  .catch(() => {});
+                              }
+                            }}
+                            style={{ marginBottom: gymConflict ? 8 : 16 }}
+                          >
+                            <SelectItem value="" text={t("history.noClassSelected")} />
+                            {gymSessions.map(s => {
+                              const time = new Date(s.start_time).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" });
+                              const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
+                              return <SelectItem key={s.id} value={s.id} text={label} />;
+                            })}
+                          </Select>
+                          {gymConflict && (
+                            <InlineNotification kind="warning" title={t("history.conflictWarningTitle")}
+                              subtitle={t("history.conflictWarningBody", { date: gymConflict.session_date })}
+                              hideCloseButton style={{ marginBottom: 16 }} />
+                          )}
+                        </>
+                      ) : session.gym_calendar && (
+                        <div style={{ marginBottom: 12 }}>
+                          <Tag type="outline" size="sm">{session.gym_calendar.name}</Tag>
+                        </div>
                       )}
-
-                      {/* Visibility toggle — always visible, auto-saves instantly */}
-                      <Toggle
-                        id={`visibility-${session.id}`}
-                        labelText={t("history.shareWithColleagues")}
-                        labelA={t("history.shareOff")}
-                        labelB={t("history.shareOn")}
-                        toggled={(session.visibility ?? "shared") === "shared"}
-                        onToggle={(checked) => {
-                          const vis = checked ? "shared" : "private";
-                          setDaySessions(prev => prev.map(s => s.id === session.id ? { ...s, visibility: vis } : s));
-                          updateSessionVisibility(session.id, vis).catch(() => {
-                            setDaySessions(prev => prev.map(s => s.id === session.id ? { ...s, visibility: session.visibility ?? "shared" } : s));
-                          });
-                        }}
-                        style={{ marginBottom: 24 }}
-                      />
 
                       {/* Body map */}
                       <BodyPanel
@@ -680,111 +683,55 @@ export default function History({ initialDate }) {
                         <Tag type="blue" size="sm">{t("history.secondaryCount", { count: sessionMuscles.secondary.length })}</Tag>
                       </div>
 
-                      {/* Exercise list */}
+                      {/* Exercise list — always editable */}
                       <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
-                        <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                          {t("common.exercises")}
-                        </p>
-
-                        {isEditing ? (
-                          <>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
-                              {editExercises.map((ex) => (
-                                <ExerciseRowWithAutocomplete
-                                  key={ex.id}
-                                  exercise={ex}
-                                  autoFocusName={ex.id === editingExId}
-                                  onChange={(updates) => setEditExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
-                                  onDelete={() => setEditExercises(p => p.filter(e => e.id !== ex.id))}
-                                  layer="layer-02"
-                                  validateNumbers
-                                  libraryExercises={libraryExercises}
-                                  isNew={newExerciseIds.has(ex.id)}
-                                />
-                              ))}
-                            </div>
-                            <Button
-                              kind="ghost"
-                              renderIcon={Add}
-                              size="sm"
-                              onClick={() => {
-                                const id = Date.now();
-                                setEditExercises(p => [...p, { id, name: "", standardName: "", sets: null, reps: null, primary: [], secondary: [], enabled: true }]);
-                                setEditingExId(id);
-                                setNewExerciseIds(prev => new Set([...prev, id]));
-                              }}
-                              style={{ width: "100%" }}
-                            >
-                              {t("muscleMap.addManual")}
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            {myDisplayName && (
-                              <p style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 13, color: "var(--cds-text-primary)", margin: "0 0 8px", borderInlineStart: "3px solid var(--accent)", paddingInlineStart: 8 }}>
-                                {myDisplayName}
-                              </p>
-                            )}
-                          {(session.session_exercises || []).map(ex => {
-                            const muscleLabels = (ex.muscle_activations || []).map(ma => t(`muscles.${ma.muscle_id}`, { defaultValue: MUSCLES[ma.muscle_id]?.label || ma.muscle_id })).join(", ");
-                            return (
-                              <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", fontSize: 13, borderBottom: "1px solid var(--border-subtle-wl)", color: "var(--cds-text-primary)" }}>
-                                <span>
-                                  {muscleLabels ? (
-                                    <DefinitionTooltip definition={muscleLabels} openOnHover align="bottom">{ex.name}</DefinitionTooltip>
-                                  ) : ex.name}
-                                </span>
-                                {(ex.sets || ex.reps) && (
-                                  <span style={{ color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
-                                    {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                          </>
+                        {workExercises && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+                            {workExercises.map((ex) => (
+                              <ExerciseRowWithAutocomplete
+                                key={ex.id}
+                                exercise={ex}
+                                autoFocusName={edit.newExIds?.has(ex.id)}
+                                onChange={(updates) => patchSessionEdit(session.id, {
+                                  exercises: workExercises.map(e => e.id === ex.id ? { ...e, ...updates } : e),
+                                  dirty: true,
+                                })}
+                                onDelete={() => patchSessionEdit(session.id, {
+                                  exercises: workExercises.filter(e => e.id !== ex.id),
+                                  dirty: true,
+                                })}
+                                layer="layer-02"
+                                validateNumbers
+                                libraryExercises={libraryExercises}
+                                isNew={edit.newExIds?.has(ex.id)}
+                              />
+                            ))}
+                          </div>
                         )}
                       </div>
 
-                      {/* Muscle groups (read mode only) */}
-                      {!isEditing && (
-                        <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
-                          <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                            {t("history.muscleGroups")}
-                          </p>
-                          {sessionMuscles.primary.map(id => {
-                            const exNames = (sessionMuscleMap[id] || []).join(", ");
-                            return (
-                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--border-subtle-wl)" }}>
-                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: PRIMARY_FILL, flexShrink: 0 }} />
-                                <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-primary)" }}>
-                                  {exNames ? (
-                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</DefinitionTooltip>
-                                  ) : t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
-                                </span>
-                                <Tag type="green" size="sm">{t("common.primary")}</Tag>
-                              </div>
-                            );
-                          })}
-                          {sessionMuscles.secondary.map(id => {
-                            const exNames = (sessionMuscleMap[id] || []).join(", ");
-                            return (
-                              <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderBottom: "1px solid var(--border-subtle-wl)" }}>
-                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: SEC_FILL, flexShrink: 0 }} />
-                                <span style={{ fontSize: 13, flex: 1, color: "var(--cds-text-secondary)" }}>
-                                  {exNames ? (
-                                    <DefinitionTooltip definition={exNames} openOnHover align="bottom">{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</DefinitionTooltip>
-                                  ) : t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
-                                </span>
-                                <Tag type="blue" size="sm">{t("common.secondary")}</Tag>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {/* Action row: add exercise + re-upload photo */}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                        <Button kind="ghost" renderIcon={Add} size="sm"
+                          onClick={() => {
+                            const id = Date.now();
+                            patchSessionEdit(session.id, {
+                              exercises: [...(workExercises || []), { id, name: "", standardName: "", sets: null, reps: null, primary: [], secondary: [], enabled: true }],
+                              newExIds: new Set([...(edit.newExIds || []), id]),
+                              dirty: true,
+                            });
+                          }}
+                        >
+                          {t("muscleMap.addManual")}
+                        </Button>
+                        <Button kind="ghost" renderIcon={isAnalyzing ? Renew : Camera} size="sm" disabled={isAnalyzing}
+                          onClick={() => { uploadingForSession.current = session; fileRef.current?.click(); }}>
+                          {isAnalyzing ? t("history.analyzing") : t("history.reuploadPhoto")}
+                        </Button>
+                      </div>
 
-                      {/* Class history (read mode, gym-linked sessions only) */}
-                      {!isEditing && session.gym_calendar_id && (() => {
+                      {/* Class history (gym-linked sessions only) */}
+                      {session.gym_calendar_id && (() => {
                         const ch = classHistory.get(session.gym_calendar_id);
                         if (!ch) return null;
                         if (ch.loading) return (
@@ -826,42 +773,37 @@ export default function History({ initialDate }) {
                         );
                       })()}
 
-                      {/* Edit mode actions */}
-                      {isEditing && (
+                      {/* Hidden file input for photo re-upload */}
+                      <input ref={fileRef} id="session-image-upload" name="session-image-upload" type="file" accept="image/*" style={{ display: "none" }}
+                        onChange={(e) => {
+                          if (e.target.files[0] && uploadingForSession.current) {
+                            reanalyze(uploadingForSession.current, e.target.files[0]);
+                          }
+                          e.target.value = "";
+                          uploadingForSession.current = null;
+                        }} />
+
+                      {/* Dirty state: error notifications + save bar */}
+                      {isDirty && (
                         <>
-                          {analyzeError && (
-                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
+                          {edit.analyzeError && (
+                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={edit.analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
                           )}
-                          {editError && (
-                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={editError} hideCloseButton style={{ marginBottom: 8 }} />
+                          {edit.saveError && (
+                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={edit.saveError} hideCloseButton style={{ marginBottom: 8 }} />
                           )}
-                          <input ref={fileRef} id="session-image-upload" name="session-image-upload" type="file" accept="image/*" style={{ display: "none" }}
-                            onChange={(e) => { if (e.target.files[0]) reanalyze(e.target.files[0]); e.target.value = ""; }} />
-                          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                            <Button kind="secondary" renderIcon={analyzing ? Renew : Camera} disabled={analyzing} onClick={() => fileRef.current?.click()}>
-                              {analyzing ? t("history.analyzing") : t("history.reanalyze")}
-                            </Button>
-                            <Button kind="ghost" onClick={cancelEdit}>{t("common.cancel")}</Button>
-                            <Button
-                              kind="primary"
-                              disabled={editSaving || hasEditErrors}
-                              onClick={saveEdit}
-                              style={{ marginLeft: "auto" }}
-                            >
-                              {editSaving ? t("common.saving") : t("common.save")}
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                            <Button kind="ghost" onClick={() => discardEdit(session)}>{t("common.discard")}</Button>
+                            <Button kind="primary" disabled={isSaving || hasErrors}
+                              onClick={() => saveEdit(session)} style={{ marginLeft: "auto" }}>
+                              {isSaving ? t("common.saving") : t("common.save")}
                             </Button>
                           </div>
                         </>
                       )}
-
-                      {/* Read mode: edit button (hidden when any session is in edit mode) */}
-                      {!editMode && (
-                        <Button kind="ghost" renderIcon={EditIcon} onClick={() => enterEditMode(session)}>
-                          {t("history.editSession")}
-                        </Button>
-                      )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}

@@ -23,7 +23,8 @@
     "front": "جلو",
     "back_view": "پشت",
     "saveFailed": "ذخیره ناموفق بود. دوباره امتحان کنید.",
-    "add": "افزودن"
+    "add": "افزودن",
+    "discard": "لغو تغییرات"
   },
   "muscles": {
     "chest": "سینه",
@@ -110,7 +111,7 @@
     "dropzoneLabel": "آپلود تصویر تمرین",
     "dropzoneClick": "برای انتخاب تصویر ضربه بزنید",
     "dropzoneDrag": "یا بکشید و رها کنید · JPEG، PNG، WebP",
-    "useTemplate": "قالب",
+    "useTemplate": "قالب‌های من",
     "manualEntry": "ورود دستی",
     "tipsHeading": "راهنما",
     "tipsBody": "نور مناسب و نمایش کامل تخته در تصویر بهترین نتیجه را می‌دهد. چند تصویر پشتیبانی می‌شود.",
@@ -151,7 +152,8 @@
     "savingError": "ذخیره ناموفق بود",
     "progressLabel": "پیشرفت",
     "primaryTag": "اولیه",
-    "secondaryTag": "ثانویه"
+    "secondaryTag": "ثانویه",
+    "confirmLabel": "تأیید جلسه"
   },
   "history": {
     "sectionLabel": "تاریخچه",
@@ -163,11 +165,9 @@
     "primaryCount": "اولیه ({{count}})",
     "secondaryCount": "ثانویه ({{count}})",
     "reanalyze": "تحلیل مجدد",
+    "reuploadPhoto": "آپلود عکس جدید",
     "analyzing": "در حال تحلیل…",
     "editSession": "ویرایش جلسه",
-    "shareWithColleagues": "اشتراک با مربیان دیگر",
-    "shareOn": "اشتراکی",
-    "shareOff": "خصوصی",
     "classHistory": "همکاران در این کلاس",
     "classHistoryLoading": "در حال بارگذاری جلسات همکاران…",
     "classHistoryError": "بارگذاری جلسات همکاران ممکن نشد",
@@ -193,8 +193,8 @@
     },
     "gymClassLabel": "کلاس ورزشی",
     "noClassSelected": "کلاسی انتخاب نشده",
-    "conflictWarningTitle": "جلسه موجود:",
-    "conflictWarningBody": "این کلاس از قبل یک جلسه ذخیره شده دارد ({{date}}). ذخیره جدید جایگزین آن می‌شود.",
+    "conflictWarningTitle": "هشدار:",
+    "conflictWarningBody": "این کلاس از قبل به جلسه‌ای از {{date}} متصل است. با ذخیره، اتصال آن جلسه حذف می‌شود — داده‌هایش حفظ می‌شود اما ارتباط با کلاس قطع می‌شود.",
     "duplicateGymSession": "این کلاس از قبل یک جلسه ذخیره شده دارد.",
     "reanalyzeServerError": "خطای سرور ({{status}}): پاسخ نامعتبر از سرور",
     "reanalyzeServerErrorDetail": "خطای سرور ({{status}}): {{detail}}",
@@ -207,9 +207,8 @@
     "sectionLabel": "کتابخانه",
     "heading": "بلوک‌های سازنده شما.",
     "tabExercises": "تمرین‌ها",
-    "tabTemplates": "قالب‌ها",
+    "tabTemplates": "قالب‌های من",
     "newExercise": "تمرین جدید",
-    "shortcuts": "میانبرها",
     "searchPlaceholder": "جستجوی تمرین…",
     "loadingExercises": "در حال بارگذاری تمرین‌ها…",
     "noExercises": "هنوز تمرینی اضافه نشده.",
@@ -228,14 +227,16 @@
     "usedInTemplates_one": "این تمرین در قالب استفاده شده",
     "usedInTemplates_other": "این تمرین در قالب‌ها استفاده شده",
     "exerciseRemovedWarning": "و از آن حذف خواهد شد.",
-    "exerciseCount": "{{count}} تمرین"
+    "exerciseCount": "{{count}} تمرین",
+    "searchTemplates": "جستجو در قالب‌ها…",
+    "showMore": "نمایش {{count}} بیشتر"
   },
   "planlegger": {
     "heading": "برنامه‌ریزی هفته",
     "prevWeek": "هفته قبل",
     "nextWeek": "هفته بعد",
     "notTrainedThisWeek": "تمرین‌نشده این هفته",
-    "allMusclesTrained": "هر ۱۷ عضله این هفته تمرین شده",
+    "allMusclesTrained": "هر ۱۷ عضله این هفته برنامه‌ریزی شده",
     "projectedCoverage": "پوشش پیش‌بینی‌شده",
     "weekSummary_one": "{{count}} جلسه · {{muscleCount}} گروه عضلانی",
     "weekSummary_other": "{{count}} جلسه · {{muscleCount}} گروه عضلانی",
@@ -292,7 +293,8 @@
     "languagePersian": "فارسی",
     "myGym": "باشگاه من",
     "myGymMembership": "Sporty Thon Senter Ski",
-    "myGymFutureHint": "به زودی: انتخاب باشگاه و مشاهده تاریخچه مشترک با سایر مربیان."
+    "myGymFutureHint": "به زودی: انتخاب باشگاه و مشاهده تاریخچه مشترک با سایر مربیان.",
+    "dataSharingNote": "تمام جلسات ثبت‌شده برای سایر مربیان در همان مرکز ورزشی قابل مشاهده است. این برای ارائه بینش درباره تمرین همکاران ضروری است."
   },
   "report": {
     "heroMuscles_one": "{{count}} عضله",
@@ -319,6 +321,8 @@
     "noSessions": "جلسه‌ای برای فیلتر انتخاب‌شده یافت نشد.",
     "saveRecError": "ذخیره تمرین ناموفق بود. دوباره امتحان کنید.",
     "fetchRecError": "دریافت پیشنهادها ناموفق بود. دوباره امتحان کنید.",
+    "allMusclesPrimary": "همه ۱۷ گروه عضلانی در این دوره تمرین شده. آفرین!",
+    "allMusclesSecondaryNote": "همه عضلات اولیه تمرین شده. اینها فقط ثانویه تمرین شده‌اند:",
     "toCta": "این‌ها را به برنامه‌ات اضافه کن →",
     "period": "دوره",
     "activeDays": "روزهای فعال",
@@ -356,7 +360,9 @@
     "defaultSets": "ست پیش‌فرض",
     "defaultReps": "تکرار پیش‌فرض",
     "saveExercise": "ذخیره تمرین",
-    "noMusclesWarning": "هیچ عضله‌ای انتخاب نشده — روی شکل کلیک کنید"
+    "noMusclesWarning": "هیچ عضله‌ای انتخاب نشده — روی شکل کلیک کنید",
+    "headerNew": "تمرین جدید",
+    "headerEdit": "ویرایش تمرین"
   },
   "libraryPicker": {
     "searchLabel": "جستجو در کتابخانه تمرین‌ها",
@@ -386,7 +392,10 @@
     "goToLibrary": "رفتن به کتابخانه",
     "lastUsed": "آخرین استفاده: {{date}}",
     "exerciseCount_one": "{{count}} تمرین",
-    "exerciseCount_other": "{{count}} تمرین"
+    "exerciseCount_other": "{{count}} تمرین",
+    "step1": "انتخاب قالب",
+    "step2": "تنظیم",
+    "step3": "ثبت جلسه"
   },
   "templateEditor": {
     "titleEdit": "ویرایش قالب",
@@ -398,6 +407,7 @@
     "manual": "دستی",
     "saveChanges": "ذخیره تغییرات قالب",
     "useSession": "شروع جلسه",
-    "saveTemplate": "ذخیره قالب"
+    "saveTemplate": "ذخیره قالب",
+    "nameLabel": "نام قالب"
   }
 }

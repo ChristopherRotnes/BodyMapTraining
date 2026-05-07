@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { fetchSessionsForReport, saveLibraryExercise } from "../lib/db";
-import { HeatmapBodySVG, BodySVG, MUSCLES, useIsMobile } from "../lib/bodymap.jsx";
-import { buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
+import { HeatmapBodySVG, MUSCLES } from "../lib/bodymap.jsx";
+import { callClaude, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
 import { AiGenerate, Add, Checkmark } from "@carbon/icons-react";
-import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
-import { useNav } from "../lib/NavContext";
+import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useTranslation } from "react-i18next";
 import i18n from "../lib/i18n";
 
@@ -52,9 +51,6 @@ function KpiTile({ label, value }) {
 
 export default function Report({ prefill, onPrefillConsumed }) {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
-  const { onShowBibliotek } = useNav();
-  const [mobileRecView, setMobileRecView] = useState("front");
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedDays, setSelectedDays] = useState(new Set());
   const [selectedTypes, setSelectedTypes] = useState(new Set());
@@ -269,6 +265,10 @@ export default function Report({ prefill, onPrefillConsumed }) {
     .filter(([, c]) => c.primary === 0)
     .map(([id]) => id);
 
+  const secondaryOnlyMuscles = Object.entries(muscleCounts)
+    .filter(([, c]) => c.primary === 0 && c.secondary > 0)
+    .map(([id]) => id);
+
   const frequencyTable = Object.entries(muscleCounts)
     .map(([id, c]) => ({ id, ...c }))
     .sort((a, b) => b.primary - a.primary || b.secondary - a.secondary);
@@ -294,16 +294,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
           <span style={{ display: "block" }}>{t("report.period")} · {periodLabel}</span>
           <span style={{ display: "block" }}>{dayLabel}</span>
         </SectionLabel>
-
-        {/* Hero */}
-        <div style={{ padding: "4px 16px 20px" }}>
-          <p style={{ fontFamily: "var(--cond)", fontSize: 30, fontWeight: 700, lineHeight: 1.1, margin: 0 }}>
-            <span style={{ color: "var(--accent)" }}>{t("report.heroMuscles", { count: untrainedMuscles.length })}</span>
-          </p>
-          <p style={{ fontFamily: "var(--cond)", fontSize: 30, fontWeight: 700, lineHeight: 1.1, margin: 0, color: "var(--cds-text-primary)" }}>
-            {t("report.heroNeverTrained")}
-          </p>
-        </div>
 
         {/* Filters */}
         <div style={{ marginBottom: 12 }}>
@@ -424,24 +414,8 @@ export default function Report({ prefill, onPrefillConsumed }) {
                 </div>
               </div>
 
-              {/* Gap callout card */}
-              {untrainedMuscles.length > 0 && (
-                <div style={{ background: "var(--accent-bg-08)", border: "1px solid var(--accent-bg-30)", padding: "14px 16px", marginBottom: 20, borderRadius: "var(--r-tile)" }}>
-                  <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: 10 }}>
-                    {t("report.gapHeading")}
-                  </p>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {untrainedMuscles.map(id => (
-                      <AccentChip key={id}>
-                        {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
-                      </AccentChip>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Frequency table */}
-              <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: 14, borderRadius: "var(--r-tile)" }}>
+              <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: 14, borderRadius: "var(--r-tile)", marginBottom: 20 }}>
                 <p style={{ ...labelStyle, marginBottom: 8 }} id="freq-table-label">{t("report.frequencyTable")}</p>
                 <table aria-labelledby="freq-table-label" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                   <thead>
@@ -494,8 +468,42 @@ export default function Report({ prefill, onPrefillConsumed }) {
                 </table>
               </div>
 
+              {/* Untrained section — acts as recommendation header */}
+              {untrainedMuscles.length > 0 ? (
+                <div style={{ background: "var(--accent-bg-08)", border: "1px solid var(--accent-bg-30)", padding: "14px 16px", marginBottom: 16, borderRadius: "var(--r-tile)" }}>
+                  <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--accent-soft)", marginBottom: 10 }}>
+                    {t("report.gapHeading")}
+                  </p>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {untrainedMuscles.map(id => (
+                      <AccentChip key={id}>
+                        {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
+                      </AccentChip>
+                    ))}
+                  </div>
+                </div>
+              ) : secondaryOnlyMuscles.length > 0 ? (
+                <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "14px 16px", marginBottom: 16, borderRadius: "var(--r-tile)" }}>
+                  <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted-wl)", marginBottom: 10 }}>
+                    {t("report.allMusclesSecondaryNote")}
+                  </p>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {secondaryOnlyMuscles.map(id => (
+                      <Tag key={id} type="blue" size="sm">
+                        {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
+                      </Tag>
+                    ))}
+                  </div>
+                </div>
+              ) : sessionCount > 0 ? (
+                <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-sans)", marginBottom: 16 }}>
+                  {t("report.allMusclesPrimary")}
+                </p>
+              ) : null}
+
+              {/* Recommendation button + results */}
               {sessionCount > 0 && (
-                <div style={{ marginTop: 20 }}>
+                <div style={{ marginBottom: 20 }}>
                   <Button
                     kind="tertiary"
                     size="sm"
@@ -521,119 +529,74 @@ export default function Report({ prefill, onPrefillConsumed }) {
                     )}
                   </div>
 
-                  {recs && recs.length > 0 && (() => {
-                    const recPrimary = [...new Set(recs.flatMap(r => r.primary || []))];
-                    const recSecAll = [...new Set(recs.flatMap(r => r.secondary || []))];
-                    const recSecondary = recSecAll.filter(id => !recPrimary.includes(id));
-                    return (
-                      <div className="fade-in" style={{ marginTop: 12 }}>
-                        <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", overflow: "hidden", marginBottom: 10 }}>
-                          <p style={{ ...labelStyle, margin: "14px 14px 10px" }}>{t("report.recommendedExercises")}</p>
-                          {saveRecError && (
-                            <InlineNotification
-                              kind="error"
-                              title={`${t("common.error")}:`}
-                              subtitle={saveRecError}
-                              hideCloseButton
-                              style={{ margin: "0 14px 8px" }}
-                            />
-                          )}
-                          {recs.map((r, i) => (
-                            <div key={i} style={{
-                              padding: "10px 14px",
-                              borderInlineStart: "3px solid var(--accent)",
-                              borderBottom: i < recs.length - 1 ? "1px solid var(--border-subtle-wl)" : "none",
-                              display: "flex", alignItems: "flex-start", gap: 12,
-                            }}>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <p style={{ fontSize: 14, fontFamily: "var(--cond)", fontWeight: 700, marginBottom: 3, color: "var(--cds-text-primary)" }}>{r.name}</p>
-                                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", marginBottom: r.tip ? 4 : 0 }}>
-                                  {[
-                                    (r.primary || []).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", "),
-                                    (r.secondary || []).length > 0 && `(${(r.secondary || []).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", ")})`
-                                  ].filter(Boolean).join(" · ")}
-                                </p>
-                                {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", margin: 0 }}>{r.tip}</p>}
-                              </div>
-                              {savedRecs.has(r.name) ? (
-                                <button
-                                  disabled
-                                  aria-label={`${r.name} er lagret i biblioteket`}
-                                  style={{
-                                    width: 28, height: 28, borderRadius: "50%",
-                                    background: "var(--cds-layer-02)", border: "none", cursor: "default",
-                                    color: "var(--cds-text-secondary)",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <Checkmark size={16} />
-                                </button>
-                              ) : (
-                                <button
-                                  aria-label={`Legg til ${r.name} i biblioteket`}
-                                  onClick={() => handleSaveRec(r)}
-                                  disabled={savingRec === r.name}
-                                  style={{
-                                    width: 28, height: 28, borderRadius: "50%",
-                                    background: savingRec === r.name ? "var(--cds-layer-02)" : "var(--accent)",
-                                    border: "none",
-                                    cursor: savingRec === r.name ? "default" : "pointer",
-                                    color: savingRec === r.name ? "var(--cds-text-secondary)" : "#fff",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    flexShrink: 0,
-                                    opacity: savingRec === r.name ? 0.5 : 1,
-                                  }}
-                                >
-                                  <Add size={16} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        {isMobile ? (
-                          <>
-                            <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-                              {["front", "back"].map(v => (
-                                <button key={v}
-                                  onClick={() => setMobileRecView(v)}
-                                  style={{
-                                    padding: "5px 14px", borderRadius: "var(--r-pill)", border: "1px solid",
-                                    borderColor: mobileRecView === v ? "var(--accent)" : "var(--border-subtle-wl)",
-                                    background: mobileRecView === v ? "var(--accent)" : "transparent",
-                                    color: mobileRecView === v ? "#fff" : "var(--text-muted-wl)",
-                                    fontFamily: "var(--cds-font-mono)", fontSize: 11, cursor: "pointer",
-                                    letterSpacing: "0.06em",
-                                  }}
-                                >
-                                  {v === "front" ? t("common.front") : t("common.back_view")}
-                                </button>
-                              ))}
-                            </div>
-                            <div style={{ maxWidth: 240, margin: "0 auto 10px", background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "10px 6px", borderRadius: "var(--r-tile)" }}>
-                              <BodySVG view={mobileRecView} primary={recPrimary} secondary={recSecondary}
-                                muscleMap={buildRecMuscleMap(recs)} />
-                            </div>
-                          </>
-                        ) : (
-                          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                            {["front", "back"].map(view => (
-                              <div key={view} style={{ flex: 1, background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "10px 6px", borderRadius: "var(--r-tile)" }}>
-                                <BodySVG view={view} primary={recPrimary} secondary={recSecondary}
-                                  muscleMap={buildRecMuscleMap(recs)} />
-                              </div>
-                            ))}
-                          </div>
+                  {recs && recs.length > 0 && (
+                    <div className="fade-in" style={{ marginTop: 12 }}>
+                      <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", borderRadius: "var(--r-tile)", overflow: "hidden" }}>
+                        <p style={{ ...labelStyle, margin: "14px 14px 10px" }}>{t("report.recommendedExercises")}</p>
+                        {saveRecError && (
+                          <InlineNotification
+                            kind="error"
+                            title={`${t("common.error")}:`}
+                            subtitle={saveRecError}
+                            hideCloseButton
+                            style={{ margin: "0 14px 8px" }}
+                          />
                         )}
-
-                        <div style={{ display: "flex", gap: 8, marginBottom: 12, fontSize: 12 }}>
-                          <Tag type="green" size="sm">{t("report.legendPrimary")}</Tag>
-                          <Tag type="blue" size="sm">{t("report.legendSecondary")}</Tag>
-                        </div>
+                        {recs.map((r, i) => (
+                          <div key={i} style={{
+                            padding: "10px 14px",
+                            borderInlineStart: "3px solid var(--accent)",
+                            borderBottom: i < recs.length - 1 ? "1px solid var(--border-subtle-wl)" : "none",
+                            display: "flex", alignItems: "flex-start", gap: 12,
+                          }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: 14, fontFamily: "var(--cond)", fontWeight: 700, marginBottom: 3, color: "var(--cds-text-primary)" }}>{r.name}</p>
+                              <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", marginBottom: r.tip ? 4 : 0 }}>
+                                {[
+                                  (r.primary || []).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", "),
+                                  (r.secondary || []).length > 0 && `(${(r.secondary || []).map(id => t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })).join(", ")})`
+                                ].filter(Boolean).join(" · ")}
+                              </p>
+                              {r.tip && <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", margin: 0 }}>{r.tip}</p>}
+                            </div>
+                            {savedRecs.has(r.name) ? (
+                              <button
+                                disabled
+                                aria-label={`${r.name} er lagret i biblioteket`}
+                                style={{
+                                  width: 28, height: 28, borderRadius: "50%",
+                                  background: "var(--cds-layer-02)", border: "none", cursor: "default",
+                                  color: "var(--cds-text-secondary)",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <Checkmark size={16} />
+                              </button>
+                            ) : (
+                              <button
+                                aria-label={`Legg til ${r.name} i biblioteket`}
+                                onClick={() => handleSaveRec(r)}
+                                disabled={savingRec === r.name}
+                                style={{
+                                  width: 28, height: 28, borderRadius: "50%",
+                                  background: savingRec === r.name ? "var(--cds-layer-02)" : "var(--accent)",
+                                  border: "none",
+                                  cursor: savingRec === r.name ? "default" : "pointer",
+                                  color: savingRec === r.name ? "var(--cds-text-secondary)" : "#fff",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  flexShrink: 0,
+                                  opacity: savingRec === r.name ? 0.5 : 1,
+                                }}
+                              >
+                                <Add size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
 
                   {recs && recs.length === 0 && (
                     <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", marginTop: 12 }}>
@@ -652,23 +615,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
           )}
         </div>
 
-        {/* Sticky CTA to Bibliotek */}
-        {recs && recs.length > 0 && (
-          <StickyCta>
-            <button
-              onClick={() => onShowBibliotek()}
-              style={{
-                width: "100%", background: "var(--accent)", border: "none", cursor: "pointer",
-                padding: "14px 16px", borderRadius: "var(--r-pill)",
-                fontFamily: "var(--cond)", fontSize: 16, fontWeight: 700,
-                color: "#fff", textAlign: "center",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              }}
-            >
-              {t("report.toCta")}
-            </button>
-          </StickyCta>
-        )}
       </div>
     </PageShell>
   );

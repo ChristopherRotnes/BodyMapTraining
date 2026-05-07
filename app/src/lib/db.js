@@ -262,7 +262,7 @@ export async function fetchSessionsByDate(dateStr) {
   const { data, error } = await supabase
     .from("sessions")
     .select(`
-      id, session_date, created_at, visibility,
+      id, session_date, created_at,
       gym_calendar_id, gym_calendar(name, start_time),
       session_exercises(
         id, name, standard_name, sets, reps, position,
@@ -376,14 +376,6 @@ export async function updateSession(sessionId, exercises, gymCalendarId, { repla
   if (error) throw error;
 }
 
-export async function updateSessionVisibility(sessionId, visibility) {
-  const { error } = await supabase
-    .from("sessions")
-    .update({ visibility })
-    .eq("id", sessionId);
-  if (error) throw error;
-}
-
 // ── CLASS HISTORY ─────────────────────────────────────────────────────
 
 export async function fetchClassHistory(gymCalendarId) {
@@ -399,7 +391,6 @@ export async function fetchClassHistory(gymCalendarId) {
       )
     `)
     .eq("gym_calendar_id", gymCalendarId)
-    .eq("visibility", "shared")
     .neq("trainer_id", user?.id ?? "")
     .order("session_date", { ascending: false });
   if (error) throw error;
