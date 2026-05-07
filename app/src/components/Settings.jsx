@@ -177,7 +177,7 @@ export default function Settings() {
               {t("settings.contactBody")}
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Button kind="ghost" size="sm" href="mailto:kontakt@umulig.org">
+              <Button kind="ghost" size="sm" href="mailto:workout@umulig.org">
                 {t("settings.sendEmail")}
               </Button>
               <Button
