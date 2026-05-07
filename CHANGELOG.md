@@ -35,6 +35,9 @@ All notable changes to Workout Lens are documented here.
 - **Library — scaling** — the Snarveier carousel is capped at 6 items with a "Se alle →" link to the templates tab. Load-more buttons (20 exercises / 12 templates per batch) appear when lists exceed their threshold. A search input is added to the templates tab.
 - **Test suite — better coverage, less noise** — replaced low-value assertions (one-line constant checks, per-model `it`s, a duplicated prompt assertion) with behavioural tests, and filled the largest gaps in `utils.js` (date helpers `toIsoDate`/`toWeekIso`/`weekIsoToMonday`/`isoWeekMonday`, `isInvalidNum`, `extractMuscles`, `getIntlLocale`, `inferMusclesFromName`) and `prompts.js` (`buildMuscleInferencePrompt`). Added a fake-timer test for `checkRateLimit` window expiry. Net: 60 → 82 tests; `utils.js` line coverage ~30% → ~80%, `prompts.js` to 100% statements.
 
+### Infrastructure
+- **Temporal roles table (#140)** — replaced the `user_gyms.role` text placeholder with a proper `roles` table (`user_id`, `sporty_business_unit_id`, `name`, `title`, `valid_from`, `valid_to`). Active roles derived via date range (`valid_from <= today AND (valid_to IS NULL OR valid_to >= today)`). Existing placeholder data migrated. `fetchActiveRoles(buId)` added to `db.js`. RLS restricts all operations to the owning user.
+
 ---
 
 ## [1.2.0-rc.8] — 2026-05-06

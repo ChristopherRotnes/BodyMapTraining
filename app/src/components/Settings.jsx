@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { Toggle, Button, RadioButtonGroup, RadioButton, Tag, TextInput, InlineNotification } from "@carbon/react";
+import { Toggle, Button, RadioButtonGroup, RadioButton, Tag, TextInput, InlineNotification, Accordion, AccordionItem } from "@carbon/react";
+import { ChevronDown, ChevronUp } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 import BodyPanel from "./BodyPanel";
-import ChangelogModal from "./ChangelogModal";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
 import { fetchDisplayName, updateDisplayName } from "../lib/db";
 import i18n from "../lib/i18n";
 import { version } from "../../package.json";
+import { CHANGELOG } from "../lib/changelog";
 
 const PREVIEW_PRIMARY = ["chest", "quads", "lats"];
 const PREVIEW_SECONDARY = ["shoulders_front", "hamstrings", "triceps"];
@@ -21,10 +22,55 @@ const cardStyle = {
   marginBottom: 16,
 };
 
+const MONTHS = [
+  "januar", "februar", "mars", "april", "mai", "juni",
+  "juli", "august", "september", "oktober", "november", "desember",
+];
+
+function formatDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d}. ${MONTHS[m - 1]} ${y}`;
+}
+
+function CollapsibleSection({ label, children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "none",
+          border: "none",
+          borderInlineStart: "3px solid var(--accent)",
+          cursor: "pointer",
+          fontFamily: "var(--cds-font-mono)",
+          fontSize: 12,
+          fontWeight: 400,
+          textTransform: "uppercase",
+          letterSpacing: "0.16em",
+          color: "var(--cds-text-secondary)",
+          paddingInlineStart: 13,
+          paddingTop: 8,
+          paddingBottom: 8,
+          paddingRight: 8,
+          margin: "16px 16px 0",
+          width: "calc(100% - 32px)",
+        }}
+      >
+        {label}
+        {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+      {open && children}
+    </div>
+  );
+}
+
 export default function Settings() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
-  const [changelogOpen, setChangelogOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [lang, setLang] = useState(() => localStorage.getItem("wl-lang") || "nb");
   const [displayName, setDisplayName] = useState("");
@@ -63,90 +109,93 @@ export default function Settings() {
     <PageShell>
       <PageHeading>{t("settings.heading")}</PageHeading>
 
-      <SectionLabel>{t("settings.language")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
-          <RadioButtonGroup
-            name="language-selector"
-            valueSelected={lang}
-            onChange={handleLangChange}
-            legendText=""
-            orientation="vertical"
-          >
-            <RadioButton labelText={t("settings.languageNorwegian")} value="nb" id="lang-nb" />
-            <RadioButton labelText={t("settings.languageEnglish")} value="en" id="lang-en" />
-            <RadioButton labelText={t("settings.languagePersian")} value="fa" id="lang-fa" />
-          </RadioButtonGroup>
-        </div>
-      </div>
-
-      <SectionLabel>{t("settings.appearance")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
-          <Toggle
-            id="theme-toggle"
-            labelText={t("settings.darkTheme")}
-            labelA={t("settings.darkThemeOff")}
-            labelB={t("settings.darkThemeOn")}
-            toggled={theme === "g100"}
-            onToggle={(checked) => setTheme(checked ? "g100" : "g10")}
-          />
-        </div>
-        <BodyPanel
-          primary={PREVIEW_PRIMARY}
-          secondary={PREVIEW_SECONDARY}
-          marginBottom={0}
-        />
-      </div>
-
-      <SectionLabel>{t("settings.myGym")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
-          <Tag type="green" size="md" style={{ marginBottom: 8 }}>
-            {t("settings.myGymMembership")}
-          </Tag>
-          <p style={{
-            color: "var(--cds-text-secondary)",
-            fontFamily: "var(--cds-font-sans)",
-            fontSize: 13,
-            margin: 0,
-          }}>
-            {t("settings.myGymFutureHint")}
-          </p>
-        </div>
-      </div>
-
-      <SectionLabel>{t("settings.contact")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
-          <p style={{
-            color: "var(--cds-text-secondary)",
-            fontFamily: "var(--cds-font-sans)",
-            fontSize: 14,
-            margin: "0 0 16px",
-          }}>
-            {t("settings.contactBody")}
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Button kind="ghost" size="sm" href="mailto:kontakt@umulig.org">
-              {t("settings.sendEmail")}
-            </Button>
-            <Button
-              kind="ghost"
-              size="sm"
-              href="https://github.com/ChristopherRotnes/BodyMapTraining/issues"
-              target="_blank"
-              rel="noopener noreferrer"
+      <CollapsibleSection label={t("settings.language")}>
+        <div style={{ padding: "12px 16px 24px" }}>
+          <div style={cardStyle}>
+            <RadioButtonGroup
+              name="language-selector"
+              valueSelected={lang}
+              onChange={handleLangChange}
+              legendText=""
+              orientation="vertical"
             >
-              {t("settings.reportGithub")}
-            </Button>
+              <RadioButton labelText={t("settings.languageNorwegian")} value="nb" id="lang-nb" />
+              <RadioButton labelText={t("settings.languageEnglish")} value="en" id="lang-en" />
+              <RadioButton labelText={t("settings.languagePersian")} value="fa" id="lang-fa" />
+            </RadioButtonGroup>
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
-      <SectionLabel>{t("settings.about")}</SectionLabel>
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={cardStyle}>
+      <CollapsibleSection label={t("settings.appearance")}>
+        <div style={{ padding: "12px 16px 24px" }}>
+          <div style={cardStyle}>
+            <Toggle
+              id="theme-toggle"
+              labelText={t("settings.darkTheme")}
+              labelA={t("settings.darkThemeOff")}
+              labelB={t("settings.darkThemeOn")}
+              toggled={theme === "g100"}
+              onToggle={(checked) => setTheme(checked ? "g100" : "g10")}
+            />
+          </div>
+          <BodyPanel
+            primary={PREVIEW_PRIMARY}
+            secondary={PREVIEW_SECONDARY}
+            marginBottom={0}
+          />
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection label={t("settings.myGym")}>
+        <div style={{ padding: "12px 16px 24px" }}>
+          <div style={cardStyle}>
+            <Tag type="green" size="md" style={{ marginBottom: 8 }}>
+              {t("settings.myGymMembership")}
+            </Tag>
+            <p style={{
+              color: "var(--cds-text-secondary)",
+              fontFamily: "var(--cds-font-sans)",
+              fontSize: 13,
+              margin: 0,
+            }}>
+              {t("settings.myGymFutureHint")}
+            </p>
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection label={t("settings.contact")}>
+        <div style={{ padding: "12px 16px 24px" }}>
+          <div style={cardStyle}>
+            <p style={{
+              color: "var(--cds-text-secondary)",
+              fontFamily: "var(--cds-font-sans)",
+              fontSize: 14,
+              margin: "0 0 16px",
+            }}>
+              {t("settings.contactBody")}
+            </p>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Button kind="ghost" size="sm" href="mailto:kontakt@umulig.org">
+                {t("settings.sendEmail")}
+              </Button>
+              <Button
+                kind="ghost"
+                size="sm"
+                href="https://github.com/ChristopherRotnes/BodyMapTraining/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t("settings.reportGithub")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection label={t("settings.about")}>
+        <div style={{ padding: "12px 16px 8px" }}>
           <p style={{
             color: "var(--cds-text-secondary)",
             fontFamily: "var(--cds-font-mono)",
@@ -156,13 +205,32 @@ export default function Settings() {
           }}>
             v{version}
           </p>
-          <Button kind="ghost" size="sm" onClick={() => setChangelogOpen(true)}>
-            {t("settings.changelog")}
-          </Button>
+          <Accordion>
+            {CHANGELOG.slice(0, 15).map((entry, i) => (
+              <AccordionItem
+                key={entry.version}
+                title={`v${entry.version} — ${formatDate(entry.date)}`}
+                open={i === 0}
+              >
+                <ul style={{
+                  margin: "0 0 8px",
+                  paddingLeft: 20,
+                  color: "var(--cds-text-secondary)",
+                  fontFamily: "var(--cds-font-sans)",
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                }}>
+                  {entry.items.map(item => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
-      </div>
+      </CollapsibleSection>
 
-      <SectionLabel>{t("settings.account")}</SectionLabel>
+      <SectionLabel style={{ marginTop: 24 }}>{t("settings.account")}</SectionLabel>
       <div style={{ padding: "0 16px 32px" }}>
         <div style={{ ...cardStyle, marginBottom: 0 }}>
           <p style={{
@@ -214,8 +282,6 @@ export default function Settings() {
           </Button>
         </div>
       </div>
-
-      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </PageShell>
   );
 }
