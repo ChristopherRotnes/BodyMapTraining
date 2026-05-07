@@ -119,7 +119,7 @@ export function reducer(state, action) {
 // ── MAIN COMPONENT ────────────────────────────────────────────────────
 export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }) {
   const { t } = useTranslation();
-  const { onShowHome, onShowTemplatePicker, onShowReportWithPrefill } = useNav();
+  const { onShowHome, onShowTemplatePicker } = useNav();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { step, images, exercises, muscles, error, dragging, editingId,
           recs, loadingRecs, recsError, saving, saved, saveError,
