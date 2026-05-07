@@ -7,8 +7,7 @@ import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
 import { AiGenerate, Add, Checkmark } from "@carbon/icons-react";
-import PageShell, { SectionLabel, AccentChip, StickyCta } from "./PageShell";
-import { useNav } from "../lib/NavContext";
+import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useTranslation } from "react-i18next";
 import i18n from "../lib/i18n";
 
@@ -52,7 +51,6 @@ function KpiTile({ label, value }) {
 
 export default function Report({ prefill, onPrefillConsumed }) {
   const { t } = useTranslation();
-  const { onShowBibliotek } = useNav();
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedDays, setSelectedDays] = useState(new Set());
   const [selectedTypes, setSelectedTypes] = useState(new Set());
@@ -617,23 +615,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
           )}
         </div>
 
-        {/* Sticky CTA to Bibliotek */}
-        {recs && recs.length > 0 && (
-          <StickyCta>
-            <button
-              onClick={() => onShowBibliotek()}
-              style={{
-                width: "100%", background: "var(--accent)", border: "none", cursor: "pointer",
-                padding: "14px 16px", borderRadius: "var(--r-pill)",
-                fontFamily: "var(--cond)", fontSize: 16, fontWeight: 700,
-                color: "#fff", textAlign: "center",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              }}
-            >
-              {t("report.toCta")}
-            </button>
-          </StickyCta>
-        )}
       </div>
     </PageShell>
   );

@@ -111,7 +111,7 @@
     "dropzoneLabel": "Last opp treningsbilde",
     "dropzoneClick": "Trykk for å velge bilde",
     "dropzoneDrag": "eller dra og slipp · JPEG, PNG, WebP",
-    "useTemplate": "Mal",
+    "useTemplate": "Mine maler",
     "manualEntry": "Legg inn manuelt",
     "tipsHeading": "Tips",
     "tipsBody": "God belysning og hele tavla i bildet gir best resultat. Flere bilder støttes.",
@@ -236,7 +236,7 @@
     "prevWeek": "Forrige uke",
     "nextWeek": "Neste uke",
     "notTrainedThisWeek": "Ikke trent denne uken",
-    "allMusclesTrained": "Alle 17 muskler er trent denne uken",
+    "allMusclesTrained": "Alle 17 muskler planlagt denne uken",
     "projectedCoverage": "Projisert dekning",
     "weekSummary_one": "{{count}} økt · {{muscleCount}} muskelgrupper",
     "weekSummary_other": "{{count}} økter · {{muscleCount}} muskelgrupper",
@@ -392,7 +392,10 @@
     "goToLibrary": "Gå til biblioteket",
     "lastUsed": "Sist brukt {{date}}",
     "exerciseCount_one": "{{count}} øvelse",
-    "exerciseCount_other": "{{count}} øvelser"
+    "exerciseCount_other": "{{count}} øvelser",
+    "step1": "Velg mal",
+    "step2": "Tilpass",
+    "step3": "Logg økt"
   },
   "templateEditor": {
     "titleEdit": "Rediger mal",
@@ -405,7 +408,6 @@
     "saveChanges": "Lagre endringer i malen",
     "useSession": "Bruk økt",
     "saveTemplate": "Lagre mal",
-    "stepIndicator": "Steg 2 av 3 — Tilpass øvelser",
     "nameLabel": "Navn på mal"
   }
 }

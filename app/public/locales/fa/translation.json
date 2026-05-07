@@ -111,7 +111,7 @@
     "dropzoneLabel": "آپلود تصویر تمرین",
     "dropzoneClick": "برای انتخاب تصویر ضربه بزنید",
     "dropzoneDrag": "یا بکشید و رها کنید · JPEG، PNG، WebP",
-    "useTemplate": "قالب",
+    "useTemplate": "قالب‌های من",
     "manualEntry": "ورود دستی",
     "tipsHeading": "راهنما",
     "tipsBody": "نور مناسب و نمایش کامل تخته در تصویر بهترین نتیجه را می‌دهد. چند تصویر پشتیبانی می‌شود.",
@@ -236,7 +236,7 @@
     "prevWeek": "هفته قبل",
     "nextWeek": "هفته بعد",
     "notTrainedThisWeek": "تمرین‌نشده این هفته",
-    "allMusclesTrained": "هر ۱۷ عضله این هفته تمرین شده",
+    "allMusclesTrained": "هر ۱۷ عضله این هفته برنامه‌ریزی شده",
     "projectedCoverage": "پوشش پیش‌بینی‌شده",
     "weekSummary_one": "{{count}} جلسه · {{muscleCount}} گروه عضلانی",
     "weekSummary_other": "{{count}} جلسه · {{muscleCount}} گروه عضلانی",
@@ -392,7 +392,10 @@
     "goToLibrary": "رفتن به کتابخانه",
     "lastUsed": "آخرین استفاده: {{date}}",
     "exerciseCount_one": "{{count}} تمرین",
-    "exerciseCount_other": "{{count}} تمرین"
+    "exerciseCount_other": "{{count}} تمرین",
+    "step1": "انتخاب قالب",
+    "step2": "تنظیم",
+    "step3": "ثبت جلسه"
   },
   "templateEditor": {
     "titleEdit": "ویرایش قالب",
@@ -405,7 +408,6 @@
     "saveChanges": "ذخیره تغییرات قالب",
     "useSession": "شروع جلسه",
     "saveTemplate": "ذخیره قالب",
-    "stepIndicator": "مرحله ۲ از ۳ — تنظیم تمرین‌ها",
     "nameLabel": "نام قالب"
   }
 }

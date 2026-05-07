@@ -111,7 +111,7 @@
     "dropzoneLabel": "Upload training photo",
     "dropzoneClick": "Tap to choose photo",
     "dropzoneDrag": "or drag and drop · JPEG, PNG, WebP",
-    "useTemplate": "Template",
+    "useTemplate": "My templates",
     "manualEntry": "Enter manually",
     "tipsHeading": "Tips",
     "tipsBody": "Good lighting and the full board in frame gives the best results. Multiple images supported.",
@@ -236,7 +236,7 @@
     "prevWeek": "Previous week",
     "nextWeek": "Next week",
     "notTrainedThisWeek": "Not trained this week",
-    "allMusclesTrained": "All 17 muscles trained this week",
+    "allMusclesTrained": "All 17 muscles planned this week",
     "projectedCoverage": "Projected coverage",
     "weekSummary_one": "{{count}} session · {{muscleCount}} muscle groups",
     "weekSummary_other": "{{count}} sessions · {{muscleCount}} muscle groups",
@@ -392,7 +392,10 @@
     "goToLibrary": "Go to library",
     "lastUsed": "Last used {{date}}",
     "exerciseCount_one": "{{count}} exercise",
-    "exerciseCount_other": "{{count}} exercises"
+    "exerciseCount_other": "{{count}} exercises",
+    "step1": "Pick template",
+    "step2": "Adjust",
+    "step3": "Log session"
   },
   "templateEditor": {
     "titleEdit": "Edit template",
@@ -405,7 +408,6 @@
     "saveChanges": "Save template changes",
     "useSession": "Use session",
     "saveTemplate": "Save template",
-    "stepIndicator": "Step 2 of 3 — Adjust exercises",
     "nameLabel": "Template name"
   }
 }

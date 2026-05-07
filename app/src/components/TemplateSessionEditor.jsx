@@ -135,11 +135,32 @@ export default function TemplateSessionEditor({ template, mode, onBack, onUseTem
             {mode === "edit" ? t("templateEditor.titleEdit") : t("templateEditor.titleUse")}
           </SectionLabel>
 
-          {mode === "use" && (
-            <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.06em", marginBottom: 16 }}>
-              {t("templateEditor.stepIndicator")}
-            </p>
-          )}
+          {mode === "use" && (() => {
+            const STEPS = [t("templatePicker.step1"), t("templatePicker.step2"), t("templatePicker.step3")];
+            return (
+              <div role="list" style={{ display: "flex", marginBottom: 16 }}>
+                {STEPS.map((label, idx) => {
+                  const isActive = idx === 1;
+                  const isComplete = idx < 1;
+                  return (
+                    <div key={idx} role="listitem" aria-current={isActive ? "step" : undefined} style={{
+                      flex: 1,
+                      borderTop: isActive ? "3px solid var(--accent)" : isComplete ? "3px solid var(--accent-bg-55)" : "1px solid var(--border-subtle-wl)",
+                      paddingTop: 10,
+                      paddingRight: idx < 2 ? 16 : 0,
+                    }}>
+                      <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: isActive ? "var(--accent)" : "var(--text-muted-wl)", letterSpacing: "0.12em" }}>
+                        {String(idx + 1).padStart(2, "0")}
+                      </div>
+                      <div style={{ fontSize: 12, color: isActive ? "var(--cds-text-primary)" : "var(--text-muted-wl)", fontWeight: isActive ? 600 : 400, marginTop: 2 }}>
+                        {label}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Editable template name */}
           <div style={{ marginBottom: 20 }}>
