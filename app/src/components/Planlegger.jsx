@@ -204,7 +204,6 @@ export default function Planlegger() {
   const [templates, setTemplates] = useState([]);
   const [pickerDow, setPickerDow] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const [mobileBodyView, setMobileBodyView] = useState("front");
@@ -353,7 +352,6 @@ export default function Planlegger() {
   }, [pickerDow]);
 
   const autoSave = async (newAssignments) => {
-    setSaving(true);
     setSaveError(null);
     const asgn = Object.entries(newAssignments)
       .filter(([, tpl]) => tpl)
@@ -367,8 +365,6 @@ export default function Planlegger() {
     } catch (e) {
       logDevError("Planlegger/autoSave", e);
       setSaveError(e.message);
-    } finally {
-      setSaving(false);
     }
   };
 
