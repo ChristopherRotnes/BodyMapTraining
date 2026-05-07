@@ -462,3 +462,20 @@ export async function ensureGymMembership(buId = DEFAULT_SPORTY_BUSINESS_UNIT_ID
   if (error) throw error;
   return data;
 }
+
+// ── RECOMMENDATION CACHE ──────────────────────────────────────────────
+
+export async function fetchRecsCache(cacheKey) {
+  const { data } = await supabase
+    .from("recommendation_cache")
+    .select("recs")
+    .eq("cache_key", cacheKey)
+    .maybeSingle();
+  return data?.recs ?? null;
+}
+
+export async function saveRecsCache(cacheKey, recs) {
+  await supabase
+    .from("recommendation_cache")
+    .upsert({ cache_key: cacheKey, recs, fetched_at: new Date().toISOString() });
+}

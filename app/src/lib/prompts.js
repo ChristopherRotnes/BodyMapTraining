@@ -6,6 +6,10 @@ export const CLAUDE_MODEL_VISION = "claude-opus-4-5";
 // claude-sonnet-4-6 is used for text-only tasks (recommendations).
 export const CLAUDE_MODEL_TEXT = "claude-sonnet-4-6";
 
+// Bump when ANALYZE_PROMPT or buildPeriodRecommendPrompt changes.
+// Old cache entries with a stale version prefix are swept by the weekly cleanup job.
+export const RECS_PROMPT_VERSION = 1;
+
 const MUSCLE_IDS = Object.keys(MUSCLES).join(", ");
 
 const TIP_LANG_INSTRUCTION = {
