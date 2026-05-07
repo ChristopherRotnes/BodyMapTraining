@@ -29,6 +29,7 @@ export const buildRecommendPrompt = (trained, untrained, lang = 'nb') => {
   return `Du er en personlig trener. Brukeren har trent disse musklene i dag: ${trained.join(", ")}.
 Muskelgrupper som IKKE er trent: ${untrained.join(", ")}.
 Foreslå 5 øvelser som dekker de utrente musklene. Gjerne øvelser som er vanlige på norske treningssentre.
+Treningslokalet er en stor gymsal uten treningmaskiner. Tilgjengelig utstyr: frivekter, vektstenger, manualer, matter, yogablokker, strikk/resistance bands. Foreslå KUN øvelser som passer dette utstyret.
 Bruk KUN disse muscle-ID-ene: ${MUSCLE_IDS}.
 Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 [{"name":"Øvelsesnavn","primary":["muscle_id"],"secondary":["muscle_id"],"tip":"${tipInstruction}"}]`;
@@ -49,6 +50,7 @@ export const buildPeriodRecommendPrompt = (periodDays, sessionCount, trainedLabe
 Trent (primær): ${trainedLabels || "ingen"}.
 Ikke trent: ${untrainedLabels || "alle muskelgrupper er dekket"}.
 Foreslå 5 øvelser som prioriterer de utrente musklene. Gjerne øvelser som er vanlige på norske treningssentre.
+Treningslokalet er en stor gymsal uten treningmaskiner. Tilgjengelig utstyr: frivekter, vektstenger, manualer, matter, yogablokker, strikk/resistance bands. Foreslå KUN øvelser som passer dette utstyret.
 Bruk KUN disse muscle-ID-ene: ${MUSCLE_IDS}.
 Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 [{"name":"Øvelsesnavn","primary":["muscle_id"],"secondary":["muscle_id"],"tip":"${tipInstruction}"}]`;
