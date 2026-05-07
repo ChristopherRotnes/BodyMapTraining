@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { fetchSessionsForReport, saveLibraryExercise } from "../lib/db";
+import { fetchSessionsForReport, saveLibraryExercise, fetchRecsCache, saveRecsCache } from "../lib/db";
 import { HeatmapBodySVG, MUSCLES } from "../lib/bodymap.jsx";
 import { callClaude, logDevError, getIntlLocale } from "../lib/utils";
-import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt } from "../lib/prompts";
+import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt, RECS_PROMPT_VERSION } from "../lib/prompts";
 import {
   Tag, InlineLoading, DefinitionTooltip, Button, InlineNotification,
 } from "@carbon/react";
-import { AiGenerate, Add, Checkmark } from "@carbon/icons-react";
+import { AiGenerate, Add, Checkmark, Renew } from "@carbon/icons-react";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useTranslation } from "react-i18next";
 import i18n from "../lib/i18n";
@@ -47,6 +47,10 @@ function KpiTile({ label, value }) {
       </div>
     </div>
   );
+}
+
+function recsCacheKey(periodDays, sessionCount, trainedIds, untrainedIds) {
+  return `v${RECS_PROMPT_VERSION}_${periodDays}_${sessionCount}_${[...trainedIds].sort().join(',')}_${[...untrainedIds].sort().join(',')}`;
 }
 
 export default function Report({ prefill, onPrefillConsumed }) {
@@ -105,9 +109,18 @@ export default function Report({ prefill, onPrefillConsumed }) {
   }, [periodDays]);
 
   useEffect(() => {
-    setRecs(null);
+    let cancelled = false;
     setRecsError(null);
-  }, [periodDays, selectedDays, selectedTypes]);
+    const trainedIds = Object.entries(muscleCounts)
+      .filter(([, c]) => c.primary > 0)
+      .map(([id]) => id);
+    fetchRecsCache(recsCacheKey(periodDays, sessionCount, trainedIds, untrainedMuscles))
+      .then(cached => { if (!cancelled) setRecs(cached); })
+      .catch(() => { if (!cancelled) setRecs(null); });
+    return () => { cancelled = true; };
+    // muscleCounts, sessionCount, untrainedMuscles are derived from the state values already in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodDays, selectedDays, selectedTypes, sessions]);
 
   useEffect(() => {
     if (!hoveredMuscle) return;
@@ -170,6 +183,10 @@ export default function Report({ prefill, onPrefillConsumed }) {
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       setRecs(parsed);
+      const trainedIds = Object.entries(muscleCounts)
+        .filter(([, c]) => c.primary > 0)
+        .map(([id]) => id);
+      saveRecsCache(recsCacheKey(periodDays, sessionCount, trainedIds, untrainedMuscles), parsed);
     } catch (err) {
       logDevError("Report/anbefalinger", err);
       setRecsError(err.message || t("report.fetchRecError"));
@@ -289,7 +306,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
 
   return (
     <PageShell>
-      <div style={{ paddingBottom: 80 }}>
+      <div style={{ paddingBottom: 24 }}>
         <SectionLabel>
           <span style={{ display: "block" }}>{t("report.period")} · {periodLabel}</span>
           <span style={{ display: "block" }}>{dayLabel}</span>
@@ -594,6 +611,16 @@ export default function Report({ prefill, onPrefillConsumed }) {
                             )}
                           </div>
                         ))}
+                        <Button
+                          kind="ghost"
+                          size="sm"
+                          renderIcon={Renew}
+                          onClick={getAdvice}
+                          disabled={loadingRecs}
+                          style={{ marginTop: 4 }}
+                        >
+                          {t("report.refreshRecs")}
+                        </Button>
                       </div>
                     </div>
                   )}
