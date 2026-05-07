@@ -4,6 +4,9 @@ All notable changes to Workout Lens are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Open source housekeeping** — repository prepared for public release: added MIT `LICENSE`, `CONTRIBUTING.md`, and GitHub issue templates (feature + bug). `README.md` updated with contributing and license sections; instance-specific infrastructure IDs removed. `CLAUDE.md` stripped of internal deployment identifiers. `app/package.json` updated with `author`, `license`, and `repository` fields.
+
 ### Fixed
 - **Gym class name deduplication** — `sportySync.js` now strips quoted annotations (e.g. `"SVART TRØYE"`) from class names before storing them, preventing duplicate filter chips in Report when sporty.no temporarily appends labels to existing class names. A one-time SQL migration cleaned all existing rows. Handles both straight (`"`) and curly (`"`) double quotes generically.
 
