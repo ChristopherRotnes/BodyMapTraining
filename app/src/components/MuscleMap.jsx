@@ -427,16 +427,6 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               </button>
             </div>
 
-            {/* Tips callout */}
-            <div style={{
-              borderInlineStart: "3px solid var(--accent)",
-              background: "var(--accent-bg-08)",
-              padding: "10px 12px",
-              marginBottom: 14,
-            }}>
-              <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>{t("muscleMap.tipsHeading")}</p>
-              <p style={{ fontSize: 13, color: "var(--cds-text-secondary)" }}>{t("muscleMap.tipsBody")}</p>
-            </div>
 
             <div aria-live="polite" aria-atomic="true">
               {sizeError && (
@@ -780,43 +770,6 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   </div>
                 );
               })}
-            </div>
-
-            {/* Forward CTA → Periode-rapport */}
-            <div style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--border-subtle-wl)",
-              borderRadius: "var(--r-card)",
-              padding: "18px 16px",
-              marginBottom: 16,
-            }}>
-              <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", color: "var(--text-muted-wl)", textTransform: "uppercase", marginBottom: 8 }}>
-                {t("muscleMap.nextStep")}
-              </div>
-              <p style={{ fontSize: 14, color: "var(--cds-text-primary)", marginBottom: 14 }}>
-                {t("muscleMap.nextStepBody")}
-              </p>
-              <button
-                onClick={() => {
-                  const weekday = new Date(sessionDate + "T12:00:00").getDay();
-                  const gymSession = gymSessions.find(s => s.id === gymSessionId);
-                  onShowReportWithPrefill({ periodDays: 30, weekday, sessionType: gymSession?.name || "" });
-                }}
-                style={{
-                  width: "100%", padding: "12px 16px",
-                  background: "var(--accent)", color: "#fff",
-                  border: "none", borderRadius: "var(--r-pill)",
-                  fontFamily: "var(--cds-font-sans)", fontWeight: 600, fontSize: 14,
-                  cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}
-                onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"}
-                onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
-                onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-              >
-                <span>{t("muscleMap.analyzePeriod")}</span>
-                <ArrowRight size={16} />
-              </button>
             </div>
 
             {/* Recommendations */}

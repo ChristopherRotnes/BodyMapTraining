@@ -193,8 +193,8 @@
     },
     "gymClassLabel": "Gymtime",
     "noClassSelected": "Ingen time valgt",
-    "conflictWarningTitle": "Eksisterende økt:",
-    "conflictWarningBody": "Denne gymtimen har allerede en lagret økt ({{date}}). Lagring erstatter den.",
+    "conflictWarningTitle": "Advarsel:",
+    "conflictWarningBody": "Denne gymtimen er allerede koblet til en økt fra {{date}}. Lagring fjerner den koblingen — den andre øvelsen beholder sine data.",
     "duplicateGymSession": "Denne gymtimen har allerede en økt lagret.",
     "reanalyzeServerError": "Serverfeil ({{status}}): Ugyldig svar fra server",
     "reanalyzeServerErrorDetail": "Serverfeil ({{status}}): {{detail}}",
@@ -207,9 +207,8 @@
     "sectionLabel": "BIBLIOTEK",
     "heading": "Dine byggeklosser.",
     "tabExercises": "Øvelser",
-    "tabTemplates": "Maler",
+    "tabTemplates": "Mine maler",
     "newExercise": "Ny øvelse",
-    "shortcuts": "SNARVEIER",
     "searchPlaceholder": "Søk øvelse…",
     "loadingExercises": "Laster øvelser…",
     "noExercises": "Ingen øvelser lagt til ennå.",
@@ -230,8 +229,7 @@
     "exerciseRemovedWarning": "og vil bli fjernet derfra.",
     "exerciseCount": "{{count}} ØV",
     "searchTemplates": "Søk i maler…",
-    "showMore": "Vis {{count}} til",
-    "seeAll": "Se alle"
+    "showMore": "Vis {{count}} til"
   },
   "planlegger": {
     "heading": "Planlegg uken",

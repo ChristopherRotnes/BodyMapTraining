@@ -5,14 +5,13 @@ import {
 } from "@carbon/react";
 import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { getIntlLocale } from "../lib/utils";
+import { logDevError } from "../lib/utils";
 import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
   fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
 } from "../lib/db";
 import { MUSCLES, BodySVG } from "../lib/bodymap.jsx";
-import { logDevError } from "../lib/utils";
 import ExerciseForm from "./ExerciseForm";
 
 export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
@@ -189,62 +188,6 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={exError} hideCloseButton style={{ marginBottom: 16 }} />
             )}
 
-            {!showNewEx && (
-              <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
-                style={{ marginBottom: 16 }}>
-                {t("bibliotek.newExercise")}
-              </Button>
-            )}
-
-            {/* Shortcut carousel — template shortcuts */}
-            {!tplLoading && templates.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--text-muted-wl)", marginBottom: 8 }}>
-                  {t("bibliotek.shortcuts")}
-                </p>
-                <div style={{ overflowX: "auto", display: "flex", gap: 8, paddingBottom: 8, scrollbarWidth: "none" }}>
-                  {templates.slice(0, 6).map(tpl => {
-                    const exCount = tpl.session_template_exercises?.length || 0;
-                    return (
-                      <button
-                        key={tpl.id}
-                        onClick={() => onEditTemplate(tpl)}
-                        style={{
-                          flexShrink: 0,
-                          background: "var(--surface-card)",
-                          border: "1px solid var(--border-subtle-wl)",
-                          borderRadius: "var(--r-tile)",
-                          padding: "10px 14px",
-                          cursor: "pointer", textAlign: "left",
-                          minWidth: 110,
-                        }}
-                      >
-                        <div style={{ fontFamily: "var(--cond)", fontWeight: 600, fontSize: 14, color: "var(--cds-text-primary)", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 }}>
-                          {tpl.name}
-                        </div>
-                        <div style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {t("bibliotek.exerciseCount", { count: exCount })}
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {templates.length > 6 && (
-                    <button
-                      onClick={() => setTabIndex(1)}
-                      style={{
-                        flexShrink: 0, alignSelf: "center",
-                        background: "none", border: "none",
-                        color: "var(--accent)", fontFamily: "var(--cds-font-mono)", fontSize: 11,
-                        letterSpacing: "0.06em", cursor: "pointer", padding: "10px 8px",
-                      }}
-                    >
-                      {t("bibliotek.seeAll")} →
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Search */}
             {!exLoading && exercises.length > 0 && (
               <div style={{ position: "relative", marginBottom: 12 }}>
@@ -268,6 +211,13 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                   }}
                 />
               </div>
+            )}
+
+            {!showNewEx && (
+              <Button kind="primary" renderIcon={Add} onClick={() => { setShowNewEx(true); setEditingEx(null); }}
+                style={{ marginBottom: 16 }}>
+                {t("bibliotek.newExercise")}
+              </Button>
             )}
 
             {showNewEx && (
@@ -433,9 +383,6 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {filteredTemplates.slice(0, tplVisible).map(tpl => {
                   const exCount = tpl.session_template_exercises?.length || 0;
-                  const usedAt = tpl.used_at
-                    ? new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short", year: "numeric" }).format(new Date(tpl.used_at))
-                    : null;
                   const tplPrimary = [...new Set((tpl.session_template_exercises || []).flatMap(e => e.primary_muscles || []))];
                   const muscleCount = tplPrimary.length;
                   return (
@@ -458,7 +405,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                           {tpl.name}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                          {t("bibliotek.exerciseCount", { count: exCount })} · {muscleCount} MUS{usedAt ? ` · ${usedAt}` : ""}
+                          {t("bibliotek.exerciseCount", { count: exCount })} · {muscleCount} MUS
                         </div>
                       </div>
                       <Button kind="ghost" hasIconOnly renderIcon={ChevronRight}

@@ -193,8 +193,8 @@
     },
     "gymClassLabel": "Gym class",
     "noClassSelected": "No class selected",
-    "conflictWarningTitle": "Existing session:",
-    "conflictWarningBody": "This class already has a saved session ({{date}}). Saving will replace it.",
+    "conflictWarningTitle": "Warning:",
+    "conflictWarningBody": "This class is already linked to a session from {{date}}. Saving will unlink that session — it keeps its data but loses the class connection.",
     "duplicateGymSession": "This gym class already has a saved session.",
     "reanalyzeServerError": "Server error ({{status}}): Invalid response from server",
     "reanalyzeServerErrorDetail": "Server error ({{status}}): {{detail}}",
@@ -207,9 +207,8 @@
     "sectionLabel": "LIBRARY",
     "heading": "Your building blocks.",
     "tabExercises": "Exercises",
-    "tabTemplates": "Templates",
+    "tabTemplates": "My templates",
     "newExercise": "New exercise",
-    "shortcuts": "SHORTCUTS",
     "searchPlaceholder": "Search exercise…",
     "loadingExercises": "Loading exercises…",
     "noExercises": "No exercises added yet.",
@@ -230,8 +229,7 @@
     "exerciseRemovedWarning": "and will be removed from it.",
     "exerciseCount": "{{count}} EX",
     "searchTemplates": "Search templates…",
-    "showMore": "Show {{count}} more",
-    "seeAll": "See all"
+    "showMore": "Show {{count}} more"
   },
   "planlegger": {
     "heading": "Plan the week",

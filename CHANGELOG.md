@@ -4,6 +4,16 @@ All notable changes to Workout Lens are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **UI polish — post-#147 review (#147)** — ten UX fixes across History, Bibliotek, Planlegger, MuscleMap, TemplatePicker, and Login:
+  - **History** — removed username display from exercise edit box; "Legg til øvelse manuelt" and "Last opp nytt bilde" unified as sibling ghost buttons below the exercise list; session header chips capped at 2 visible + `+N` overflow to prevent title overflow; library pre-fetched on mount so autocomplete is always ready; gym-class conflict warning wording clarified
+  - **Bibliotek** — "Maler" tab renamed to "Mine maler"; Snarveier carousel removed (caused horizontal overflow); `used_at` date removed from template cards
+  - **TemplatePicker** — "Sist brukt" date removed from template cards
+  - **Planlegger** — "Lagre plan" and "Fjern uke" buttons removed; plan now auto-saves on every add/remove and auto-deletes when all slots are cleared
+  - **MuscleMap** — "NESTE STEG / Analyser perioden" CTA card removed from result step; "TIPS" callout removed from upload step
+  - **Login** — daily quotes hardcoded to English (language is unknown before sign-in)
+  - **Carbon Select** — global CSS fix strengthened to also force `background-color: var(--cds-field-01)` in default state, preventing white-on-white in all layer contexts
+
 ### Added
 - **Email templates (#148)** — Supabase auth emails (magic link, invite, email confirmation) are now version-controlled in `supabase/templates/`. Branded with Workout Lens name, `workout.umulig.org` domain, magenta CTA button, and Carbon-matching dark colour scheme. Apply to the remote project with `supabase link` + `supabase config push`.
 - **Joint class history (#138)** — expanding a gym-linked session in History now shows a "Kolleger i denne klassen" panel listing co-instructor sessions for the same class slot. Display name (or "Instruktør" fallback) is shown as a header per colleague, with their exercise list below. Fetched lazily on first expand and cached per `gym_calendar_id`. New RLS policy on `sessions` allows same-gym users to read each other's sessions. `fetchClassHistory(gymCalendarId)` added to `db.js`.

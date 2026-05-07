@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
-import { ChevronLeft, ChevronRight, Add, Close, TrashCan, Checkmark } from "@carbon/icons-react";
+import { ChevronLeft, ChevronRight, Add, Close } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates, fetchSessionsForWeek } from "../lib/db";
 import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale, extractMuscles } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
-import PageShell, { SectionLabel, PageHeading, StickyCta, AccentChip } from "./PageShell";
+import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
 
 function TemplatePickerSheet({ templates, onSelect, onClose }) {
   const { t } = useTranslation();
@@ -201,14 +201,10 @@ export default function Planlegger() {
   const { t } = useTranslation();
   const [weekOffset, setWeekOffset] = useState(0);
   const [assignments, setAssignments] = useState({});
-  const [savedAssignments, setSavedAssignments] = useState({});
   const [templates, setTemplates] = useState([]);
   const [pickerDow, setPickerDow] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const [mobileBodyView, setMobileBodyView] = useState("front");
@@ -337,7 +333,6 @@ export default function Planlegger() {
         map[d.day_of_week] = d.session_templates || null;
       });
       setAssignments(map);
-      setSavedAssignments(map);
     } catch (e) {
       logDevError("Planlegger/loadPlan", e);
       setSaveError(e.message);
@@ -357,55 +352,42 @@ export default function Planlegger() {
     return () => window.removeEventListener("keydown", handler);
   }, [pickerDow]);
 
-  const handleAssign = (dow, tpl) => {
-    setAssignments(prev => ({ ...prev, [dow]: tpl }));
-    setPickerDow(null);
-  };
-
-  const handleRemove = (dow) => {
-    setAssignments(prev => ({ ...prev, [dow]: null }));
-  };
-
-  const handleSave = async () => {
+  const autoSave = async (newAssignments) => {
     setSaving(true);
     setSaveError(null);
+    const asgn = Object.entries(newAssignments)
+      .filter(([, tpl]) => tpl)
+      .map(([dow, tpl]) => ({ day_of_week: parseInt(dow, 10), template_id: tpl.id }));
     try {
-      const asgn = Object.entries(assignments)
-        .filter(([, tpl]) => tpl)
-        .map(([dow, tpl]) => ({ day_of_week: parseInt(dow, 10), template_id: tpl.id }));
-      await saveWeekPlan(weekIso, asgn);
-      setSavedAssignments({ ...assignments });
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
+      if (asgn.length === 0) {
+        await deleteWeekPlan(weekIso);
+      } else {
+        await saveWeekPlan(weekIso, asgn);
+      }
     } catch (e) {
-      logDevError("Planlegger/saveWeekPlan", e);
+      logDevError("Planlegger/autoSave", e);
       setSaveError(e.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    setDeleting(true);
-    setSaveError(null);
-    try {
-      await deleteWeekPlan(weekIso);
-      setAssignments({});
-      setSavedAssignments({});
-      setConfirmDelete(false);
-    } catch (e) {
-      logDevError("Planlegger/deleteWeekPlan", e);
-      setSaveError(e.message);
-    } finally {
-      setDeleting(false);
-    }
+  const handleAssign = (dow, tpl) => {
+    const next = { ...assignments, [dow]: tpl };
+    setAssignments(next);
+    setPickerDow(null);
+    autoSave(next);
   };
 
-  const hasSavedPlan = Object.values(savedAssignments).some(Boolean);
+  const handleRemove = (dow) => {
+    const next = { ...assignments, [dow]: null };
+    setAssignments(next);
+    autoSave(next);
+  };
 
   return (
     <PageShell>
-      <div style={{ paddingBottom: 80 }}>
+      <div style={{ paddingBottom: 32 }}>
 
         {/* Week navigation */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
@@ -596,72 +578,9 @@ export default function Planlegger() {
               ))}
             </div>
 
-            {/* Confirm delete strip */}
-            {confirmDelete && (
-              <div style={{
-                margin: "12px 16px 0",
-                padding: "12px 14px",
-                background: "var(--cds-layer-01)",
-                border: "1px solid var(--cds-support-error)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 8,
-              }}>
-                <span style={{ fontSize: 13, color: "var(--cds-text-primary)" }}>
-                  {t("planlegger.confirmDelete")}
-                </span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button kind="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
-                    {t("common.cancel")}
-                  </Button>
-                  <Button
-                    kind="danger"
-                    size="sm"
-                    renderIcon={deleting ? undefined : TrashCan}
-                    onClick={handleDelete}
-                    disabled={deleting}
-                  >
-                    {deleting ? t("planlegger.removing") : t("planlegger.remove")}
-                  </Button>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
-
-      {/* Sticky action bar */}
-      {!loading && (
-        <StickyCta>
-          <div style={{ display: "flex", gap: 8, padding: "0 16px" }}>
-            {hasSavedPlan && !confirmDelete && (
-              <Button
-                kind="ghost"
-                size="md"
-                renderIcon={TrashCan}
-                onClick={() => setConfirmDelete(true)}
-                disabled={saving || deleting}
-              >
-                {t("planlegger.removeWeek")}
-              </Button>
-            )}
-            <Button
-              kind="primary"
-              size="md"
-              onClick={handleSave}
-              disabled={saving || saveSuccess || deleting}
-              style={{ flex: 1 }}
-            >
-              {saving
-                ? <InlineLoading description={t("common.saving")} status="active" />
-                : saveSuccess
-                  ? <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Checkmark size={16} />{t("planlegger.planSaved")}</span>
-                  : t("planlegger.savePlan")}
-            </Button>
-          </div>
-        </StickyCta>
-      )}
 
       {/* Template picker bottom sheet */}
       {pickerDow !== null && (

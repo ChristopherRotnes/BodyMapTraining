@@ -193,8 +193,8 @@
     },
     "gymClassLabel": "کلاس ورزشی",
     "noClassSelected": "کلاسی انتخاب نشده",
-    "conflictWarningTitle": "جلسه موجود:",
-    "conflictWarningBody": "این کلاس از قبل یک جلسه ذخیره شده دارد ({{date}}). ذخیره جدید جایگزین آن می‌شود.",
+    "conflictWarningTitle": "هشدار:",
+    "conflictWarningBody": "این کلاس از قبل به جلسه‌ای از {{date}} متصل است. با ذخیره، اتصال آن جلسه حذف می‌شود — داده‌هایش حفظ می‌شود اما ارتباط با کلاس قطع می‌شود.",
     "duplicateGymSession": "این کلاس از قبل یک جلسه ذخیره شده دارد.",
     "reanalyzeServerError": "خطای سرور ({{status}}): پاسخ نامعتبر از سرور",
     "reanalyzeServerErrorDetail": "خطای سرور ({{status}}): {{detail}}",
@@ -207,9 +207,8 @@
     "sectionLabel": "کتابخانه",
     "heading": "بلوک‌های سازنده شما.",
     "tabExercises": "تمرین‌ها",
-    "tabTemplates": "قالب‌ها",
+    "tabTemplates": "قالب‌های من",
     "newExercise": "تمرین جدید",
-    "shortcuts": "میانبرها",
     "searchPlaceholder": "جستجوی تمرین…",
     "loadingExercises": "در حال بارگذاری تمرین‌ها…",
     "noExercises": "هنوز تمرینی اضافه نشده.",
@@ -230,8 +229,7 @@
     "exerciseRemovedWarning": "و از آن حذف خواهد شد.",
     "exerciseCount": "{{count}} تمرین",
     "searchTemplates": "جستجو در قالب‌ها…",
-    "showMore": "نمایش {{count}} بیشتر",
-    "seeAll": "مشاهده همه"
+    "showMore": "نمایش {{count}} بیشتر"
   },
   "planlegger": {
     "heading": "برنامه‌ریزی هفته",

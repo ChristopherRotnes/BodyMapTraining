@@ -3,7 +3,7 @@ import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { Book } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchTemplates } from "../lib/db";
-import { logDevError, getIntlLocale } from "../lib/utils";
+import { logDevError } from "../lib/utils";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
@@ -51,9 +51,6 @@ export default function TemplatePicker({ onBack, onSelectTemplate }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {templates.map(tpl => {
               const exCount = tpl.session_template_exercises?.length || 0;
-              const usedAt = tpl.used_at
-                ? new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short", year: "numeric" }).format(new Date(tpl.used_at))
-                : null;
               return (
                 <button
                   key={tpl.id}
@@ -79,7 +76,6 @@ export default function TemplatePicker({ onBack, onSelectTemplate }) {
                   </span>
                   <span style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
                     {t("templatePicker.exerciseCount", { count: exCount })}
-                    {usedAt ? ` · ${t("templatePicker.lastUsed", { date: usedAt })}` : ""}
                   </span>
                 </button>
               );

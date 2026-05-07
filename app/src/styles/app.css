@@ -34,6 +34,10 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 input[type=number] { -moz-appearance: textfield; }
 
+/* Carbon Select: force text and background to stay readable (prevents white-on-white in some layer contexts) */
+.cds--select-input { color: var(--cds-text-primary); background-color: var(--cds-field-01); }
+.cds--select-input:hover { background-color: var(--cds-field-hover); color: var(--cds-text-primary); }
+
 /* ===== RTL (Persian / فارسی) ===== */
 [dir="rtl"] {
   font-family: var(--fa-font);

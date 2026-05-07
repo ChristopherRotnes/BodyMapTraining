@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory, fetchDisplayName } from "../lib/db";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
 import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
 import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
@@ -180,7 +180,6 @@ export default function History({ initialDate }) {
   const libraryCache = useRef(null);
   const uploadingForSession = useRef(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
-  const [myDisplayName, setMyDisplayName] = useState(null);
   const [classHistory, setClassHistory] = useState(new Map());
   const fileRef = useRef();
 
@@ -195,7 +194,9 @@ export default function History({ initialDate }) {
       .then(setSessions)
       .catch(e => logDevError("History/fetchSessions", e))
       .finally(() => setLoading(false));
-    fetchDisplayName().then(setMyDisplayName).catch(() => {});
+    fetchLibraryExercises()
+      .then(data => { libraryCache.current = data; setLibraryExercises(data); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -573,14 +574,18 @@ export default function History({ initialDate }) {
                     <span style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {sessionTitle}
                     </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                      <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, maxWidth: "55%", overflow: "hidden" }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap", flexShrink: 0 }}>
                         {t("history.exerciseCount", { count: exCount })}
                       </span>
-                      {isFilterMatch
-                        ? matchedLabels.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)
-                        : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)
-                      }
+                      {isFilterMatch ? (() => {
+                        const visible = matchedLabels.slice(0, 2);
+                        const extra = matchedLabels.length - 2;
+                        return <>
+                          {visible.map(label => <Tag key={label} type="cyan" size="sm">{label}</Tag>)}
+                          {extra > 0 && <span style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", whiteSpace: "nowrap", flexShrink: 0 }}>+{extra}</span>}
+                        </>;
+                      })() : topMuscles.map(label => <Tag key={label} type="green" size="sm">{label}</Tag>)}
                       <ChevronDown size={16} style={{ color: "var(--text-muted-wl)", transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }} />
                     </div>
                   </button>
@@ -680,11 +685,6 @@ export default function History({ initialDate }) {
 
                       {/* Exercise list — always editable */}
                       <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
-                        {myDisplayName && !isDirty && (
-                          <p style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 13, color: "var(--cds-text-primary)", margin: "0 0 8px", borderInlineStart: "3px solid var(--accent)", paddingInlineStart: 8 }}>
-                            {myDisplayName}
-                          </p>
-                        )}
                         {workExercises && (
                           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
                             {workExercises.map((ex) => (
@@ -708,6 +708,10 @@ export default function History({ initialDate }) {
                             ))}
                           </div>
                         )}
+                      </div>
+
+                      {/* Action row: add exercise + re-upload photo */}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                         <Button kind="ghost" renderIcon={Add} size="sm"
                           onClick={() => {
                             const id = Date.now();
@@ -717,9 +721,12 @@ export default function History({ initialDate }) {
                               dirty: true,
                             });
                           }}
-                          style={{ width: "100%" }}
                         >
                           {t("muscleMap.addManual")}
+                        </Button>
+                        <Button kind="ghost" renderIcon={isAnalyzing ? Renew : Camera} size="sm" disabled={isAnalyzing}
+                          onClick={() => { uploadingForSession.current = session; fileRef.current?.click(); }}>
+                          {isAnalyzing ? t("history.analyzing") : t("history.reuploadPhoto")}
                         </Button>
                       </div>
 
@@ -776,16 +783,6 @@ export default function History({ initialDate }) {
                           uploadingForSession.current = null;
                         }} />
 
-                      {/* Upload new photo button (always shown) */}
-                      {!isDirty && (
-                        <div style={{ marginBottom: 8 }}>
-                          <Button kind="ghost" renderIcon={isAnalyzing ? Renew : Camera} disabled={isAnalyzing}
-                            onClick={() => { uploadingForSession.current = session; fileRef.current?.click(); }}>
-                            {isAnalyzing ? t("history.analyzing") : t("history.reuploadPhoto")}
-                          </Button>
-                        </div>
-                      )}
-
                       {/* Dirty state: error notifications + save bar */}
                       {isDirty && (
                         <>
@@ -797,10 +794,6 @@ export default function History({ initialDate }) {
                           )}
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                             <Button kind="ghost" onClick={() => discardEdit(session)}>{t("common.discard")}</Button>
-                            <Button kind="secondary" renderIcon={isAnalyzing ? Renew : Camera} disabled={isAnalyzing}
-                              onClick={() => { uploadingForSession.current = session; fileRef.current?.click(); }}>
-                              {isAnalyzing ? t("history.analyzing") : t("history.reuploadPhoto")}
-                            </Button>
                             <Button kind="primary" disabled={isSaving || hasErrors}
                               onClick={() => saveEdit(session)} style={{ marginLeft: "auto" }}>
                               {isSaving ? t("common.saving") : t("common.save")}
