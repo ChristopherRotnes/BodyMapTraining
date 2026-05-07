@@ -298,8 +298,7 @@ Rules of thumb when adding tests:
 Coverage (`npm run test:ci`) is configured in `vite.config.js` to scope to `src/lib/**` and `api/claudeUtils.js`. Current line coverage: `utils.js` ~80%, `prompts.js` 100%, reducer & `calcMuscles` ~100% within tested files; `db.js` and `bodymap.jsx` SVG render code are intentionally untested.
 
 ## Azure deploy notes
-- **Resource group:** `rg-muskelkart` (West Europe) — **Azure resource name:** `muskelkart`
-- **Supabase Auth redirect URLs** — three entries in Authentication → URL Configuration → Additional redirect URLs: `http://localhost:4280` (local dev), `https://workout.umulig.org` + `https://workout.umulig.org/**` (prod), and `https://white-island-090dfd003-*.westeurope.7.azurestaticapps.net` (PR preview wildcard — safe because the `white-island-090dfd003` prefix is unique to this SWA instance). The app uses `emailRedirectTo: window.location.origin` so no per-PR config is needed (#135)
+- **Supabase Auth redirect URLs** — add the following in Supabase → Authentication → URL Configuration → Additional redirect URLs: `http://localhost:4280` (local dev), your production URL + `<prod-url>/**` (prod), and `<your-swa-subdomain>-*.westeurope.7.azurestaticapps.net` (PR preview wildcard). The app uses `emailRedirectTo: window.location.origin` so no per-PR config is needed (#135)
 - For secrets/settings/live URL, see README → Deployment section
 
 ## Known pitfalls (previously hit, fixed, must not regress)
