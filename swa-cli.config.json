@@ -7,9 +7,7 @@
       "outputLocation": "dist",
       "appDevserverUrl": "http://localhost:5173",
       "env": "local",
-      "port": 4280,
-      "appName": "body-map-training",
-      "resourceGroup": "body-map-training-rg"
+      "port": 4280
     }
   }
 }
