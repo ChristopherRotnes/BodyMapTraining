@@ -7,6 +7,9 @@ All notable changes to Workout Lens are documented here.
 ### Added
 - **Nav tooltips (#155)** — hovering or focusing any navigation icon on desktop now shows a tooltip with the full translated label (works in all three locales). Implemented via CSS `::after` on `NavBtn` so only one tooltip is ever visible at a time. Mobile layout is unchanged. Settings → Utseende has a new "Vis navigasjonsforklaringer" toggle (default: on) that disables tooltips immediately and persists to `localStorage` key `wl-nav-hints` for users who already know the app. `useNavHints()` hook exported from `PageShell.jsx` for shared state across Settings and the nav bar.
 
+### CI
+- **GitHub Actions upgraded to v5 (#158)** — `actions/checkout`, `actions/setup-node`, and `actions/cache` bumped from `@v4` to `@v5` (native Node.js 24 support). Removed `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` workaround.
+
 ## [1.2.0] — 2026-05-07
 
 ### Open source
