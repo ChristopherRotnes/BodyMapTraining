@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.1] — 2026-05-10
+
+### Added
+- **Nav tooltips (#155)** — hovering or focusing any navigation icon on desktop now shows a Carbon tooltip with the full translated label (works in all three locales). Mobile layout is unchanged. Settings → Utseende has a new "Vis navigasjonsforklaringer" toggle (default: on) that disables tooltips immediately and persists to `localStorage` key `wl-nav-hints` for users who already know the app. `useNavHints()` hook exported from `PageShell.jsx` for shared state across Settings and the nav bar.
+
 ## [1.2.0] — 2026-05-07
 
 ### Open source

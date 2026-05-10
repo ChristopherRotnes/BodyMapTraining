@@ -274,6 +274,7 @@
     "darkTheme": "Dark theme",
     "darkThemeOff": "Off",
     "darkThemeOn": "On",
+    "navHints": "Show navigation hints",
     "account": "Account",
     "signOut": "Sign out",
     "displayNameLabel": "Display name",

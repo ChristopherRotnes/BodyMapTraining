@@ -1,11 +1,39 @@
+import { forwardRef, useState, useEffect } from "react";
 import { Camera, RecentlyViewed, Analytics, Book, EventSchedule, Settings, ArrowLeft } from "@carbon/icons-react";
-import { Button } from "@carbon/react";
+import { Button, Tooltip } from "@carbon/react";
 import { useTranslation } from "react-i18next";
 import { useNav } from "../lib/NavContext";
+import { useIsMobile } from "../lib/bodymap";
 
-function NavBtn({ onClick, ariaLabel, active, children }) {
+export function useNavHints() {
+  const [hints, setHints] = useState(() => localStorage.getItem("wl-nav-hints") !== "false");
+
+  useEffect(() => {
+    function handler() {
+      setHints(localStorage.getItem("wl-nav-hints") !== "false");
+    }
+    window.addEventListener("storage", handler);
+    window.addEventListener("wl-nav-hints-change", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("wl-nav-hints-change", handler);
+    };
+  }, []);
+
+  function toggle(val) {
+    localStorage.setItem("wl-nav-hints", val ? "true" : "false");
+    window.dispatchEvent(new Event("wl-nav-hints-change"));
+    setHints(val);
+  }
+
+  return [hints, toggle];
+}
+
+const NavBtn = forwardRef(function NavBtn({ onClick, ariaLabel, active, children, ...rest }, ref) {
   return (
     <button
+      ref={ref}
+      {...rest}
       aria-label={ariaLabel}
       onClick={onClick}
       style={{
@@ -26,6 +54,11 @@ function NavBtn({ onClick, ariaLabel, active, children }) {
       {children}
     </button>
   );
+});
+
+function NavTooltip({ show, label, children }) {
+  if (!show) return children;
+  return <Tooltip label={label} align="bottom">{children}</Tooltip>;
 }
 
 export function SectionLabel({ children, style, renderIcon: Icon }) {
@@ -127,6 +160,9 @@ export function BackButton({ onClick }) {
 export default function PageShell({ children }) {
   const { t } = useTranslation();
   const { currentView, onShowHome, onShowLogger, onShowHistory, onShowReport, onShowBibliotek, onShowSettings, onShowPlanlegger } = useNav();
+  const isMobile = useIsMobile();
+  const [navHints] = useNavHints();
+  const showTooltip = !isMobile && navHints;
 
   return (
     <div style={{ background: "var(--bg-canvas)", minHeight: "100vh" }}>
@@ -161,24 +197,36 @@ export default function PageShell({ children }) {
           </button>
 
           <div style={{ display: "flex", alignItems: "center" }}>
-            <NavBtn ariaLabel={t("nav.logSession")} onClick={onShowLogger} active={currentView === "logger"}>
-              <Camera size={20} />
-            </NavBtn>
-            <NavBtn ariaLabel={t("nav.history")} onClick={onShowHistory} active={currentView === "history"}>
-              <RecentlyViewed size={20} />
-            </NavBtn>
-            <NavBtn ariaLabel={t("nav.report")} onClick={onShowReport} active={currentView === "report"}>
-              <Analytics size={20} />
-            </NavBtn>
-            <NavBtn ariaLabel={t("nav.planner")} onClick={onShowPlanlegger} active={currentView === "planlegger"}>
-              <EventSchedule size={20} />
-            </NavBtn>
-            <NavBtn ariaLabel={t("nav.library")} onClick={onShowBibliotek} active={currentView === "bibliotek"}>
-              <Book size={20} />
-            </NavBtn>
-            <NavBtn ariaLabel={t("nav.settings")} onClick={onShowSettings} active={currentView === "settings"}>
-              <Settings size={20} />
-            </NavBtn>
+            <NavTooltip show={showTooltip} label={t("nav.logSession")}>
+              <NavBtn ariaLabel={t("nav.logSession")} onClick={onShowLogger} active={currentView === "logger"}>
+                <Camera size={20} />
+              </NavBtn>
+            </NavTooltip>
+            <NavTooltip show={showTooltip} label={t("nav.history")}>
+              <NavBtn ariaLabel={t("nav.history")} onClick={onShowHistory} active={currentView === "history"}>
+                <RecentlyViewed size={20} />
+              </NavBtn>
+            </NavTooltip>
+            <NavTooltip show={showTooltip} label={t("nav.report")}>
+              <NavBtn ariaLabel={t("nav.report")} onClick={onShowReport} active={currentView === "report"}>
+                <Analytics size={20} />
+              </NavBtn>
+            </NavTooltip>
+            <NavTooltip show={showTooltip} label={t("nav.planner")}>
+              <NavBtn ariaLabel={t("nav.planner")} onClick={onShowPlanlegger} active={currentView === "planlegger"}>
+                <EventSchedule size={20} />
+              </NavBtn>
+            </NavTooltip>
+            <NavTooltip show={showTooltip} label={t("nav.library")}>
+              <NavBtn ariaLabel={t("nav.library")} onClick={onShowBibliotek} active={currentView === "bibliotek"}>
+                <Book size={20} />
+              </NavBtn>
+            </NavTooltip>
+            <NavTooltip show={showTooltip} label={t("nav.settings")}>
+              <NavBtn ariaLabel={t("nav.settings")} onClick={onShowSettings} active={currentView === "settings"}>
+                <Settings size={20} />
+              </NavBtn>
+            </NavTooltip>
           </div>
         </div>
 
