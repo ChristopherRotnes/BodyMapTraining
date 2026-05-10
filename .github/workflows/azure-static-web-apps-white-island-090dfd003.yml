@@ -17,9 +17,6 @@ on:
       - 'app/**'
       - '.github/workflows/**'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
@@ -29,11 +26,11 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true
           lfs: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
@@ -57,7 +54,7 @@ jobs:
         working-directory: app
         run: npm run test:ci
       - name: Restore Vite build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: app/node_modules/.vite
           key: vite-${{ runner.os }}-${{ hashFiles('app/src/**', 'app/vite.config.js') }}
