@@ -182,6 +182,7 @@ export default function History({ initialDate }) {
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const [classHistory, setClassHistory] = useState(new Map());
   const fileRef = useRef();
+  const initialDateRef = useRef(initialDate);
 
   const patchSessionEdit = (id, patch) => setSessionEdits(prev => {
     const next = new Map(prev);
@@ -197,10 +198,6 @@ export default function History({ initialDate }) {
     fetchLibraryExercises()
       .then(data => { libraryCache.current = data; setLibraryExercises(data); })
       .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (initialDate) loadSession(initialDate);
   }, []);
 
   const sessionMuscleIdMap = useMemo(
@@ -229,14 +226,6 @@ export default function History({ initialDate }) {
     const d = new Date(s.session_date + "T12:00:00");
     return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
   }).length, [filteredSessions, viewYear, viewMonth]);
-
-  useEffect(() => {
-    if (daySessions.length === 1) {
-      setExpandedIds(new Set([daySessions[0].id]));
-    } else {
-      setExpandedIds(new Set());
-    }
-  }, [daySessions]);
 
   const loadClassHistory = async (gymCalendarId) => {
     setClassHistory(prev => new Map(prev).set(gymCalendarId, { loading: true, sessions: [], error: null }));
@@ -272,6 +261,7 @@ export default function History({ initialDate }) {
   const loadSession = async (dateStr) => {
     setLoadingSession(true);
     setDaySessions([]);
+    setExpandedIds(new Set());
     try {
       const results = await fetchSessionsByDate(dateStr);
       results.forEach(s => {
@@ -285,12 +275,18 @@ export default function History({ initialDate }) {
         return new Date(ta) - new Date(tb);
       });
       setDaySessions(results);
+      setExpandedIds(results.length === 1 ? new Set([results[0].id]) : new Set());
     } catch (err) {
       logDevError("History/loadSession", err);
     } finally {
       setLoadingSession(false);
     }
   };
+
+  // mount-only: initialDate is a one-time navigation hint from the home screen
+  useEffect(() => {
+    if (initialDateRef.current) loadSession(initialDateRef.current);
+  }, []); // mount-only: initialDateRef is a ref, not reactive
 
   const handleSelect = (dateStr) => {
     if (!dateStr || !filteredTrainedSet.has(dateStr)) return;

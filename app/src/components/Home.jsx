@@ -142,7 +142,7 @@ export default function Home({ onShowHistoryWithDate }) {
                         onKeyDown={count > 0 ? e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onShowHistoryWithDate(date); } } : undefined}
                         onMouseEnter={count > 0 ? e => {
                           const rect = weekStripRef.current?.getBoundingClientRect();
-                          if (rect) setTooltip({ names, x: e.clientX - rect.left, y: e.clientY - rect.top });
+                          if (rect) setTooltip({ names, x: e.clientX - rect.left, y: e.clientY - rect.top, maxLeft: rect.width - 160 });
                         } : undefined}
                         onMouseMove={count > 0 ? e => {
                           const rect = weekStripRef.current?.getBoundingClientRect();
@@ -152,7 +152,7 @@ export default function Home({ onShowHistoryWithDate }) {
                         onFocus={count > 0 ? e => {
                           const stripRect = weekStripRef.current?.getBoundingClientRect();
                           const cellRect = e.currentTarget.getBoundingClientRect();
-                          if (stripRect) setTooltip({ names, x: cellRect.left - stripRect.left, y: 0 });
+                          if (stripRect) setTooltip({ names, x: cellRect.left - stripRect.left, y: 0, maxLeft: stripRect.width - 160 });
                         } : undefined}
                         onBlur={count > 0 ? () => setTooltip(null) : undefined}
                         style={{
@@ -176,7 +176,7 @@ export default function Home({ onShowHistoryWithDate }) {
             {tooltip && tooltip.names.length > 0 && (
               <div style={{
                 position: "absolute",
-                left: Math.min(tooltip.x + 10, (weekStripRef.current?.offsetWidth || 300) - 160),
+                left: Math.min(tooltip.x + 10, tooltip.maxLeft ?? 140),
                 top: Math.max(tooltip.y - 10, 4),
                 background: "var(--surface-card)",
                 border: "1px solid var(--border-subtle-wl)",
