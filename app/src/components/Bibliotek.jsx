@@ -62,7 +62,8 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
       : exercises;
   }, [exercises, debouncedSearch]);
 
-  useEffect(() => { setExVisible(20); }, [filteredExercises]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setExVisible(20); }, [filteredExercises]); // reset pagination when filter changes
 
   const filteredTemplates = useMemo(() => {
     const q = tplSearch.trim().toLowerCase();

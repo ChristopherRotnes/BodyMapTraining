@@ -95,9 +95,11 @@ export default function Report({ prefill, onPrefillConsumed }) {
     if (p.weekday !== undefined) setSelectedDays(new Set([p.weekday]));
     if (p.sessionType) setSelectedTypes(new Set([p.sessionType]));
     onPrefillConsumed?.();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only: onPrefillConsumed excluded — it's a one-shot callback that must not re-run if parent re-renders
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
     const to = new Date().toISOString().slice(0, 10);
@@ -107,20 +109,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
       .catch(err => { logDevError("Report/fetchSessions", err); setError(err.message); })
       .finally(() => setLoading(false));
   }, [periodDays]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setRecsError(null);
-    const trainedIds = Object.entries(muscleCounts)
-      .filter(([, c]) => c.primary > 0)
-      .map(([id]) => id);
-    fetchRecsCache(recsCacheKey(periodDays, sessionCount, trainedIds, untrainedMuscles))
-      .then(cached => { if (!cancelled) setRecs(cached); })
-      .catch(() => { if (!cancelled) setRecs(null); });
-    return () => { cancelled = true; };
-    // muscleCounts, sessionCount, untrainedMuscles are derived from the state values already in deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodDays, selectedDays, selectedTypes, sessions]);
 
   useEffect(() => {
     if (!hoveredMuscle) return;
@@ -289,6 +277,21 @@ export default function Report({ prefill, onPrefillConsumed }) {
   const frequencyTable = Object.entries(muscleCounts)
     .map(([id, c]) => ({ id, ...c }))
     .sort((a, b) => b.primary - a.primary || b.secondary - a.secondary);
+
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRecsError(null);
+    const trainedIds = Object.entries(muscleCounts)
+      .filter(([, c]) => c.primary > 0)
+      .map(([id]) => id);
+    fetchRecsCache(recsCacheKey(periodDays, sessionCount, trainedIds, untrainedMuscles))
+      .then(cached => { if (!cancelled) setRecs(cached); })
+      .catch(() => { if (!cancelled) setRecs(null); });
+    return () => { cancelled = true; };
+    // muscleCounts, sessionCount, untrainedMuscles are derived from the state values already in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodDays, selectedDays, selectedTypes, sessions]);
 
   const dayLabel = selectedDays.size > 0
     ? DAYS.filter(d => selectedDays.has(d.day)).map(d => d.label.toUpperCase()).join(" · ")

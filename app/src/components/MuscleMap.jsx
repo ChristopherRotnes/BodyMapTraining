@@ -141,10 +141,6 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
   }, []);
 
   useEffect(() => {
-    if (step === "confirm") setUseTodayDate(true);
-  }, [step]);
-
-  useEffect(() => {
     if (step !== "confirm") return;
     fetchGymSessionsByDate(sessionDate)
       .then(sessions => dispatch({ type: "SET_GYM_SESSIONS", sessions }))
@@ -161,8 +157,11 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
   useEffect(() => {
     if (!templatePreload) return;
     dispatch({ type: "LOAD_TEMPLATE", exercises: templatePreload.map((e, i) => ({ ...e, id: e.id || i })) });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUseTodayDate(true);
     onTemplatePreloadConsumed();
-  }, [templatePreload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templatePreload]); // onTemplatePreloadConsumed excluded: adding it would re-run if parent recreates the callback
 
   const stepIndex = { upload: 0, analyzing: 0, confirm: 1, muscles: 2 }[step] ?? 0;
   const headingRef = useRef();
@@ -210,6 +209,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
       }
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
       dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })) });
+      setUseTodayDate(true);
     } catch (err) {
       logDevError("MuscleMap/analyse", err);
       dispatch({ type: "ANALYZE_ERROR", error: err.message || "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde." });

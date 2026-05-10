@@ -341,7 +341,8 @@ export default function Planlegger() {
   }, []);
 
   useEffect(() => {
-    loadPlan(weekIso);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadPlan(weekIso); // async data fetch — setState happens inside async callbacks, not synchronously
   }, [weekIso, loadPlan]);
 
   useEffect(() => {

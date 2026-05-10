@@ -2,6 +2,12 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.2] — 2026-05-10
+
+### Developer
+
+- **React hook lint fixes (#159 #160)** — Resolved all `react-hooks/exhaustive-deps` and `react-compiler` warnings. Real refactors: `History` auto-expand logic moved into `loadSession` (eliminates a cascading setState); `MuscleMap` date-reset moved to the two dispatch sites that enter the confirm step; `Report` cache-lookup `useEffect` relocated below the `useMemo` values it reads (fixes forward-references to `muscleCounts`, `sessionCount`, `untrainedMuscles`); `Home` tooltip clamping now stores `maxLeft` in state at event-handler time instead of reading `weekStripRef.current` during render. Remaining five patterns (`Bibliotek` pagination reset, `Planlegger` async plan fetch, `Report` loading-state initialisation, `MuscleMap` template-preload callback) suppressed with targeted `eslint-disable` comments explaining why each omission is intentional.
+
 ## [1.2.1] — 2026-05-10
 
 ### Added
