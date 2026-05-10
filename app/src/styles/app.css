@@ -38,6 +38,12 @@ input[type=number] { -moz-appearance: textfield; }
 .cds--select-input { color: var(--cds-text-primary); background-color: var(--cds-field-01); }
 .cds--select-input:hover { background-color: var(--cds-field-hover); color: var(--cds-text-primary); }
 
+/* Faster tooltip transitions to prevent overlapping text on fade-out */
+.bx--tooltip,
+[role="tooltip"] {
+  transition-duration: 100ms !important;
+}
+
 /* ===== RTL (Persian / فارسی) ===== */
 [dir="rtl"] {
   font-family: var(--fa-font);
