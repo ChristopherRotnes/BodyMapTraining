@@ -38,6 +38,33 @@ input[type=number] { -moz-appearance: textfield; }
 .cds--select-input { color: var(--cds-text-primary); background-color: var(--cds-field-01); }
 .cds--select-input:hover { background-color: var(--cds-field-hover); color: var(--cds-text-primary); }
 
+/* Nav tooltips — CSS ::after approach so only one is ever visible at a time */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle-01);
+  color: var(--cds-text-primary);
+  font-family: var(--cds-font-sans);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 4px 8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 1000;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  [data-tooltip]::after { transition: none; }
+}
+
 /* ===== RTL (Persian / فارسی) ===== */
 [dir="rtl"] {
   font-family: var(--fa-font);

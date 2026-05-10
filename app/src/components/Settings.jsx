@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Toggle, Button, RadioButtonGroup, RadioButton, Tag, TextInput, InlineNotification, Accordion, AccordionItem } from "@carbon/react";
 import { ChevronDown, ChevronUp } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import PageShell, { SectionLabel, PageHeading } from "./PageShell";
+import PageShell, { SectionLabel, PageHeading, useNavHints } from "./PageShell";
 import BodyPanel from "./BodyPanel";
 import { useTheme } from "../theme";
 import { supabase } from "../lib/supabase";
@@ -71,6 +71,7 @@ function CollapsibleSection({ label, children }) {
 export default function Settings() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const [navHints, setNavHints] = useNavHints();
   const [userEmail, setUserEmail] = useState("");
   const [lang, setLang] = useState(() => localStorage.getItem("wl-lang") || "nb");
   const [displayName, setDisplayName] = useState("");
@@ -138,6 +139,16 @@ export default function Settings() {
               toggled={theme === "g100"}
               onToggle={(checked) => setTheme(checked ? "g100" : "g10")}
             />
+            <div style={{ marginTop: 16 }}>
+              <Toggle
+                id="nav-hints-toggle"
+                labelText={t("settings.navHints")}
+                labelA={t("settings.darkThemeOff")}
+                labelB={t("settings.darkThemeOn")}
+                toggled={navHints}
+                onToggle={setNavHints}
+              />
+            </div>
           </div>
           <BodyPanel
             primary={PREVIEW_PRIMARY}
