@@ -12,6 +12,7 @@ import TemplatePicker from "./components/TemplatePicker";
 import TemplateSessionEditor from "./components/TemplateSessionEditor";
 import Settings from "./components/Settings";
 import Planlegger from "./components/Planlegger";
+import IntroModal from "./components/IntroModal";
 
 function App() {
   const [session, setSession] = useState(undefined);
@@ -21,6 +22,7 @@ function App() {
   const [historyInitialDate, setHistoryInitialDate] = useState(null);
   const [bibliotekInitialTab, setBibliotekInitialTab] = useState(0);
   const [reportPrefill, setReportPrefill] = useState(null);
+  const [introOpen, setIntroOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,6 +35,15 @@ function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (session && !localStorage.getItem("wl-intro-seen")) setIntroOpen(true);
+  }, [session]);
+
+  function handleShowIntro() {
+    localStorage.removeItem("wl-intro-seen");
+    setIntroOpen(true);
+  }
 
   if (session === undefined) return null;
   if (!session) return <Login />;
@@ -76,7 +87,7 @@ function App() {
       }}
     />;
   else if (view === "settings")
-    content = <Settings />;
+    content = <Settings onShowIntro={handleShowIntro} />;
   else if (view === "template-editor" && templateEditorState)
     content = <TemplateSessionEditor
       template={templateEditorState.template}
@@ -107,6 +118,7 @@ function App() {
   return (
     <NavContext.Provider value={navValue}>
       {content}
+      <IntroModal open={introOpen} onClose={() => setIntroOpen(false)} />
     </NavContext.Provider>
   );
 }

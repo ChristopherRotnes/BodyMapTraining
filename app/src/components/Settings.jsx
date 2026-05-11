@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Toggle, Button, RadioButtonGroup, RadioButton, Tag, TextInput, InlineNotification, Accordion, AccordionItem } from "@carbon/react";
-import { ChevronDown, ChevronUp } from "@carbon/icons-react";
+import { ChevronDown, ChevronUp, Information } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, PageHeading, useNavHints } from "./PageShell";
 import BodyPanel from "./BodyPanel";
@@ -68,7 +68,7 @@ function CollapsibleSection({ label, children }) {
   );
 }
 
-export default function Settings() {
+export default function Settings({ onShowIntro }) {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [navHints, setNavHints] = useNavHints();
@@ -216,6 +216,17 @@ export default function Settings() {
           }}>
             v{version}
           </p>
+          {onShowIntro && (
+            <Button
+              kind="ghost"
+              size="sm"
+              renderIcon={Information}
+              onClick={onShowIntro}
+              style={{ marginBottom: 12 }}
+            >
+              {t("settings.showIntroGuide")}
+            </Button>
+          )}
           <Accordion>
             {CHANGELOG.slice(0, 15).map((entry, i) => (
               <AccordionItem

@@ -268,6 +268,25 @@
       "7": "SØN"
     }
   },
+  "intro": {
+    "modalHeading": "Kom i gang med Workout Lens",
+    "stepIndicator": "Steg {{current}} av {{total}}",
+    "skip": "Hopp over",
+    "prev": "Forrige",
+    "next": "Neste",
+    "start": "Kom i gang",
+    "replayHint": "Du kan alltid åpne denne guiden igjen under Innstillinger.",
+    "slide1Title": "Last opp treningsøkt",
+    "slide1Body": "Ta bilde av treningstavla eller legg inn øvelser manuelt. Claude gjenkjenner øvelsene og kartlegger hvilke muskler du har trent.",
+    "slide2Title": "Se historikken din",
+    "slide2Body": "Alle øktene dine samles i Historikk. Du kan redigere øvelser, endre dato og se hvilke muskler som ble aktivert.",
+    "slide3Title": "Analyser treningen",
+    "slide3Body": "Perioderapporter viser hvilke muskler du treffer jevnlig, hvilke du glemmer, og gir deg personlige anbefalinger.",
+    "slide4Title": "Planlegg uken",
+    "slide4Body": "Bygg ukesplaner fra malene dine og se projisert muskeldekning før du trener.",
+    "slide5Title": "Bygg et bibliotek",
+    "slide5Body": "Lagre dine egne øvelser med muskeltilknytning og bygg maler du kan gjenbruke uke etter uke."
+  },
   "settings": {
     "heading": "Innstillinger",
     "appearance": "Utseende",
@@ -295,7 +314,8 @@
     "myGym": "Min gym",
     "myGymMembership": "Sporty Thon Senter Ski",
     "myGymFutureHint": "Fremtidig: velg gym og se felles økthistorikk med andre instruktører.",
-    "dataSharingNote": "Alle økter du logger er synlige for andre instruktører ved samme treningssenter. Dette er nødvendig for å gi deg innsikt i hva kollegene dine trener, og er en del av tjenestens formål."
+    "dataSharingNote": "Alle økter du logger er synlige for andre instruktører ved samme treningssenter. Dette er nødvendig for å gi deg innsikt i hva kollegene dine trener, og er en del av tjenestens formål.",
+    "showIntroGuide": "Vis introduksjonsguide"
   },
   "report": {
     "heroMuscles_one": "{{count}} muskel",
