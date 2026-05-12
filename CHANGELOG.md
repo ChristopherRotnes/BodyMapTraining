@@ -6,6 +6,7 @@ All notable changes to Workout Lens are documented here.
 
 ### Added
 - **First-login intro guide (#162)** — a 5-slide Carbon `Modal` (`passiveModal`) appears automatically for new users when `wl-intro-seen` is not set in localStorage. Each slide shows a 64px Carbon icon (`Camera`, `RecentlyViewed`, `Analytics`, `EventSchedule`, `Book`), a `PageHeading` title, and a body paragraph. Navigation: ghost "Hopp over" (any step) closes and sets the key; secondary "Forrige" + primary "Neste" step through slides 1–5; "Kom i gang" on the final slide closes and sets the key; the close (×) button also sets the key. A step indicator ("Steg N av 5") updates on every step; a replay hint appears on step 5 only. Settings → Om appen gains a ghost "Vis introduksjonsguide" button (`Information` icon) that clears `wl-intro-seen` and re-opens the modal from step 1. All strings translated in `nb`, `en`, and `fa`.
+- **Theme FOUC fixes** — eliminated flash-of-unstyled-content on initial page load: (1) a blocking inline script in `index.html` sets `data-theme` on `<html>` before the JS bundle executes; (2) `ThemeProvider` also sets `data-theme` synchronously inside its `useState` lazy initialiser so the attribute is present before React's first commit.
 
 ## [1.2.2] — 2026-05-10
 

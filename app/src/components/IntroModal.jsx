@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal, Button, Theme } from "@carbon/react";
 import { Camera, RecentlyViewed, Analytics, EventSchedule, Book } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
@@ -17,10 +17,6 @@ export default function IntroModal({ open, onClose }) {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    if (open) setStep(0);
-  }, [open]);
 
   function dismiss() {
     localStorage.setItem("wl-intro-seen", "1");
