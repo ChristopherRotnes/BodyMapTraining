@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Workout Lens</title>
+    <script>
+      (function () {
+        var s = localStorage.getItem('carbon-theme');
+        var t = (s === 'g10' || s === 'g100') ? s
+          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'g100' : 'g10');
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
