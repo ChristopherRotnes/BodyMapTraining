@@ -118,7 +118,7 @@ function App() {
   return (
     <NavContext.Provider value={navValue}>
       {content}
-      <IntroModal open={introOpen} onClose={() => setIntroOpen(false)} />
+      {introOpen && <IntroModal open={true} onClose={() => setIntroOpen(false)} />}
     </NavContext.Provider>
   );
 }
