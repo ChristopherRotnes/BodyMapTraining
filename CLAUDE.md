@@ -48,7 +48,7 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - Installed `@carbon/react` and `@carbon/icons-react`
 - IBM Plex fonts (Sans, Mono, Serif, Condensed) bundled locally in `app/public/fonts/` — no Google Fonts, no CDN
 - `app/src/styles/carbon-tokens.css` — all Carbon CSS variables for g10 (light) and g100 (dark) themes, plus `@font-face` declarations; font URLs use `/fonts/...` (Vite public-dir absolute paths)
-- `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`, respects `prefers-color-scheme`, defaults to g100 (dark)
+- `app/src/theme.jsx` — `ThemeProvider` sets `data-theme="g10"` or `data-theme="g100"` on `<html>`, persists to `localStorage`. Default (no saved preference): respects OS `prefers-color-scheme` — dark OS → g100, light OS → g10. This is intentional; the app does not force dark mode on first visit.
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon; `getDailyQuote()` renders a date-aware motivational quote below the subtitle — English only (hardcoded; language preference is unknown before login); keyed by `MM-DD` for special dates (`01-01`, `12-24`), falls back to a per-weekday quote; 13px italic `var(--cds-text-secondary)`
 - `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav, `Book` library nav, light/dark toggle), `ProgressIndicator` (horizontal stepper with step labels), `Button`, `Tag`, `InlineLoading`, `InlineNotification`; dashed-border dropzone on upload step; sticky action bar on confirm step; exercise rows delegated to `ExerciseRow`
 - `History.jsx` → `SectionLabel` + `PageHeading` hero (context-aware: default shows month count; filter active + date selected shows "N av total økter den dato"; filter active + no date shows month count with "med disse filtrene"); `PageHeading` has `minHeight: 72` to prevent layout shift; muscle filter chips use `flexWrap: wrap` (all always visible); `borderBottom` separator below chip section; session rows always have 3px left strip (accent when filter-matched); session title in Cond 700; custom `MonthGrid` calendar; expanded sessions are always editable — per-session edit state in a `Map<sessionId, editState>` (no global `editMode` boolean); a dirty-state Save / Discard bar appears when changes are detected; "Legg til øvelse manuelt" (`Add` icon) and "Last opp nytt bilde" (`Camera` icon) rendered as sibling `Button kind="ghost"` on one row below the exercise list; session header chips capped at 2 visible with `+N` overflow span; library exercises pre-fetched on mount (not on first expand) to ensure autocomplete is ready when user adds first exercise to a session with 0 exercises; exercise rows delegated to `ExerciseRowWithAutocomplete`; all date formatting via `Intl.DateTimeFormat` driven by `i18n.language`
@@ -327,4 +327,14 @@ Azure Static Web Apps' proxy layer silently replaces any incoming `Authorization
 **Fix:** send the Supabase JWT in a custom header `X-Supabase-Token` that Azure's proxy ignores. See `callClaude` in `app/src/lib/utils.js` and `verifySupabaseJwt` in `app/api/claude.js`.
 
 **Never revert to `Authorization: Bearer` for the Supabase token** — Azure will always intercept it.
+
+### Issue #164 — White flash on History calendar in dark mode (resolved 2026-05-12)
+Symptom: a brief white flash appeared on the MonthGrid calendar area every time a user navigated to History in g100 (dark) mode.
+
+**Root cause — Carbon skeleton dark tokens not applied via `data-theme` attribute:**
+Carbon's compiled CSS from `@carbon/styles` emits dark skeleton token overrides under the `.cds--g100` CSS class selector (e.g. `.cds--g100 { --cds-skeleton-background: #393939 }`). The app's `ThemeProvider` only sets `data-theme="g100"` on `<html>` — it never adds the `.cds--g100` class. Therefore `SkeletonPlaceholder` and `AccordionSkeleton` always resolved `--cds-skeleton-background` to the `:root` default (`#e8e8e8` — light gray), producing a bright/white flash while loading.
+
+**Fix:** Added `--cds-skeleton-background: #393939` and `--cds-skeleton-element: #525252` to the `.cds--g100, [data-theme="g100"]` block in `carbon-tokens.css`. These are Carbon's official g100 skeleton token values (gray-80 and gray-70 respectively). The existing block already overrides all other Carbon semantic tokens for the same reason.
+
+**Pattern to watch:** Any new Carbon token that Carbon's SCSS emits only under `.cds--g100` (not `:root`) must be explicitly added to the `[data-theme="g100"]` block in `carbon-tokens.css`. Run a visual check in dark mode whenever a new Carbon component is introduced.
 

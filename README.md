@@ -16,7 +16,8 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 10. **Language** — switch between Norsk, English and فارسی (RTL) at any time from Settings; all UI strings, date formats, and month names update instantly
 11. **Settings** — language selector (top), theme toggle (dark/light) + nav hints toggle with live body map preview, contact, Om appen section (version + "Vis introduksjonsguide" replay button + changelog accordion), and account section: display name input + sign-out (bottom)
 12. **First-login intro guide** — a 5-slide modal appears automatically on first login (gated by `localStorage` key `wl-intro-seen`); walks through Upload → History → Report → Planner → Library; skippable and replayable from Settings
-12. **Joint class history** — when a gym-linked session is expanded in History, a "Kolleger i denne klassen" panel shows co-instructor sessions for the same class slot (display name + exercise list). All sessions are always visible to co-instructors at the same gym — this cross-instructor transparency is the core value of the shared view
+13. **Joint class history** — when a gym-linked session is expanded in History, a "Kolleger i denne klassen" panel shows co-instructor sessions for the same class slot (display name + exercise list). All sessions are always visible to co-instructors at the same gym — this cross-instructor transparency is the core value of the shared view
+14. **Polished dark/light theme** — IBM Carbon g100 (dark) and g10 (light) themes with no flash-of-unstyled-content on page load or view navigation; theme persists across sessions and respects `prefers-color-scheme` on first visit
 
 ## Tech stack
 

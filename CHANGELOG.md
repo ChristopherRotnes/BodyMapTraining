@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.4] — 2026-05-12
+
+### Fixed
+- **Dark mode skeleton flash on History navigation (#164)** — `SkeletonPlaceholder` and `AccordionSkeleton` were rendering with light-mode colours (`--cds-skeleton-background: #e8e8e8`) even in dark mode (g100). Root cause: Carbon's compiled CSS sets dark skeleton token overrides under the `.cds--g100` class selector, but the app only applies `data-theme="g100"` on `<html>` — never the class. Added explicit `--cds-skeleton-background: #393939` and `--cds-skeleton-element: #525252` overrides to the `[data-theme="g100"]` block in `carbon-tokens.css`, matching Carbon's official g100 token values.
+
 ## [1.2.3] — 2026-05-11
 
 ### Added
