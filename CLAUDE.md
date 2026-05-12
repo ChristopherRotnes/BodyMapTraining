@@ -328,3 +328,13 @@ Azure Static Web Apps' proxy layer silently replaces any incoming `Authorization
 
 **Never revert to `Authorization: Bearer` for the Supabase token** — Azure will always intercept it.
 
+### Issue #164 — White flash on History calendar in dark mode (resolved 2026-05-12)
+Symptom: a brief white flash appeared on the MonthGrid calendar area every time a user navigated to History in g100 (dark) mode.
+
+**Root cause — Carbon skeleton dark tokens not applied via `data-theme` attribute:**
+Carbon's compiled CSS from `@carbon/styles` emits dark skeleton token overrides under the `.cds--g100` CSS class selector (e.g. `.cds--g100 { --cds-skeleton-background: #393939 }`). The app's `ThemeProvider` only sets `data-theme="g100"` on `<html>` — it never adds the `.cds--g100` class. Therefore `SkeletonPlaceholder` and `AccordionSkeleton` always resolved `--cds-skeleton-background` to the `:root` default (`#e8e8e8` — light gray), producing a bright/white flash while loading.
+
+**Fix:** Added `--cds-skeleton-background: #393939` and `--cds-skeleton-element: #525252` to the `.cds--g100, [data-theme="g100"]` block in `carbon-tokens.css`. These are Carbon's official g100 skeleton token values (gray-80 and gray-70 respectively). The existing block already overrides all other Carbon semantic tokens for the same reason.
+
+**Pattern to watch:** Any new Carbon token that Carbon's SCSS emits only under `.cds--g100` (not `:root`) must be explicitly added to the `[data-theme="g100"]` block in `carbon-tokens.css`. Run a visual check in dark mode whenever a new Carbon component is introduced.
+

@@ -296,6 +296,13 @@
   --cds-button-primary-hover: #0353e9;
   --cds-button-secondary: #6f6f6f;
   --cds-button-secondary-hover: #5e5e5e;
+
+  /* Skeleton — Carbon's .cds--g100 class is not applied (we use data-theme attr),
+     so these dark values must be explicitly overridden here. Without them,
+     SkeletonPlaceholder / AccordionSkeleton render with the :root light defaults
+     (#e8e8e8), causing the white flash on History navigation. */
+  --cds-skeleton-background: #393939;
+  --cds-skeleton-element: #525252;
 }
 
 /* ============ SEMANTIC TYPE STYLES — apply directly as classes ============ */
