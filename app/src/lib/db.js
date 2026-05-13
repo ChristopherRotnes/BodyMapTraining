@@ -244,7 +244,8 @@ export async function fetchSessionsForReport(fromDate, toDate) {
   const { data, error } = await supabase
     .from("sessions")
     .select(`
-      id, session_date, gym_calendar_id,
+      id, session_date, gym_calendar_id, trainer_id,
+      profiles(display_name),
       gym_calendar(name, start_time),
       session_exercises(
         id, name,
@@ -420,6 +421,16 @@ export async function updateDisplayName(displayName) {
     .update({ display_name: trimmed || null })
     .eq("id", user.id);
   if (error) throw error;
+}
+
+export async function ensureDisplayName() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data } = await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
+  if (data?.display_name) return;
+  const derived = user.email?.split("@")[0] || null;
+  if (!derived) return;
+  await supabase.from("profiles").update({ display_name: derived }).eq("id", user.id);
 }
 
 // ── USER GYMS ─────────────────────────────────────────────────────────

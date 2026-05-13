@@ -58,6 +58,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedDays, setSelectedDays] = useState(new Set());
   const [selectedTypes, setSelectedTypes] = useState(new Set());
+  const [selectedInstructors, setSelectedInstructors] = useState(new Set());
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -191,6 +192,18 @@ export default function Report({ prefill, onPrefillConsumed }) {
     return [...names].sort();
   }, [sessions]);
 
+  const availableInstructors = useMemo(() => {
+    const map = new Map();
+    sessions.forEach(s => {
+      if (s.trainer_id && !map.has(s.trainer_id)) {
+        map.set(s.trainer_id, s.profiles?.display_name || "Unnamed");
+      }
+    });
+    return [...map.entries()]
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [sessions]);
+
   const filteredSessions = useMemo(() => {
     return sessions.filter(s => {
       if (selectedDays.size > 0) {
@@ -201,9 +214,12 @@ export default function Report({ prefill, onPrefillConsumed }) {
         const name = s.gym_calendar?.name || null;
         if (!name || !selectedTypes.has(name)) return false;
       }
+      if (selectedInstructors.size > 0) {
+        if (!selectedInstructors.has(s.trainer_id)) return false;
+      }
       return true;
     });
-  }, [sessions, selectedDays, selectedTypes]);
+  }, [sessions, selectedDays, selectedTypes, selectedInstructors]);
 
   const { muscleCounts, maxPrimaryCount, muscleExercises, muscleVolume, muscleLastDate } = useMemo(() => {
     const primarySessions = {};
@@ -262,6 +278,14 @@ export default function Report({ prefill, onPrefillConsumed }) {
     });
   };
 
+  const toggleInstructor = (id) => {
+    setSelectedInstructors(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
   const sessionCount = filteredSessions.length;
   const musclesCovered = Object.values(muscleCounts).filter(c => c.primary > 0).length;
   const avgPerWeek = (sessionCount / (periodDays / 7)).toFixed(1);
@@ -291,7 +315,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
     return () => { cancelled = true; };
     // muscleCounts, sessionCount, untrainedMuscles are derived from the state values already in deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [periodDays, selectedDays, selectedTypes, sessions]);
+  }, [periodDays, selectedDays, selectedTypes, selectedInstructors, sessions]);
 
   const dayLabel = selectedDays.size > 0
     ? DAYS.filter(d => selectedDays.has(d.day)).map(d => d.label.toUpperCase()).join(" · ")
@@ -337,14 +361,22 @@ export default function Report({ prefill, onPrefillConsumed }) {
               ))}
             </div>
           )}
+          {/* Row 4: instructors — only when >1 instructor present */}
+          {availableInstructors.length > 1 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 8, paddingBottom: 8, borderTop: "1px solid var(--border-subtle-wl)" }}>
+              {availableInstructors.map(({ id, label }) => (
+                <FilterChip key={id} label={label} active={selectedInstructors.has(id)} onClick={() => toggleInstructor(id)} />
+              ))}
+            </div>
+          )}
           <button
-            onClick={() => { setSelectedDays(new Set()); setSelectedTypes(new Set()); }}
+            onClick={() => { setSelectedDays(new Set()); setSelectedTypes(new Set()); setSelectedInstructors(new Set()); }}
             style={{
               display: "block", background: "none", border: "none", padding: "4px 0 0", cursor: "pointer",
               fontSize: 11, color: "var(--accent)", fontFamily: "var(--cds-font-mono)",
               letterSpacing: "0.06em", textAlign: "left",
-              opacity: (selectedDays.size > 0 || selectedTypes.size > 0) ? 1 : 0,
-              pointerEvents: (selectedDays.size > 0 || selectedTypes.size > 0) ? "auto" : "none",
+              opacity: (selectedDays.size > 0 || selectedTypes.size > 0 || selectedInstructors.size > 0) ? 1 : 0,
+              pointerEvents: (selectedDays.size > 0 || selectedTypes.size > 0 || selectedInstructors.size > 0) ? "auto" : "none",
             }}
           >
             {t("common.resetFilter")}
