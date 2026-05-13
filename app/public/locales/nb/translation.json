@@ -361,7 +361,8 @@
       "7": "7 dager",
       "30": "30 dager",
       "90": "90 dager"
-    }
+    },
+    "unnamed": "Ukjent"
   },
   "exerciseRow": {
     "namePlaceholder": "Klikk for å skrive øvelse…",

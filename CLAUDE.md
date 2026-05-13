@@ -21,6 +21,51 @@ All GitHub issues follow this structure:
 - **`## Out of scope`** — explicit exclusions to prevent scope creep (optional but recommended for larger issues)
 
 
+## Glossary
+
+Canonical definitions for domain terms. When a term is ambiguous in an issue or conversation, refer here — or ask for clarification before implementing.
+
+### People & roles
+
+| Term | Definition |
+|---|---|
+| **User** | The person logged into Workout Lens. A gym instructor employed at a sporty.no gym. Maps to `auth.uid()`, `sessions.trainer_id`, `user_id` across all tables. |
+| **Trainer** | Avoid this term. It is ambiguous — could mean the app user or the gym class instructor. If someone says "trainer" in an issue or conversation, ask: do you mean the app user, or the instructor who led the class? In code, `trainer_id` is a legacy DB column name that refers to the app user. |
+| **Instructor** | The person who *leads* a gym class, sourced from sporty.no. Stored in `gym_calendar.instructor`. Has no account in the app. Example: "Linda Hatlevik." When unqualified, "instructor" always means this — the class leader, not the app user. |
+| **Co-instructor** | Another app user registered at the same gym (`sporty_business_unit_id`). Their sessions are cross-readable via RLS. |
+| **Display name** | A user's visible name in the app. Stored in `profiles.display_name`. Auto-set to email prefix on first login. |
+
+### Training concepts
+
+| Term | Definition |
+|---|---|
+| **Session** | One logged workout. One row in `sessions`. Logged by a user (`trainer_id`). Optionally linked to a gym class (`gym_calendar_id`). |
+| **Gym class** | A scheduled class from sporty.no. Stored in `gym_calendar`. Has a name, instructor, start/end time. Synced by `sportySync.js`. |
+| **Session exercise** | One exercise performed within a session. Stored in `session_exercises`. Has name, sets, reps, and muscle activations. |
+| **Library exercise** | A saved, reusable exercise with a standardised name and default muscle map. Stored in `exercise_library`. Can be referenced by templates. |
+| **Template** | A named, reusable workout skeleton owned by a user. Stored in `session_templates`. Contains ordered template exercises. |
+| **Template exercise** | An exercise slot inside a template. Stored in `session_template_exercises`. Name and muscles are a denormalised snapshot — renaming the library source doesn't affect it. |
+| **Week plan** | An assignment of templates to days of a specific ISO week. Stored in `week_plans` + `week_plan_days`. |
+
+### Muscle concepts
+
+| Term | Definition |
+|---|---|
+| **Muscle ID** | One of 17 fixed string keys (e.g. `chest`, `lats`, `quads`). The canonical identifier used in the DB, prompts, and bodymap. Full list in `MUSCLES` in `bodymap.jsx`. |
+| **Primary muscle** | A muscle directly targeted by an exercise. `muscle_activations.activation_type = 'primary'`. Shown as solid green on the body map. |
+| **Secondary muscle** | A muscle engaged in a supporting/stabilising role. `activation_type = 'secondary'`. Shown as blue diagonal hatch on the body map. |
+| **Muscle activation** | A DB record linking a session exercise to a muscle ID with a type. Stored in `muscle_activations`. |
+
+### System concepts
+
+| Term | Definition |
+|---|---|
+| **Business unit** | A gym location in sporty.no. Identified by `sporty_business_unit_id` (hardcoded as `8`). Used to scope RLS policies and the sporty sync. |
+| **Gym calendar** | The sporty.no schedule mirrored in the `gym_calendar` table. Populated by `sportySync.js` three times daily. |
+| **Recommendation** | A Claude-generated exercise suggestion based on untrained muscle gap analysis for a period. Cached in `recommendation_cache` keyed by prompt version + period + muscle coverage. |
+| **Period** | A filter duration on the Report page — 7, 30, or 90 days back from today. |
+| **View** | Front or back side of the body SVG. Not to be confused with React "views" (the full-page components). |
+
 ## Project overview
 **Workout Lens** — a workout-logging app. User photographs a handwritten training program from a gym whiteboard (sporty.no format), the app analyses the image via Claude Vision, displays which muscles were trained on a body figure, and gives next-session recommendations.
 

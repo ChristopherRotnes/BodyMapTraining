@@ -193,15 +193,11 @@ export default function Report({ prefill, onPrefillConsumed }) {
   }, [sessions]);
 
   const availableInstructors = useMemo(() => {
-    const map = new Map();
+    const names = new Set();
     sessions.forEach(s => {
-      if (s.trainer_id && !map.has(s.trainer_id)) {
-        map.set(s.trainer_id, s.profiles?.display_name || "Unnamed");
-      }
+      if (s.gym_calendar?.instructor) names.add(s.gym_calendar.instructor);
     });
-    return [...map.entries()]
-      .map(([id, label]) => ({ id, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+    return [...names].sort((a, b) => a.localeCompare(b));
   }, [sessions]);
 
   const filteredSessions = useMemo(() => {
@@ -215,7 +211,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
         if (!name || !selectedTypes.has(name)) return false;
       }
       if (selectedInstructors.size > 0) {
-        if (!selectedInstructors.has(s.trainer_id)) return false;
+        if (!selectedInstructors.has(s.gym_calendar?.instructor)) return false;
       }
       return true;
     });
@@ -364,8 +360,8 @@ export default function Report({ prefill, onPrefillConsumed }) {
           {/* Row 4: instructors — only when >1 instructor present */}
           {availableInstructors.length > 1 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 8, paddingBottom: 8, borderTop: "1px solid var(--border-subtle-wl)" }}>
-              {availableInstructors.map(({ id, label }) => (
-                <FilterChip key={id} label={label} active={selectedInstructors.has(id)} onClick={() => toggleInstructor(id)} />
+              {availableInstructors.map(name => (
+                <FilterChip key={name} label={name} active={selectedInstructors.has(name)} onClick={() => toggleInstructor(name)} />
               ))}
             </div>
           )}

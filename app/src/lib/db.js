@@ -244,9 +244,8 @@ export async function fetchSessionsForReport(fromDate, toDate) {
   const { data, error } = await supabase
     .from("sessions")
     .select(`
-      id, session_date, gym_calendar_id, trainer_id,
-      profiles(display_name),
-      gym_calendar(name, start_time),
+      id, session_date, gym_calendar_id,
+      gym_calendar(name, start_time, instructor),
       session_exercises(
         id, name,
         muscle_activations(muscle_id, activation_type)
