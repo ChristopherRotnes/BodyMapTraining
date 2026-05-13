@@ -1,5 +1,5 @@
 export const ALLOWED_MODELS = new Set([
-  'claude-opus-4-5',
+  'claude-opus-4-7',
   'claude-sonnet-4-6',
 ]);
 export const MAX_TOKENS_LIMIT = 2000;

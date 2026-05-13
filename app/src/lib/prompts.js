@@ -1,7 +1,7 @@
 import { MUSCLES } from './bodymap.jsx';
 
 // claude-opus-4-5 is used for vision tasks (whiteboard photo analysis).
-export const CLAUDE_MODEL_VISION = "claude-opus-4-5";
+export const CLAUDE_MODEL_VISION = "claude-opus-4-7";
 
 // claude-sonnet-4-6 is used for text-only tasks (recommendations).
 export const CLAUDE_MODEL_TEXT = "claude-sonnet-4-6";
