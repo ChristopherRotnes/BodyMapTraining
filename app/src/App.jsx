@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
-import { ensureGymMembership } from "./lib/db";
+import { ensureGymMembership, ensureDisplayName } from "./lib/db";
 import { NavContext } from "./lib/NavContext";
 import Login from "./components/Login";
 import Home from "./components/Home";
@@ -27,11 +27,11 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) ensureGymMembership().catch(() => {});
+      if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) ensureGymMembership().catch(() => {});
+      if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
     });
     return () => subscription.unsubscribe();
   }, []);

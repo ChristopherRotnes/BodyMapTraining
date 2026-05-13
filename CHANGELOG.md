@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.5] — 2026-05-13
+
+### Fixed
+- **Image analysis broken (400 error)** — `CLAUDE_MODEL_VISION` was set to `claude-opus-4-5`, which has been retired by Anthropic. Switched vision to `claude-sonnet-4-6` (same model as text recommendations) — sufficient for OCR + JSON extraction and significantly cheaper than Opus. API allowlist simplified to a single entry.
+
+### Added
+- **Instructor filter on Report** — the report page now includes a fourth filter row (instructor display names) when sessions from more than one co-instructor are present in the selected period. Default is all instructors (empty selection = no filter), consistent with the existing weekday and session-type filter pattern. `fetchSessionsForReport` now joins `trainer_id` and `profiles(display_name)` so instructor identity is available client-side without an extra query.
+- **Auto-set display name on login** — `ensureDisplayName()` in `db.js` runs alongside `ensureGymMembership()` on every auth state change. If the user's `profiles.display_name` is null, it is automatically set to the prefix before `@` in their email address. This ensures the instructor filter always has a meaningful label for every user without requiring manual action in Settings.
+
 ## [1.2.4] — 2026-05-12
 
 ### Fixed
