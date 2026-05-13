@@ -9,7 +9,7 @@ import {
 
 describe('ALLOWED_MODELS', () => {
   it('contains exactly the two production model IDs', () => {
-    expect([...ALLOWED_MODELS].sort()).toEqual(['claude-opus-4-7', 'claude-sonnet-4-6']);
+    expect([...ALLOWED_MODELS].sort()).toEqual(['claude-sonnet-4-6']);
   });
 
   it('caps max_tokens at 2000', () => {
