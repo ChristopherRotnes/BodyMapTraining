@@ -16,6 +16,15 @@ jobs:
       pull-requests: write
     steps:
       - name: Close Pull Request
+        id: close1
+        uses: Azure/static-web-apps-deploy@v1
+        continue-on-error: true
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_WHITE_ISLAND_090DFD003 }}
+          action: "close"
+
+      - name: Retry close (if first attempt failed)
+        if: steps.close1.outcome == 'failure'
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_WHITE_ISLAND_090DFD003 }}

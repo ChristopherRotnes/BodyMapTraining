@@ -2,10 +2,20 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.7] — 2026-05-13
+
+### Developer
+
+- **Reliable SWA staging environment cleanup (#169)** — the close-PR workflow now retries the `action: "close"` step once on failure. A single transient Azure API error had left a stale staging environment alive (2026-05-12), filling one of the three available slots and blocking deploys. The retry catches transient failures automatically; a double failure still requires manual portal cleanup.
+
 ## [1.2.6] — 2026-05-13
 
 ### Fixed
 - **Exercise list missing in History on mobile** — when a day with a single session was loaded, `loadSession` auto-expanded it by setting `expandedIds` but never called `initSessionEdit`. The body map rendered correctly (reads directly from raw session data) but the exercise list stayed hidden because `edit.exercises` was `undefined`. Fixed by calling `initSessionEdit` alongside `setExpandedIds` in the single-session auto-expand branch.
+
+### Developer
+
+- **Supabase Data API grant audit (#167)** — audited all 14 public schema tables against Supabase's upcoming change (explicit GRANTs required from Oct 30 2026). All existing tables confirmed to have full grants for `anon`, `authenticated`, and `service_role` — no action needed on existing schema. Added migration hygiene section to `CLAUDE.md` documenting the required `GRANT` + `ALTER TABLE … ENABLE ROW LEVEL SECURITY` boilerplate for any future table.
 
 ## [1.2.5] — 2026-05-13
 

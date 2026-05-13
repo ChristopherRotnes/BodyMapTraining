@@ -300,6 +300,20 @@ supabase config push
 
 All templates use inline CSS only (no external stylesheets — email clients strip them). Colours match the app: `#161616` background, `#ee2c80` accent, `#262626` header. The `{{ .ConfirmationURL }}` and `{{ .SiteURL }}` variables are Supabase Go template syntax — do not change them.
 
+## Supabase migration hygiene
+
+From **October 30, 2026**, Supabase enforces explicit GRANTs on all new `public` schema tables — PostgREST returns `42501` without them. All 14 existing tables already have grants and are unaffected. Any future migration that creates a new table **must** include the following grant block:
+
+```sql
+grant select on public.your_table to anon;
+grant select, insert, update, delete on public.your_table to authenticated;
+grant select, insert, update, delete on public.your_table to service_role;
+
+alter table public.your_table enable row level security;
+```
+
+Adjust `anon` privileges to the minimum required (often no access at all — `anon` can typically be omitted for app tables that require login). Always enable RLS and add policies immediately after the grants.
+
 ## Local development
 
 ```powershell
