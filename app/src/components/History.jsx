@@ -275,7 +275,12 @@ export default function History({ initialDate }) {
         return new Date(ta) - new Date(tb);
       });
       setDaySessions(results);
-      setExpandedIds(results.length === 1 ? new Set([results[0].id]) : new Set());
+      if (results.length === 1) {
+        setExpandedIds(new Set([results[0].id]));
+        initSessionEdit(results[0]);
+      } else {
+        setExpandedIds(new Set());
+      }
     } catch (err) {
       logDevError("History/loadSession", err);
     } finally {
