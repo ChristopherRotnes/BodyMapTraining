@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.6] — 2026-05-13
+
+### Fixed
+- **Exercise list missing in History on mobile** — when a day with a single session was loaded, `loadSession` auto-expanded it by setting `expandedIds` but never called `initSessionEdit`. The body map rendered correctly (reads directly from raw session data) but the exercise list stayed hidden because `edit.exercises` was `undefined`. Fixed by calling `initSessionEdit` alongside `setExpandedIds` in the single-session auto-expand branch.
+
 ## [1.2.5] — 2026-05-13
 
 ### Fixed
