@@ -24,6 +24,16 @@ const localDateStr = () => {
 
 
 
+// Gym whiteboards are written in ALL CAPS by convention. Normalize to title
+// case when the entire string is uppercase so names display consistently.
+const toTitleCase = (str) =>
+  str.toLowerCase().split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
+const normalizeExName = (str) => {
+  if (!str) return str;
+  const t = str.trim();
+  return t === t.toUpperCase() && /[A-ZÆØÅ]{2,}/.test(t) ? toTitleCase(t) : t;
+};
+
 function getConfidenceColor(ex) {
   if (ex.primary?.length || ex.secondary?.length) return "var(--heat-4)";
   const txt = ((ex.name || "") + " " + (ex.standardName || "")).toLowerCase();
@@ -206,7 +216,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
-      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })) });
+      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1", name: normalizeExName(ex.name), standardName: normalizeExName(ex.standardName) })) });
       setUseTodayDate(true);
     } catch (err) {
       logDevError("MuscleMap/analyse", err);
