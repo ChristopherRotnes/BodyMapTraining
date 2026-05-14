@@ -61,7 +61,7 @@ function App() {
     onShowLogger: () => setView("logger"),
     onShowHistory: () => { setHistoryInitialDate(null); setView("history"); },
     onShowReport: () => setView("report"),
-    onShowBibliotek: () => { setBibliotekInitialTab(0); setView("bibliotek"); },
+    onShowSetSammen: () => { setBibliotekInitialTab(0); setView("sett-sammen"); },
     onShowHistoryWithDate: (dateStr) => { setHistoryInitialDate(dateStr); setView("history"); },
     onShowTemplatePicker: () => setView("template-picker"),
     onShowReportWithPrefill: (prefill) => { setReportPrefill(prefill); setView("report"); },
@@ -77,7 +77,7 @@ function App() {
     content = <History initialDate={historyInitialDate} />;
   else if (view === "report")
     content = <Report prefill={reportPrefill} onPrefillConsumed={() => setReportPrefill(null)} />;
-  else if (view === "bibliotek")
+  else if (view === "sett-sammen")
     content = <Bibliotek
       initialTab={bibliotekInitialTab}
       onEditTemplate={(tpl) => {
@@ -102,7 +102,7 @@ function App() {
       onBack={() => {
         if (templateEditorState.mode === "edit") {
           setBibliotekInitialTab(1);
-          setView("bibliotek");
+          setView("sett-sammen");
         } else {
           setView("template-picker");
         }

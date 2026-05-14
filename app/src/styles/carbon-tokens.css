@@ -396,6 +396,11 @@
   --accent-bg-30:    rgba(238,44,128,.30);
   --accent-bg-55:    rgba(238,44,128,.55);
 
+  /* Exercise — green */
+  --exercise:        #7af2a4;
+  --exercise-soft:   rgba(122,242,164,0.12);
+  --exercise-mid:    rgba(122,242,164,0.35);
+
   /* Status */
   --success-wl:      #7af2a4;
   --warning-wl:      #f1c21b;
@@ -427,6 +432,7 @@
   --text-muted-wl:    #525252;
   --text-subdued-wl:  #6f6f6f;
   --text-disabled-wl: rgba(22,22,22,.25);
+  --exercise:         #1a8c4e;
 }
 
 /* Element defaults — semantic tags, productive sizing */

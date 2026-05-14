@@ -27,6 +27,11 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
     return () => clearTimeout(timer);
   }, [exSearch]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedTplSearch(tplSearch), 200);
+    return () => clearTimeout(timer);
+  }, [tplSearch]);
+
   const [exercises, setExercises] = useState([]);
   const [exLoading, setExLoading] = useState(true);
   const [exError, setExError] = useState(null);
@@ -44,6 +49,7 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const [showNewTpl, setShowNewTpl] = useState(false);
   const [exVisible, setExVisible] = useState(20);
   const [tplSearch, setTplSearch] = useState("");
+  const [debouncedTplSearch, setDebouncedTplSearch] = useState("");
   const [tplVisible, setTplVisible] = useState(12);
   const [currentUserId, setCurrentUserId] = useState(null);
 
@@ -69,9 +75,9 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   useEffect(() => { setExVisible(20); }, [filteredExercises]); // reset pagination when filter changes
 
   const filteredTemplates = useMemo(() => {
-    const q = tplSearch.trim().toLowerCase();
+    const q = debouncedTplSearch.trim().toLowerCase();
     return q ? templates.filter(t => t.name.toLowerCase().includes(q)) : templates;
-  }, [templates, tplSearch]);
+  }, [templates, debouncedTplSearch]);
 
   const handleSaveNewExercise = async (fields) => {
     setSavingEx(true);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
-import { Book } from "@carbon/icons-react";
+import { Notebook } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchTemplates } from "../lib/db";
 import { logDevError } from "../lib/utils";
@@ -9,7 +9,7 @@ import { useNav } from "../lib/NavContext";
 
 export default function TemplatePicker({ onBack, onSelectTemplate }) {
   const { t } = useTranslation();
-  const { onShowBibliotek } = useNav();
+  const { onShowSetSammen } = useNav();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,7 +69,7 @@ export default function TemplatePicker({ onBack, onSelectTemplate }) {
             <p style={{ fontSize: 14, color: "var(--cds-text-secondary)", marginBottom: 16 }}>
               {t("templatePicker.noTemplates")}
             </p>
-            <Button kind="primary" renderIcon={Book} onClick={onShowBibliotek}>
+            <Button kind="primary" renderIcon={Notebook} onClick={onShowSetSammen}>
               {t("templatePicker.goToLibrary")}
             </Button>
           </div>

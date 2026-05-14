@@ -2,6 +2,16 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.3.0] — 2026-05-14
+
+### Added
+- **Nav redesign (#A)** — all 6 nav icons now show 2-line IBM Plex Condensed labels (8px, lowercase) below the icon. Labels: «Logg økt», «Bla i historikken», «Analyser perioden», «Planlegg uka», «Sett sammen gruppetimer», «Tilpass appen». Nav bar height increased to 56px to accommodate labels. Tooltip-based nav hints replaced by always-visible inline labels.
+- **Exercise color token** — `--exercise: #7af2a4` (green), `--exercise-soft`, `--exercise-mid` added to `carbon-tokens.css`. Light mode override: `--exercise: #1a8c4e`. Available for all new Sett-sammen components.
+- **«Sett sammen»-tab** — internal view name `"bibliotek"` → `"sett-sammen"` throughout `App.jsx` + `PageShell.jsx`. `onShowBibliotek` callback renamed to `onShowSetSammen`. Nav icon changed from `Book` to `Notebook`.
+
+### Fixed
+- **Template search debounce** — the Maler tab in Bibliotek was filtering on every keystroke (no debounce). Now uses the same 200ms debounce pattern as the Øvelser tab.
+
 ## [1.2.9] — 2026-05-14
 
 ### Fixed

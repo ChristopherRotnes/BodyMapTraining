@@ -64,9 +64,9 @@
     "logSession": "Log session",
     "history": "Training history",
     "report": "Period report",
-    "library": "Library",
+    "library": "Compose group sessions",
     "planner": "Plan week",
-    "settings": "Settings"
+    "settings": "Customize app"
   },
   "login": {
     "subtitle": "Sign in to continue",

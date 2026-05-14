@@ -11,7 +11,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data
 7. **History** — custom month grid calendar with heat colors per day (darker = more exercises); click a day to see that session's muscle map and exercise list; sessions are always editable when expanded — a Save / Discard bar appears automatically when changes are detected; add exercises with library autocomplete and AI muscle inference; upload a new photo at any time to re-analyse
-8. **Library** — shared gym-wide exercise library and session templates: any co-instructor can create, edit, or delete exercises and templates; AI muscle inference fires when you type an exercise name; creator attribution ("Av [name]") shown on items created by colleagues
+8. **Sett sammen gruppetimer** — shared gym-wide exercise library and session templates: any co-instructor can create, edit, or delete exercises and templates; AI muscle inference fires when you type an exercise name; creator attribution ("Av [name]") shown on items created by colleagues
 9. **Weekly planner** — assign templates to each day of the week; an "Ikke trent denne uken" chip row lists the muscles you have not yet trained in logged sessions for the visible ISO week (History-style mono pills); a live "Projisert dekning" heatmap body map shows projected cumulative muscle coverage from the assigned templates; a Forslag card flags muscle groups with no planned coverage; plan is saved to Supabase and reloaded on next visit
 10. **Language** — switch between Norsk, English and فارسی (RTL) at any time from Settings; all UI strings, date formats, and month names update instantly
 11. **Settings** — language selector (top), theme toggle (dark/light) + nav hints toggle with live body map preview, contact, Om appen section (version + "Vis introduksjonsguide" replay button + changelog accordion), and account section: display name input + sign-out (bottom)
@@ -81,7 +81,7 @@ Open **http://localhost:4280** —  The API routes (`/api/claude`, `/api/sporty-
 app/
   src/
     main.jsx                       # Entry — imports Carbon + app CSS, wraps with ThemeProvider
-    App.jsx                        # Auth gate + view router (logger, history, report, bibliotek,
+    App.jsx                        # Auth gate + view router (logger, history, report, sett-sammen,
                                    #   template-picker, template-editor, settings, planlegger)
     theme.jsx                      # ThemeProvider + useTheme hook (g10 ↔ g100 toggle)
     components/
@@ -95,12 +95,12 @@ app/
       MusclePicker.jsx             # Click-to-toggle body map for assigning muscles to exercises
       ExerciseForm.jsx             # Create/edit a library exercise with MusclePicker
       LibraryPicker.jsx            # Searchable exercise picker for adding library exercises to templates
-      Bibliotek.jsx                # Library page — exercise library CRUD + template CRUD (two tabs)
+      Bibliotek.jsx                # Sett-sammen page — exercise library CRUD + template CRUD (two tabs; will be replaced by SetSammen.jsx landing in Sprint 2)
       TemplatePicker.jsx           # Template selection screen (recently used first)
       TemplateSessionEditor.jsx    # Edit/use a template with live body map; save-back or hand off to logger
       Planlegger.jsx               # Weekly training planner — untrained-this-week chip list + projected heatmap, assign templates
       Settings.jsx                 # Settings view — theme toggle, account, changelog, contact
-      PageShell.jsx                # Shared nav shell (6-icon header: camera/history/report/library/planner/settings)
+      PageShell.jsx                # Shared nav shell (6-icon header with 2-line labels: Logg økt / historikken / perioden / uka / gruppetimer / appen)
       Home.jsx                     # Landing page — last session summary + quick-nav
       ErrorBoundary.jsx            # Catches render errors and shows a reload prompt
     lib/

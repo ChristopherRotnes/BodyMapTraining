@@ -64,9 +64,9 @@
     "logSession": "Logg økt",
     "history": "Treningshistorikk",
     "report": "Perioderapport",
-    "library": "Bibliotek",
+    "library": "Sett sammen gruppetimer",
     "planner": "Planlegg uke",
-    "settings": "Innstillinger"
+    "settings": "Tilpass appen"
   },
   "login": {
     "subtitle": "Logg inn for å fortsette",
@@ -316,7 +316,7 @@
     "languagePersian": "فارسی",
     "myGym": "Min gym",
     "myGymMembership": "Sporty Thon Senter Ski",
-    "myGymFutureHint": "Fremtidig: velg gym og se felles økthistorikk med andre instruktører.",
+    "myGymFutureHint": "Dette er gymmen vi henter alle gruppetimene fra og hvor vi alle trener sammen.",
     "dataSharingNote": "Alle økter du logger er synlige for andre instruktører ved samme treningssenter. Dette er nødvendig for å gi deg innsikt i hva kollegene dine trener, og er en del av tjenestens formål.",
     "showIntroGuide": "Vis introduksjonsguide"
   },
