@@ -92,7 +92,7 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      const maxDim = 2048;
+      const maxDim = 3000;
       let w = img.naturalWidth;
       let h = img.naturalHeight;
       if (w > maxDim || h > maxDim) {

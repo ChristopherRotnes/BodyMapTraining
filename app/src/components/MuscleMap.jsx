@@ -23,17 +23,6 @@ const localDateStr = () => {
 };
 
 
-// Gym whiteboards are often written in ALL CAPS. Normalize to title case
-// only when the entire string is uppercase (leave mixed-case names alone).
-function toTitleCase(str) {
-  if (!str) return str;
-  return str.toLowerCase().split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
-}
-function normalizeExName(str) {
-  if (!str) return str;
-  const t = str.trim();
-  return t === t.toUpperCase() && /[A-ZÆØÅ]{2,}/.test(t) ? toTitleCase(t) : t;
-}
 
 function getConfidenceColor(ex) {
   if (ex.primary?.length || ex.secondary?.length) return "var(--heat-4)";
