@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button, InlineLoading } from "@carbon/react";
 import { Edit } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { SectionLabel, BackButton, AccentChip } from "./PageShell";
+import PageShell, { SectionLabel, BackButton, AccentChip } from "./PageShell";
 import BodyPanel from "./BodyPanel";
 import { MUSCLES } from "../lib/bodymap.jsx";
 import { fetchTemplateNamesUsingExercise } from "../lib/db";
@@ -23,7 +23,8 @@ export default function OvelseDetail({ exercise, onBack, onEdit }) {
   const count = templateNames?.length ?? null;
 
   return (
-    <div>
+    <PageShell>
+      <div style={{ paddingBottom: 32 }}>
       <BackButton onClick={onBack} />
       <SectionLabel>{t("nav.library")}</SectionLabel>
 
@@ -40,13 +41,15 @@ export default function OvelseDetail({ exercise, onBack, onEdit }) {
         {exercise.name}
       </p>
 
-      {/* Body map */}
-      <BodyPanel
-        primary={primary}
-        secondary={secondary}
-        muscleMap={{}}
-        marginBottom={16}
-      />
+      {/* Body map — constrained so it doesn't stretch on desktop */}
+      <div style={{ maxWidth: 360, padding: "0 16px", marginBottom: 16 }}>
+        <BodyPanel
+          primary={primary}
+          secondary={secondary}
+          muscleMap={{}}
+          marginBottom={0}
+        />
+      </div>
 
       {/* Muscle tags */}
       <div style={{ padding: "0 16px 16px" }}>
@@ -134,6 +137,7 @@ export default function OvelseDetail({ exercise, onBack, onEdit }) {
           {t("ovelseDetail.edit")}
         </Button>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }
