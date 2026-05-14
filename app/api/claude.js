@@ -38,12 +38,14 @@ app.http('claude', {
     }
 
     let body;
+    let serverImageMB = null;
     try {
       body = await request.json();
       const serverImagePart = body?.messages?.[0]?.content?.[0];
       if (serverImagePart?.type === 'image') {
         const serverBytes = Math.round(serverImagePart.source.data.length * 0.75);
-        context.log(`[diag] server-received image bytes: ${serverBytes} (${(serverBytes / 1024 / 1024).toFixed(2)} MB)`);
+        serverImageMB = (serverBytes / 1024 / 1024).toFixed(2);
+        context.log(`[diag] server-received image bytes: ${serverBytes} (${serverImageMB} MB)`);
       }
     } catch {
       return new Response(
@@ -86,7 +88,7 @@ app.http('claude', {
       const errorType = data?.error?.type || 'unknown';
       context.error(`Anthropic error [${errorType}]: ${detail}`);
       return new Response(
-        JSON.stringify({ error: 'Claude request failed', detail }),
+        JSON.stringify({ error: 'Claude request failed', detail, serverImageMB }),
         { status: upstream.status, headers: { 'Content-Type': 'application/json' } }
       );
     }
