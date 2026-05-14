@@ -456,6 +456,26 @@
     "saveTemplate": "ذخیره قالب",
     "nameLabel": "نام قالب"
   },
+  "gruppetimerEditor": {
+    "typeCrossfit": "کراس‌فیت",
+    "typeStyrke": "قدرتی",
+    "typeKondisjon": "هوازی",
+    "typeYoga": "یوگا",
+    "typeSirkel": "دایره‌ای",
+    "gapHints": "پوشش داده نشده:",
+    "allTrained": "همه عضلات پوشش داده شده",
+    "addFromLibrary": "از کتابخانه",
+    "addManual": "تمرین جدید",
+    "createdBy": "توسط {{name}}",
+    "lastUsed": "آخرین استفاده {{date}}",
+    "neverUsed": "هرگز استفاده نشده",
+    "save": "ذخیره جلسه گروهی",
+    "exFlytSearch": "جستجو در کتابخانه…",
+    "exFlytEmpty": "هنوز هیچ تمرینی در کتابخانه نیست.",
+    "exFlytNoResults": "نتیجه‌ای یافت نشد.",
+    "exFlytQuickPlaceholder": "نام تمرین…",
+    "exFlytAdd": "افزودن"
+  },
   "settSammen": {
     "lagGruppetime": "ساختن جلسه گروهی",
     "lagGruppetimerBody": "ایجاد یا ویرایش الگوی جلسه",

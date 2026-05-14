@@ -456,6 +456,26 @@
     "saveTemplate": "Save template",
     "nameLabel": "Template name"
   },
+  "gruppetimerEditor": {
+    "typeCrossfit": "Crossfit",
+    "typeStyrke": "Strength",
+    "typeKondisjon": "Cardio",
+    "typeYoga": "Yoga",
+    "typeSirkel": "Circuit",
+    "gapHints": "Not covered:",
+    "allTrained": "All muscles covered",
+    "addFromLibrary": "From library",
+    "addManual": "New exercise",
+    "createdBy": "By {{name}}",
+    "lastUsed": "Last used {{date}}",
+    "neverUsed": "Never used",
+    "save": "Save group session",
+    "exFlytSearch": "Search library…",
+    "exFlytEmpty": "No exercises in library yet.",
+    "exFlytNoResults": "No results.",
+    "exFlytQuickPlaceholder": "Exercise name…",
+    "exFlytAdd": "Add"
+  },
   "settSammen": {
     "lagGruppetime": "Create group session",
     "lagGruppetimerBody": "Create or edit a session template",

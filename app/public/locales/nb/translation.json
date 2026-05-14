@@ -456,6 +456,26 @@
     "saveTemplate": "Lagre mal",
     "nameLabel": "Navn på mal"
   },
+  "gruppetimerEditor": {
+    "typeCrossfit": "Crossfit",
+    "typeStyrke": "Styrke",
+    "typeKondisjon": "Kondisjon",
+    "typeYoga": "Yoga",
+    "typeSirkel": "Sirkeltrening",
+    "gapHints": "Ikke dekket:",
+    "allTrained": "Alle muskler dekket",
+    "addFromLibrary": "Fra biblioteket",
+    "addManual": "Ny øvelse",
+    "createdBy": "Av {{name}}",
+    "lastUsed": "Sist brukt {{date}}",
+    "neverUsed": "Aldri brukt",
+    "save": "Lagre gruppetime",
+    "exFlytSearch": "Søk i biblioteket…",
+    "exFlytEmpty": "Ingen øvelser i biblioteket ennå.",
+    "exFlytNoResults": "Ingen treff.",
+    "exFlytQuickPlaceholder": "Navn på øvelse…",
+    "exFlytAdd": "Legg til"
+  },
   "settSammen": {
     "lagGruppetime": "Lag en gruppetime",
     "lagGruppetimerBody": "Opprett eller rediger en mal for gymtimen",

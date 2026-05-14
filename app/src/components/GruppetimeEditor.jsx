@@ -1,0 +1,308 @@
+import { useState, useEffect, useMemo } from "react";
+import { Button, InlineNotification, TextInput } from "@carbon/react";
+import { Add, ArrowUp, ArrowDown, Save } from "@carbon/icons-react";
+import { useTranslation } from "react-i18next";
+import PageShell, { SectionLabel, BackButton } from "./PageShell";
+import BodyPanel from "./BodyPanel";
+import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
+import ExFlyt from "./ExFlyt";
+import { MUSCLES } from "../lib/bodymap.jsx";
+import { buildMuscleMapFromExercises, logDevError, getIntlLocale } from "../lib/utils";
+import { fetchLibraryExercises, replaceTemplateExercises, updateTemplateDetails, touchTemplate } from "../lib/db";
+
+const TEMPLATE_TYPES = [
+  { key: "crossfit",     labelKey: "gruppetimerEditor.typeCrossfit" },
+  { key: "styrke",       labelKey: "gruppetimerEditor.typeStyrke" },
+  { key: "kondisjon",    labelKey: "gruppetimerEditor.typeKondisjon" },
+  { key: "yoga",         labelKey: "gruppetimerEditor.typeYoga" },
+  { key: "sirkeltrening",labelKey: "gruppetimerEditor.typeSirkel" },
+];
+
+function templateExToEditorShape(te) {
+  return {
+    id: te.id,
+    library_exercise_id: te.library_exercise_id || null,
+    name: te.name,
+    standardName: te.name,
+    sets: te.sets || null,
+    reps: te.reps || null,
+    primary: te.primary_muscles || [],
+    secondary: te.secondary_muscles || [],
+    enabled: true,
+  };
+}
+
+export default function GruppetimeEditor({ template, onBack }) {
+  const { t } = useTranslation();
+  const [exercises, setExercises] = useState(() =>
+    (template.session_template_exercises || []).map(templateExToEditorShape)
+  );
+  const [name, setName] = useState(template.name);
+  const [editingName, setEditingName] = useState(false);
+  const [templateType, setTemplateType] = useState(template.template_type || null);
+  const [libraryExercises, setLibraryExercises] = useState([]);
+  const [showExFlyt, setShowExFlyt] = useState(false);
+  const [newExId, setNewExId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    fetchLibraryExercises().then(setLibraryExercises).catch(() => {});
+  }, []);
+
+  const muscleMap = useMemo(
+    () => buildMuscleMapFromExercises(exercises.filter(e => e.enabled && e.name)),
+    [exercises]
+  );
+
+  const gapIds = useMemo(() => {
+    const trained = new Set([...muscleMap.primary, ...muscleMap.secondary]);
+    return Object.keys(MUSCLES).filter(id => !trained.has(id));
+  }, [muscleMap]);
+
+  function moveUp(idx) {
+    if (idx === 0) return;
+    setExercises(p => {
+      const next = [...p];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      return next;
+    });
+  }
+
+  function moveDown(idx) {
+    setExercises(p => {
+      if (idx === p.length - 1) return p;
+      const next = [...p];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next;
+    });
+  }
+
+  function addManual() {
+    const id = `manual-${Date.now()}`;
+    setNewExId(id);
+    setExercises(p => [...p, {
+      id,
+      library_exercise_id: null,
+      name: "", standardName: "",
+      sets: null, reps: null,
+      primary: [], secondary: [],
+      enabled: true,
+    }]);
+    setShowExFlyt(false);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const enabled = exercises.filter(e => e.enabled && e.name);
+      await updateTemplateDetails(template.id, {
+        name,
+        template_type: templateType,
+      });
+      await replaceTemplateExercises(template.id, enabled);
+      touchTemplate(template.id).catch(() => {});
+      onBack();
+    } catch (e) {
+      logDevError("GruppetimeEditor/save", e);
+      setSaveError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const creatorName = template.profiles?.display_name;
+  const usedAt = template.used_at
+    ? new Intl.DateTimeFormat(getIntlLocale(), { day: "numeric", month: "short", year: "numeric" }).format(new Date(template.used_at))
+    : null;
+
+  return (
+    <PageShell>
+      <div style={{ paddingBottom: 32 }}>
+        <SectionLabel>{t("nav.library")}</SectionLabel>
+        <div style={{ padding: "0 16px" }}>
+          <BackButton onClick={onBack} />
+
+          {/* Name + type container */}
+          <div style={{
+            background: "var(--cds-layer-02)",
+            borderTop: "2px solid var(--accent)",
+            padding: 16,
+            marginBottom: 16,
+          }}>
+            {/* Editable name */}
+            <div style={{ marginBottom: 16 }}>
+              {editingName ? (
+                <TextInput
+                  id="tpl-name"
+                  labelText={t("templateEditor.nameLabel")}
+                  autoFocus
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  onBlur={() => setEditingName(false)}
+                  onKeyDown={e => e.key === "Enter" && setEditingName(false)}
+                />
+              ) : (
+                <span
+                  onClick={() => setEditingName(true)}
+                  title={t("templateEditor.clickToRename")}
+                  style={{ cursor: "text", fontFamily: "var(--cond)", fontSize: 20, fontWeight: 700, color: "var(--cds-text-primary)" }}
+                >
+                  {name}
+                </span>
+              )}
+            </div>
+
+            {/* Type picker */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {TEMPLATE_TYPES.map(tt => (
+                <button
+                  key={tt.key}
+                  onClick={() => setTemplateType(prev => prev === tt.key ? null : tt.key)}
+                  style={{
+                    padding: "5px 14px",
+                    borderRadius: "var(--r-pill)",
+                    border: templateType === tt.key ? "1px solid var(--accent)" : "1px solid var(--border-subtle-wl)",
+                    background: templateType === tt.key ? "var(--accent-bg-14)" : "transparent",
+                    color: templateType === tt.key ? "var(--accent-soft)" : "var(--text-muted-wl)",
+                    fontFamily: "var(--cds-font-mono)",
+                    fontSize: 11,
+                    letterSpacing: "0.06em",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t(tt.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Live muscle coverage */}
+          <BodyPanel
+            primary={[...muscleMap.primary]}
+            secondary={[...muscleMap.secondary]}
+            muscleMap={{}}
+            marginBottom={8}
+          />
+
+          {/* Gap hints */}
+          {gapIds.length === 0 ? (
+            <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-support-success)", letterSpacing: "0.06em", marginBottom: 16 }}>
+              {t("gruppetimerEditor.allTrained")}
+            </p>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 16 }}>
+              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.06em", marginRight: 4 }}>
+                {t("gruppetimerEditor.gapHints")}
+              </span>
+              {gapIds.map(id => (
+                <span key={id} style={{
+                  display: "inline-block",
+                  borderRadius: "var(--r-pill)",
+                  padding: "2px 8px",
+                  background: "var(--cds-layer-02)",
+                  border: "1px solid var(--cds-border-subtle-01)",
+                  color: "var(--cds-text-secondary)",
+                  fontFamily: "var(--cds-font-mono)",
+                  fontSize: 10,
+                  letterSpacing: "0.06em",
+                }}>
+                  {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Exercise list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+            {exercises.map((ex, idx) => (
+              <div key={ex.id} style={{ display: "flex", alignItems: "flex-start", gap: 4 }}>
+                {/* Reorder buttons */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingTop: 8, flexShrink: 0 }}>
+                  <button
+                    onClick={() => moveUp(idx)}
+                    disabled={idx === 0}
+                    aria-label="Flytt opp"
+                    style={{
+                      background: "none", border: "none", cursor: idx === 0 ? "default" : "pointer",
+                      color: idx === 0 ? "var(--cds-border-subtle-01)" : "var(--cds-text-secondary)",
+                      padding: 2, display: "flex",
+                    }}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                  <button
+                    onClick={() => moveDown(idx)}
+                    disabled={idx === exercises.length - 1}
+                    aria-label="Flytt ned"
+                    style={{
+                      background: "none", border: "none", cursor: idx === exercises.length - 1 ? "default" : "pointer",
+                      color: idx === exercises.length - 1 ? "var(--cds-border-subtle-01)" : "var(--cds-text-secondary)",
+                      padding: 2, display: "flex",
+                    }}
+                  >
+                    <ArrowDown size={14} />
+                  </button>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <ExerciseRowWithAutocomplete
+                    exercise={ex}
+                    autoFocusName={ex.id === newExId}
+                    isNew={ex.id === newExId}
+                    libraryExercises={libraryExercises}
+                    onChange={updates => setExercises(p => p.map(e => e.id === ex.id ? { ...e, ...updates } : e))}
+                    onDelete={() => setExercises(p => p.filter(e => e.id !== ex.id))}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add controls */}
+          {!showExFlyt && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+              <Button kind="primary" renderIcon={Add} size="sm" onClick={() => setShowExFlyt(true)} style={{ flex: 1 }}>
+                {t("gruppetimerEditor.addFromLibrary")}
+              </Button>
+              <Button kind="ghost" renderIcon={Add} size="sm" onClick={addManual} style={{ flex: 1 }}>
+                {t("gruppetimerEditor.addManual")}
+              </Button>
+            </div>
+          )}
+
+          {saveError && (
+            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={saveError} hideCloseButton style={{ marginBottom: 12 }} />
+          )}
+
+          {/* Save */}
+          <div style={{ borderTop: "1px solid var(--cds-border-subtle-01)", paddingTop: 16, marginBottom: 16 }}>
+            <Button kind="primary" renderIcon={Save} onClick={handleSave} disabled={saving || !name.trim()}>
+              {saving ? t("common.saving") : t("gruppetimerEditor.save")}
+            </Button>
+          </div>
+
+          {/* Footer metadata */}
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            {creatorName && (
+              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.06em" }}>
+                {t("gruppetimerEditor.createdBy", { name: creatorName })}
+              </span>
+            )}
+            <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--cds-text-secondary)", letterSpacing: "0.06em" }}>
+              {usedAt ? t("gruppetimerEditor.lastUsed", { date: usedAt }) : t("gruppetimerEditor.neverUsed")}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {showExFlyt && (
+        <ExFlyt
+          libraryExercises={libraryExercises}
+          onAdd={ex => { setExercises(p => [...p, ex]); setShowExFlyt(false); }}
+          onClose={() => setShowExFlyt(false)}
+        />
+      )}
+    </PageShell>
+  );
+}
