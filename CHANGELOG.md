@@ -2,6 +2,22 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.4.0] — 2026-05-14
+
+### Added
+- **«Sett sammen»-landing (issue #174, sprint 2)** — `SetSammen.jsx` replaces `Bibliotek.jsx` as the entry point for the library tab. Two-color action system: magenta (`--accent`) for gruppetimer, green (`--exercise`) for øvelser. Featured cards with colored circle icons and chevrons.
+- **GruppetimePicker (issue #174, sprint 2)** — dedicated picker listing all templates with mini body-map thumbnails, live search, and a featured magenta «Ny gruppetime» card. Replaces the «Maler» tab.
+- **OvelsePicker (issue #174, sprint 2)** — dedicated picker listing all library exercises with region filter chips (Alle / Overkropp / Kjerne / Underkropp / Kondisjon, hidden when count = 0), search, template-usage counts, and a featured green «Ny øvelse» card. Clicking a row opens ExerciseForm directly. Replaces the «Øvelser» tab.
+- **GruppetimeEditor (issue #174, sprint 4)** — dedicated editor for creating and editing group-class templates. Features: live muscle-coverage BodyPanel, gap-hint chips for untrained muscles, reorder handles (up/down), add via ExFlyt search or manual entry, inline template name rename, creator + last-used metadata footer. Separate from `TemplateSessionEditor` which is kept unchanged for the MuscleMap «Bruk mal» flow.
+- **ExFlyt (issue #174, sprint 4)** — slide-up modal for adding exercises to a GruppetimeEditor template. Search existing library exercises or quick-create a new one with AI muscle inference.
+- **DB migration: `template_type`** — nullable `text` column added to `session_templates`. No consumer in UI yet; reserved for a future type-picker (Crossfit / Styrke / Kondisjon / etc.).
+- **`fetchExerciseTemplateCounts()` in `db.js`** — batch query returning `{ [exercise_id]: distinctTemplateCount }` using Set deduplication on `template_id`. Used by OvelsePicker to show «BRUKT I N GT» in exercise rows.
+
+### Changed
+- **ExerciseForm AI banner** — after muscle inference completes, the banner shows a colored «AI» pill + «NULLSTILL» button to clear the inferred muscles and start over.
+- **MusclePicker mobile** — on viewports ≤500px the front/back views are now shown as a toggle (one at a time) rather than cramped side-by-side.
+- **GruppetimeEditor add-exercise buttons** — replaced Carbon primary/ghost `Button` pair with green bar-buttons matching the exercise color system. «Fra biblioteket» renamed to «Velg øvelse».
+
 ## [1.3.0] — 2026-05-14
 
 ### Added
