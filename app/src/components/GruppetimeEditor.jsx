@@ -240,12 +240,41 @@ export default function GruppetimeEditor({ template, onBack }) {
           {/* Add controls */}
           {!showExFlyt && (
             <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-              <Button kind="primary" renderIcon={Add} size="sm" onClick={() => setShowExFlyt(true)} style={{ flex: 1 }}>
-                {t("gruppetimerEditor.addFromLibrary")}
-              </Button>
-              <Button kind="ghost" renderIcon={Add} size="sm" onClick={addManual} style={{ flex: 1 }}>
-                {t("gruppetimerEditor.addManual")}
-              </Button>
+              {[
+                { label: t("gruppetimerEditor.addFromLibrary"), onClick: () => setShowExFlyt(true) },
+                { label: t("gruppetimerEditor.addManual"), onClick: addManual },
+              ].map(({ label, onClick }) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  style={{
+                    flex: 1,
+                    background: "var(--cds-layer-01)",
+                    border: "1px solid var(--cds-border-subtle-01)",
+                    borderInlineStart: "3px solid var(--exercise)",
+                    borderRadius: "0 var(--r-card) var(--r-card) 0",
+                    padding: "10px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: "var(--exercise-soft)",
+                    border: "1px solid var(--exercise)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <Add size={14} style={{ color: "var(--exercise)" }} />
+                  </div>
+                  <span style={{ fontFamily: "var(--cond)", fontSize: 13, fontWeight: 700, color: "var(--cds-text-primary)", flex: 1, minWidth: 0 }}>
+                    {label}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 

@@ -473,7 +473,7 @@
     "typeSirkel": "Circuit",
     "gapHints": "Not covered:",
     "allTrained": "All muscles covered",
-    "addFromLibrary": "From library",
+    "addFromLibrary": "Choose exercise",
     "addManual": "New exercise",
     "createdBy": "By {{name}}",
     "lastUsed": "Last used {{date}}",
@@ -510,5 +510,8 @@
     "eyebrow": "EXERCISE · NEW OR EDIT",
     "nyOvelseSubtitle": "NAME + MUSCLES",
     "usedInGT": "USED IN {{count}} SESSIONS"
+  },
+  "gruppetimePicker": {
+    "nySubtitle": "NAME + EXERCISES"
   }
 }

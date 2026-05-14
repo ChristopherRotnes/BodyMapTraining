@@ -65,9 +65,42 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
           )}
 
           {!showNew && (
-            <Button kind="primary" renderIcon={Add} onClick={() => setShowNew(true)} style={{ marginBottom: 16 }}>
-              {t("settSammen.newGruppetime")}
-            </Button>
+            <button
+              onClick={() => setShowNew(true)}
+              style={{
+                width: "100%",
+                background: "var(--cds-layer-01)",
+                border: "1px solid var(--cds-border-subtle-01)",
+                borderInlineStart: "3px solid var(--accent)",
+                borderRadius: "0 var(--r-card) var(--r-card) 0",
+                padding: "14px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                textAlign: "left",
+                marginBottom: 16,
+              }}
+            >
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "var(--accent-bg-14)",
+                border: "1px solid var(--accent)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <Add size={18} style={{ color: "var(--accent)" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", margin: "0 0 2px" }}>
+                  {t("settSammen.newGruppetime")}
+                </p>
+                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--accent-soft)", margin: 0 }}>
+                  {t("gruppetimePicker.nySubtitle")}
+                </p>
+              </div>
+              <ChevronRight size={16} style={{ color: "var(--cds-text-secondary)", flexShrink: 0 }} />
+            </button>
           )}
 
           {showNew && (

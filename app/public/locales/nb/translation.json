@@ -473,7 +473,7 @@
     "typeSirkel": "Sirkeltrening",
     "gapHints": "Ikke dekket:",
     "allTrained": "Alle muskler dekket",
-    "addFromLibrary": "Fra biblioteket",
+    "addFromLibrary": "Velg øvelse",
     "addManual": "Ny øvelse",
     "createdBy": "Av {{name}}",
     "lastUsed": "Sist brukt {{date}}",
@@ -510,5 +510,8 @@
     "eyebrow": "ØVELSE · NY ELLER REDIGER",
     "nyOvelseSubtitle": "NAVN + MUSKLER",
     "usedInGT": "BRUKT I {{count}} GT"
+  },
+  "gruppetimePicker": {
+    "nySubtitle": "NAVN + ØVELSER"
   }
 }

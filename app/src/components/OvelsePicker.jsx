@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { InlineLoading, InlineNotification } from "@carbon/react";
-import { Add, Edit, Search, ChevronRight } from "@carbon/icons-react";
+import { Add, Search, ChevronRight } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import ExerciseForm from "./ExerciseForm";
-import OvelseDetail from "./OvelseDetail";
 import { MUSCLES } from "../lib/bodymap.jsx";
 import { fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, fetchExerciseTemplateCounts } from "../lib/db";
 import { logDevError } from "../lib/utils";
@@ -32,7 +31,6 @@ export default function OvelsePicker({ onBack }) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [region, setRegion] = useState("alle");
   const [showNew, setShowNew] = useState(false);
-  const [detailEx, setDetailEx] = useState(null);
   const [editingEx, setEditingEx] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -89,16 +87,6 @@ export default function OvelsePicker({ onBack }) {
     } finally {
       setSaving(false);
     }
-  }
-
-  if (detailEx) {
-    return (
-      <OvelseDetail
-        exercise={detailEx}
-        onBack={() => setDetailEx(null)}
-        onEdit={(ex) => { setDetailEx(null); setEditingEx(ex); }}
-      />
-    );
   }
 
   const regions = [
@@ -173,7 +161,7 @@ export default function OvelsePicker({ onBack }) {
           {/* Region filter chips with counts */}
           {!showNew && !editingEx && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-              {regions.map(r => (
+              {regions.filter(r => r.key === "alle" || loading || regionCounts[r.key] > 0).map(r => (
                 <button
                   key={r.key}
                   onClick={() => setRegion(r.key)}
@@ -235,7 +223,7 @@ export default function OvelsePicker({ onBack }) {
                 {filtered.map(ex => (
                   <button
                     key={ex.id}
-                    onClick={() => setDetailEx(ex)}
+                    onClick={() => { setEditingEx(ex); setShowNew(false); }}
                     style={{
                       background: "var(--cds-layer-01)",
                       border: "1px solid var(--cds-border-subtle-01)",
@@ -256,17 +244,7 @@ export default function OvelsePicker({ onBack }) {
                       </p>
                       <ExerciseSubtitle ex={ex} count={templateCounts[ex.id] || 0} t={t} />
                     </div>
-                    <span
-                      role="button"
-                      onClick={e => { e.stopPropagation(); setEditingEx(ex); setShowNew(false); }}
-                      aria-label={t("common.edit")}
-                      style={{
-                        background: "none", border: "none", cursor: "pointer",
-                        color: "var(--cds-text-secondary)", padding: 6, display: "flex", flexShrink: 0,
-                      }}
-                    >
-                      <Edit size={14} />
-                    </span>
+                    <ChevronRight size={16} style={{ color: "var(--cds-text-secondary)", flexShrink: 0 }} />
                   </button>
                 ))}
               </div>
@@ -275,12 +253,19 @@ export default function OvelsePicker({ onBack }) {
 
           {/* Edit form — shown full-width when editing, hides the list */}
           {editingEx && (
-            <ExerciseForm
-              initial={editingEx}
-              onSave={fields => handleUpdate(editingEx.id, fields)}
-              onCancel={() => setEditingEx(null)}
-              saving={saving}
-            />
+            <>
+              {(templateCounts[editingEx.id] || 0) > 0 && (
+                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 11, letterSpacing: "0.06em", color: "var(--cds-text-secondary)", margin: "0 0 8px" }}>
+                  {t("ovelsePicker.usedInGT", { count: templateCounts[editingEx.id] })}
+                </p>
+              )}
+              <ExerciseForm
+                initial={editingEx}
+                onSave={fields => handleUpdate(editingEx.id, fields)}
+                onCancel={() => setEditingEx(null)}
+                saving={saving}
+              />
+            </>
           )}
         </div>
       </div>
@@ -292,11 +277,9 @@ function ExerciseSubtitle({ ex, count, t }) {
   const muscles = (ex.primary_muscles || []).slice(0, 3).map(id =>
     t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })
   );
-  const creator = ex.profiles?.display_name;
   const parts = [];
   if (muscles.length) parts.push(muscles.join(", "));
   if (count > 0) parts.push(t("ovelsePicker.usedInGT", { count }));
-  if (creator) parts.push(creator.toUpperCase());
   if (!parts.length) return null;
   return (
     <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--cds-text-secondary)", margin: 0 }}>
