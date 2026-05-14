@@ -86,12 +86,12 @@ export async function detectMediaType(file) {
 //   1. Read via FileReader — iOS auto-converts HEIF/HEIC to JPEG at full native
 //      resolution. If the result is already under 5 MB, use it directly with zero
 //      quality loss (this is the happy path for most photos).
-//   2. Only if over 5 MB: draw to canvas capped at 4500px on the long edge, then
-//      reduce JPEG quality until it fits. The 4500px cap prevents iOS from silently
-//      refusing to allocate a ~98MB GPU backing store for 24MP+ images (which causes
-//      toDataURL to return the original-size data unchanged). At 4500px the canvas
-//      is ~61MB and compresses reliably. OCR quality is preserved — 4500px is
-//      significantly more resolution than the 3000px that caused ALL CAPS issues.
+//   2. Only if over 5 MB: load the original file via a blob URL (a short
+//      blob:// reference), NOT the huge data URL string. Setting img.src to a ~9 MB
+//      data URL causes iOS Safari to silently fail the Image decode (naturalWidth = 0),
+//      so toDataURL returns a blank result that passes the size check. The blob URL
+//      approach avoids this. Cap long edge at 4500px (keeps canvas ≤61 MB vs the
+//      ~98 MB a 24 MP canvas needs), then reduce JPEG quality until it fits.
 export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -104,10 +104,13 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
         resolve({ base64: b64, mediaType: 'image/jpeg' });
         return;
       }
-      // Over limit — scale to ≤4500px long edge, then reduce JPEG quality.
+      // Over limit — use a blob URL so iOS can decode the image without hitting the
+      // data URL size limit, then scale to ≤4500px and reduce JPEG quality.
+      const blobUrl = URL.createObjectURL(file);
       const img = new Image();
-      img.onerror = () => reject(new Error('Kunne ikke laste bildet'));
+      img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error('Kunne ikke laste bildet')); };
       img.onload = () => {
+        URL.revokeObjectURL(blobUrl);
         const MAX_LONG_EDGE = 4500;
         let w = img.naturalWidth;
         let h = img.naturalHeight;
@@ -130,7 +133,7 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
         };
         tryQuality(0.9);
       };
-      img.src = dataUrl;
+      img.src = blobUrl;
     };
     reader.readAsDataURL(file);
   });
