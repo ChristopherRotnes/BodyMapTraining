@@ -277,13 +277,14 @@ function ExerciseSubtitle({ ex, count, t }) {
   const muscles = (ex.primary_muscles || []).slice(0, 3).map(id =>
     t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })
   );
-  const parts = [];
-  if (muscles.length) parts.push(muscles.join(", "));
-  if (count > 0) parts.push(t("ovelsePicker.usedInGT", { count }));
-  if (!parts.length) return null;
+  const muscleText = muscles.join(", ");
+  const countText = count > 0 ? t("ovelsePicker.usedInGT", { count }) : null;
+  if (!muscleText && !countText) return null;
   return (
     <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--cds-text-secondary)", margin: 0 }}>
-      {parts.join(" · ")}
+      {muscleText}
+      {muscleText && countText && <span> · </span>}
+      {countText && <span style={{ color: "var(--accent-soft)" }}>{countText}</span>}
     </p>
   );
 }
