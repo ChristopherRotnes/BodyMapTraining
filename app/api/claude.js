@@ -66,6 +66,7 @@ app.http('claude', {
     }
 
     const requestBody = JSON.stringify(body);
+    context.log(`[diag] requestBody length: ${requestBody.length} chars`);
     let upstream;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2 ** attempt * 1000));
