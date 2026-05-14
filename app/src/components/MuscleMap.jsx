@@ -206,7 +206,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
-      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1", name: normalizeExName(ex.name), standardName: normalizeExName(ex.standardName) })) });
+      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })) });
       setUseTodayDate(true);
     } catch (err) {
       logDevError("MuscleMap/analyse", err);
