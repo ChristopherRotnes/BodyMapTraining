@@ -412,3 +412,23 @@ Carbon's compiled CSS from `@carbon/styles` emits dark skeleton token overrides 
 
 **Pattern to watch:** Any new Carbon token that Carbon's SCSS emits only under `.cds--g100` (not `:root`) must be explicitly added to the `[data-theme="g100"]` block in `carbon-tokens.css`. Run a visual check in dark mode whenever a new Carbon component is introduced.
 
+### Issue #173 — HEIF photo exceeds Anthropic 5 MB limit (resolved 2026-05-14)
+Symptom: uploading an iPhone 17 Pro photo failed with `Serverfeil (400): image exceeds 5 MB maximum: 5246896 bytes > 5242880 bytes`.
+
+**Root cause 1 — iOS FileReader HEIF → JPEG inflation:** `FileReader.readAsDataURL` triggers an automatic HEIF → JPEG conversion at full native resolution. A 2.6 MB HEIF image inflates to 5.25 MB — just over the 5,242,880 decoded-byte limit.
+
+**Root cause 2 — iOS silently ignores large data URLs as `img.src`:** The original canvas fallback path set `img.src = dataUrl` (the ~9 MB base64 string from FileReader). iOS Safari silently fails to decode a data URL this large: `img.naturalWidth` and `img.naturalHeight` both become 0. The canvas is created as 0×0, `toDataURL` returns a near-empty result that passes the size check, and the original un-compressed data stays in state. No error is thrown.
+
+**Fix:** Use `URL.createObjectURL(file)` as the canvas image source instead. iOS decodes blob URLs via its native pipeline, reliably returning correct `naturalWidth`/`naturalHeight`. The blob URL is immediately revoked in both `onload` and `onerror` to avoid memory leaks. Canvas long edge is capped at 4500 px (≈61 MB GPU memory) to avoid iOS GPU limits with 24 MP sensors. JPEG quality is stepped down from 0.9 in 0.1 increments until decoded size ≤ 5 MB or quality reaches 0.3.
+
+**Never revert to `img.src = dataUrl` for large images** — iOS will silently zero out naturalWidth/Height, producing a blank canvas result that passes the size check without actually compressing.
+
+### Issue #173 — fetchLastSession returning null (resolved 2026-05-14)
+Symptom: Home → "Siste økt" showed "Ingen økter logget ennå" even though sessions existed in the DB and the weekly strip showed the correct session count.
+
+**Root cause — ambiguous `created_at` ORDER in joined query:** `fetchLastSession` applied `.order("created_at", { ascending: false })` after `.order("session_date", ...)`. The query joins `session_exercises`, which also has a `created_at` column. PostgREST treated the unqualified `created_at` as ambiguous and returned 0 rows (HTTP 200, empty body) instead of 1. The `fetchThisWeekSessions` query has no secondary `created_at` sort, which is why it was unaffected.
+
+**Fix:** Removed the secondary `.order("created_at")` sort from `fetchLastSession`. `session_date DESC` with `limit(1)` is sufficient to return the most recent session. The secondary sort was only intended to resolve ties on the same date — not worth the ambiguity risk.
+
+**Pattern to watch:** When writing PostgREST queries that join tables, any ORDER clause column name must be unique across the main table and all joined tables, or must be qualified with the table name (PostgREST supports `{ foreignTable: "sessions" }` in the options object). `created_at` appears on many tables; always check for join conflicts before using it as a sort key.
+

@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.9] — 2026-05-14
+
+### Fixed
+- **HEIF/iPhone photo exceeds 5 MB limit** — iPhone 17 Pro HEIF images auto-converted to JPEG by iOS's `FileReader` inflated from ~2.6 MB to ~5.25 MB (just over Anthropic's 5 MB decoded limit). First canvas attempt used the huge data URL as `img.src`, which iOS Safari silently ignores for large blobs (naturalWidth becomes 0), so compression never ran. Fixed by using `URL.createObjectURL(file)` as the image source for the canvas path — iOS decodes blob URLs natively without the data URL size restriction. Canvas long edge is capped at 4500 px to stay within iOS GPU memory limits (~61 MB vs ~98 MB for a 24 MP canvas). JPEG quality is reduced in 0.1 steps from 0.9 until decoded size is ≤ 5 MB.
+- **ALL CAPS exercise names** — when canvas quality reduction degrades the image enough for Claude to return exercise names in ALL CAPS, `normalizeExName` in `MuscleMap.jsx` now converts fully-uppercase strings to title case before they reach the exercise list. Acts as a permanent safety net regardless of image quality.
+- **Anthropic error detail not shown** — the error message surfaced to the user read `data?.error?.message`, but the Anthropic API returns the detail in `data.detail` (string). Fixed to read `data.detail || data?.error?.message` so the actual reason (e.g. "image exceeds 5 MB maximum") is shown instead of `undefined`.
+- **"Siste økt" showing empty despite a session existing** — `fetchLastSession` in `db.js` applied a secondary `.order("created_at")` sort after the primary `session_date` sort. Because `session_exercises` (joined in the same query) also has a `created_at` column, PostgREST treated the sort as ambiguous and returned 0 rows instead of 1. Removed the secondary sort — `session_date DESC` with `limit(1)` is sufficient.
+- **Slow app load after gym-wide templates deploy** — `onAuthStateChange` in `App.jsx` called `ensureGymMembership()` and `ensureDisplayName()` on every Supabase auth event (INITIAL_SESSION, TOKEN_REFRESHED, etc.), causing 3–4 redundant DB upserts per page load. These calls now only fire on `SIGNED_IN` events; the initial `getSession().then(...)` path continues to run them on first mount.
+
 ## [1.2.8] — 2026-05-14
 
 ### Added

@@ -29,9 +29,14 @@ function App() {
       setSession(session);
       if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
+      // Only run on actual sign-in — INITIAL_SESSION, TOKEN_REFRESHED, etc. fire on
+      // every page load and would trigger redundant upserts on every auth event.
+      if (event === "SIGNED_IN" && session) {
+        ensureGymMembership().catch(() => {});
+        ensureDisplayName().catch(() => {});
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
