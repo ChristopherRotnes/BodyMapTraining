@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
 import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
-import { compressImage, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
+import { compressImage, buildMuscleMapFromSession, buildMuscleMapFromExercises, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, InlineLoading,
@@ -120,8 +120,6 @@ function sessionExToEditFormat(exercises) {
     id: ex.id,
     name: ex.name,
     standardName: ex.standard_name || "",
-    sets: ex.sets != null ? String(ex.sets) : null,
-    reps: ex.reps != null ? String(ex.reps) : null,
     primary: (ex.muscle_activations || []).filter(ma => ma.activation_type === "primary").map(ma => ma.muscle_id),
     secondary: (ex.muscle_activations || []).filter(ma => ma.activation_type === "secondary").map(ma => ma.muscle_id),
     enabled: true,
@@ -401,7 +399,7 @@ export default function History({ initialDate }) {
       }
       if (!Array.isArray(parsed)) throw new Error(t("history.reanalyzeUnexpectedFormat"));
       patchSessionEdit(session.id, {
-        exercises: parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true, sets: ex.sets ?? "1" })),
+        exercises: parsed.map((ex, i) => ({ ...ex, id: Date.now() + i, enabled: true })),
         dirty: true,
         analyzing: false,
       });
@@ -597,10 +595,7 @@ export default function History({ initialDate }) {
                     const gymSessionId = edit.gymSessionId ?? (session.gym_calendar_id || "");
                     const gymConflict = edit.gymConflict;
                     const isAnalyzing = edit.analyzing || false;
-                    const hasErrors = workExercises && (
-                      workExercises.some(e => e.enabled && !e.name?.trim()) ||
-                      workExercises.some(e => isInvalidNum(e.sets) || isInvalidNum(e.reps))
-                    );
+                    const hasErrors = workExercises && workExercises.some(e => e.enabled && !e.name?.trim());
                     return (
                     <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--border-subtle-wl)", borderTop: "none", borderInlineStart: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)", padding: "16px 14px", marginBottom: 0 }}>
 
@@ -716,7 +711,7 @@ export default function History({ initialDate }) {
                           onClick={() => {
                             const id = Date.now();
                             patchSessionEdit(session.id, {
-                              exercises: [...(workExercises || []), { id, name: "", standardName: "", sets: null, reps: null, primary: [], secondary: [], enabled: true }],
+                              exercises: [...(workExercises || []), { id, name: "", standardName: "", primary: [], secondary: [], enabled: true }],
                               newExIds: new Set([...(edit.newExIds || []), id]),
                               dirty: true,
                             });
@@ -757,13 +752,8 @@ export default function History({ initialDate }) {
                                     {name}
                                   </p>
                                   {exs.map(ex => (
-                                    <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0", fontSize: 13, color: "var(--cds-text-secondary)" }}>
-                                      <span>{ex.name}</span>
-                                      {(ex.sets || ex.reps) && (
-                                        <span style={{ color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", fontSize: 12 }}>
-                                          {[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}
-                                        </span>
-                                      )}
+                                    <div key={ex.id} style={{ padding: "3px 0", fontSize: 13, color: "var(--cds-text-secondary)" }}>
+                                      {ex.name}
                                     </div>
                                   ))}
                                 </div>

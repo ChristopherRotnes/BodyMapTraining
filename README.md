@@ -6,7 +6,7 @@ Photograph a handwritten gym whiteboard workout, and the app tells you which mus
 
 1. **Upload** one or more photos of a whiteboard workout program — or **pick a template** from the library
 2. **Claude Vision** reads the handwriting and returns a structured list of exercises with muscle IDs
-3. **Confirm** — pick the session date (defaults to today), link to a gym class, toggle/rename/adjust exercises before saving
+3. **Confirm** — pick the session date (defaults to today), link to a gym class, toggle/rename exercises before saving
 4. **Muscle map** — front and back body SVG; primary muscles glow solid green, secondary muscles show as blue diagonal stripes; hover for exercise names
 5. **Recommendations** — ask Claude what to train next based on untrained muscle groups
 6. **Save** — session is persisted to Supabase with full exercise and muscle activation data

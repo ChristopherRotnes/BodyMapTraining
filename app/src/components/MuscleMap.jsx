@@ -216,7 +216,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
-      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1", name: normalizeExName(ex.name), standardName: normalizeExName(ex.standardName) })) });
+      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, name: normalizeExName(ex.name), standardName: normalizeExName(ex.standardName) })) });
       setUseTodayDate(true);
     } catch (err) {
       logDevError("MuscleMap/analyse", err);
@@ -642,7 +642,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
               onClick={() => {
                 const id = Date.now();
                 setNewExerciseIds(s => new Set(s).add(id));
-                dispatch({ type: "ADD_EXERCISE", exercise: { id, name: "", standardName: "", sets: null, reps: null, enabled: true } });
+                dispatch({ type: "ADD_EXERCISE", exercise: { id, name: "", standardName: "", enabled: true } });
               }}
               style={{ width: "100%", marginBottom: 16 }}
             >
@@ -773,9 +773,6 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                         <DefinitionTooltip definition={muscleLabels} openOnHover align="bottom">{ex.name}</DefinitionTooltip>
                       ) : ex.name}
                     </span>
-                    {(ex.sets || ex.reps) && (
-                      <span style={{ color: "var(--text-muted-wl)" }}>{[ex.sets && `${ex.sets}×`, ex.reps].filter(Boolean).join("")}</span>
-                    )}
                   </div>
                 );
               })}

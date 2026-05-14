@@ -12,21 +12,21 @@ export async function fetchLibraryExercises() {
   return data;
 }
 
-export async function saveLibraryExercise({ name, primary_muscles, secondary_muscles, default_sets, default_reps }) {
+export async function saveLibraryExercise({ name, primary_muscles, secondary_muscles }) {
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("exercise_library")
-    .insert({ user_id: user.id, name, primary_muscles, secondary_muscles, default_sets, default_reps })
+    .insert({ user_id: user.id, name, primary_muscles, secondary_muscles })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function updateLibraryExercise(id, { name, primary_muscles, secondary_muscles, default_sets, default_reps }) {
+export async function updateLibraryExercise(id, { name, primary_muscles, secondary_muscles }) {
   const { data, error } = await supabase
     .from("exercise_library")
-    .update({ name, primary_muscles, secondary_muscles, default_sets, default_reps })
+    .update({ name, primary_muscles, secondary_muscles })
     .eq("id", id)
     .select()
     .single();
@@ -78,7 +78,7 @@ export async function fetchTemplates() {
       id, name, sort_order, used_at, created_at, user_id,
       profiles!user_id(display_name),
       session_template_exercises(
-        id, library_exercise_id, name, primary_muscles, secondary_muscles, sets, reps, sort_order
+        id, library_exercise_id, name, primary_muscles, secondary_muscles, sort_order
       )
     `)
     .order("used_at", { ascending: false, nullsFirst: false });
@@ -146,15 +146,16 @@ export async function touchTemplate(id) {
 export async function replaceTemplateExercises(templateId, exercises) {
   const { error } = await supabase.rpc('replace_template_exercises', {
     p_template_id: templateId,
-    p_exercises: exercises.map((e, i) => ({
-      library_exercise_id: e.library_exercise_id || null,
-      name: e.name,
-      primary_muscles: e.primary_muscles || e.primary || [],
-      secondary_muscles: e.secondary_muscles || e.secondary || [],
-      sets: e.sets || null,
-      reps: e.reps || null,
-      sort_order: i,
-    })),
+    p_exercises: exercises.map((e, i) => {
+      const ex = {
+        name: e.name,
+        primary_muscles: e.primary_muscles || e.primary || [],
+        secondary_muscles: e.secondary_muscles || e.secondary || [],
+        sort_order: i,
+      };
+      if (e.library_exercise_id) ex.library_exercise_id = e.library_exercise_id;
+      return ex;
+    }),
   });
   if (error) throw error;
 }
@@ -184,17 +185,18 @@ export async function saveSession(exercises, { imageUrl = null, notes = null, tr
     p_image_url: imageUrl,
     p_notes: notes,
     p_training_group_id: trainingGroupId || null,
-    p_exercises: enabledExercises.map((e, i) => ({
-      name: e.name,
-      standard_name: e.standardName || null,
-      sets: e.sets ? parseInt(e.sets, 10) || null : null,
-      reps: e.reps ? parseInt(e.reps, 10) || null : null,
-      position: i,
-      activations: [
-        ...(e.primary || []).map(muscle_id => ({ muscle_id, activation_type: 'primary' })),
-        ...(e.secondary || []).map(muscle_id => ({ muscle_id, activation_type: 'secondary' })),
-      ],
-    })),
+    p_exercises: enabledExercises.map((e, i) => {
+      const ex = {
+        name: e.name,
+        position: i,
+        activations: [
+          ...(e.primary || []).map(muscle_id => ({ muscle_id, activation_type: 'primary' })),
+          ...(e.secondary || []).map(muscle_id => ({ muscle_id, activation_type: 'secondary' })),
+        ],
+      };
+      if (e.standardName) ex.standard_name = e.standardName;
+      return ex;
+    }),
     p_replace: replace,
   });
   if (error) throw error;
@@ -222,7 +224,7 @@ export async function fetchLastSession() {
       id, session_date,
       gym_calendar(name),
       session_exercises(
-        id, name, sets, reps,
+        id, name,
         muscle_activations(muscle_id, activation_type)
       )
     `)
@@ -284,7 +286,7 @@ export async function fetchSessionsByDate(dateStr) {
       id, session_date, created_at,
       gym_calendar_id, gym_calendar(name, start_time),
       session_exercises(
-        id, name, standard_name, sets, reps, position,
+        id, name, standard_name, position,
         muscle_activations(muscle_id, activation_type)
       )
     `)
@@ -325,7 +327,7 @@ export async function fetchWeekPlan(weekIso) {
       session_templates(
         id, name,
         session_template_exercises(
-          id, name, primary_muscles, secondary_muscles, sets, reps, sort_order
+          id, name, primary_muscles, secondary_muscles, sort_order
         )
       )
     `)
@@ -379,17 +381,18 @@ export async function updateSession(sessionId, exercises, gymCalendarId, { repla
   const { error } = await supabase.rpc('update_session', {
     p_session_id: sessionId,
     p_gym_calendar_id: gymCalendarId || null,
-    p_exercises: enabledExercises.map((e, i) => ({
-      name: e.name,
-      standard_name: e.standardName || null,
-      sets: e.sets ? parseInt(e.sets, 10) || null : null,
-      reps: e.reps ? parseInt(e.reps, 10) || null : null,
-      position: i,
-      activations: [
-        ...(e.primary || []).map(muscle_id => ({ muscle_id, activation_type: 'primary' })),
-        ...(e.secondary || []).map(muscle_id => ({ muscle_id, activation_type: 'secondary' })),
-      ],
-    })),
+    p_exercises: enabledExercises.map((e, i) => {
+      const ex = {
+        name: e.name,
+        position: i,
+        activations: [
+          ...(e.primary || []).map(muscle_id => ({ muscle_id, activation_type: 'primary' })),
+          ...(e.secondary || []).map(muscle_id => ({ muscle_id, activation_type: 'secondary' })),
+        ],
+      };
+      if (e.standardName) ex.standard_name = e.standardName;
+      return ex;
+    }),
     p_replace: replace,
   });
   if (error) throw error;
@@ -405,7 +408,7 @@ export async function fetchClassHistory(gymCalendarId) {
       id, session_date, trainer_id,
       profiles(display_name),
       session_exercises(
-        id, name, sets, reps,
+        id, name,
         muscle_activations(muscle_id, activation_type)
       )
     `)

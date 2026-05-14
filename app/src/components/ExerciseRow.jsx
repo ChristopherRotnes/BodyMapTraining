@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Checkbox, Button } from "@carbon/react";
 import { TrashCan } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { isInvalidNum } from "../lib/utils";
 
 export default function ExerciseRow({
   exercise,
@@ -80,54 +79,6 @@ export default function ExerciseRow({
             )}
           </div>
         )}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-        {["sets", "reps"].map(field => {
-          const isFieldInvalid = validateNumbers && isInvalidNum(exercise[field]);
-          const errorId = `err-${exercise.id}-${field}`;
-          return (
-            <div key={field} style={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
-              <input
-                type="number"
-                min="1"
-                max="99"
-                placeholder="–"
-                id={`ex-${field}-${exercise.id}`}
-                name={`ex-${field}-${exercise.id}`}
-                aria-label={field === "sets"
-                  ? t("exerciseRow.setsLabel", { name: exercise.name || t("common.exercises") })
-                  : t("exerciseRow.repsLabel", { name: exercise.name || t("common.exercises") })}
-                aria-invalid={isFieldInvalid || undefined}
-                aria-describedby={isFieldInvalid ? errorId : undefined}
-                value={exercise[field] || ""}
-                onChange={e => onChange({ [field]: e.target.value })}
-                style={{
-                  width: 40,
-                  height: 28,
-                  padding: "0 4px",
-                  background: "var(--cds-field-01)",
-                  border: `1px solid ${isFieldInvalid ? "var(--cds-support-error)" : "var(--cds-border-strong-01)"}`,
-                  color: isFieldInvalid ? "var(--cds-support-error)" : "var(--cds-text-primary)",
-                  fontFamily: "var(--cds-font-sans)",
-                  fontSize: 12,
-                  textAlign: "center",
-                }}
-              />
-              <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                {field === "sets" ? t("common.sets") : t("common.reps")}
-              </span>
-              {isFieldInvalid && (
-                <span
-                  id={errorId}
-                  style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
-                >
-                  {t("exerciseRow.invalidNumber")}
-                </span>
-              )}
-            </div>
-          );
-        })}
       </div>
 
       <Button

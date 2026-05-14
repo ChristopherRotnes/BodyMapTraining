@@ -17,8 +17,6 @@ function templateExToEditorShape(te) {
     library_exercise_id: te.library_exercise_id || null,
     name: te.name,
     standardName: te.name,
-    sets: te.sets || null,
-    reps: te.reps || null,
     primary: te.primary_muscles || [],
     secondary: te.secondary_muscles || [],
     enabled: true,
@@ -88,7 +86,6 @@ export default function GruppetimeEditor({ template, onBack }) {
       id,
       library_exercise_id: null,
       name: "", standardName: "",
-      sets: null, reps: null,
       primary: [], secondary: [],
       enabled: true,
     }]);

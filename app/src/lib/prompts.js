@@ -24,8 +24,8 @@ Identifiser ALLE treningsøvelser fra alle bildene. Ikke dupliser øvelser som f
 For hver øvelse, angi hvilke muskler som er primære og sekundære.
 Bruk KUN disse muscle-ID-ene: ${MUSCLE_IDS}.
 Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
-[{"name":"Nøyaktig navn fra tavlen","standardName":"Standard norsk/engelsk navn","sets":"3","reps":"10","primary":["chest"],"secondary":["shoulders_front","triceps"]}]
-"sets" og "reps" er null om ikke skrevet. Finn du ingen øvelser, returner: []`;
+[{"name":"Nøyaktig navn fra tavlen","standardName":"Standard norsk/engelsk navn","primary":["chest"],"secondary":["shoulders_front","triceps"]}]
+Finn du ingen øvelser, returner: []`;
 
 // Prompt for next-session recommendations after a single logged workout.
 export const buildRecommendPrompt = (trained, untrained, lang = 'nb') => {

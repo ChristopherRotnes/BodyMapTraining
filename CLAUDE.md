@@ -166,13 +166,12 @@ The sessions table has `UNIQUE (gym_calendar_id)` — updating to a gym class th
   id: number | string,   // number from Claude parse; string (Date.now()) for manually added rows
   name: string,          // exact name from whiteboard / user-edited
   standardName: string,  // normalised name
-  sets: string | null,   // defaults to "1" if not written on board
-  reps: string | null,
   primary: string[],     // muscle IDs returned by Claude (or from library)
   secondary: string[],   // muscle IDs returned by Claude (or from library)
   enabled: boolean       // toggled in confirm/template step
 }
 ```
+Sets and reps were removed in issue #200. Group class instructors log *what exercises were in the program*, not volume. DB columns (`sets`, `reps`, `default_sets`, `default_reps`) still exist and are nullable — no destructive migration.
 
 ## Exercise library + session templates data model (issue #38)
 
@@ -295,7 +294,7 @@ recommendation_cache
 ## Known limitations
 - SVG body is improved but still geometrically simplified — not anatomically precise; key muscles (traps, lats) use path shapes, rest are ellipses
 - `shoulders_front` and `shoulders_side` shapes were previously nearly identical in position (3px apart), causing wrong hover hit targets and incorrect tooltip data in the heatmap. Fixed by moving `shoulders_front` inward (cx:42, cy:60) and `shoulders_side` outward to the arm edge (cx:23, cy:68) — see issue #18. Pending live verification.
-- Volume (sets × reps) is logged but not used in muscle analysis
+- Sets and reps are not collected or stored (removed in issue #200) — the app tracks which exercises were in the program, not individual volume
 - Recommendations are contextual per session, not based on accumulated history (will improve with data)
 - No error handling for API rate limits
 - History edit mode re-analyse uses a single image only (the new photo replaces the full exercise list); multi-image re-analysis is not supported in edit mode
