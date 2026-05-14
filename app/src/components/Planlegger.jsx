@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { ChevronLeft, ChevronRight, Add, Close } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates, fetchSessionsForWeek } from "../lib/db";
-import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale, extractMuscles } from "../lib/utils";
+import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
+import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 
@@ -207,7 +207,6 @@ export default function Planlegger() {
   const [saveError, setSaveError] = useState(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const [mobileBodyView, setMobileBodyView] = useState("front");
-  const [weekSessions, setWeekSessions] = useState([]);
   const isMobile = useIsMobile();
 
   const today = useMemo(() => new Date(), []);
@@ -243,16 +242,6 @@ export default function Planlegger() {
       return d;
     });
   }, [monday]);
-
-  const untrainedThisWeekIds = useMemo(() => {
-    const trained = new Set();
-    weekSessions.forEach(s => {
-      const m = extractMuscles(s);
-      m.primary.forEach(id => trained.add(id));
-      m.secondary.forEach(id => trained.add(id));
-    });
-    return Object.keys(MUSCLES).filter(id => !trained.has(id));
-  }, [weekSessions]);
 
   const projectedData = useMemo(() => {
     const allExercises = Object.values(assignments)
@@ -293,10 +282,8 @@ export default function Planlegger() {
     return Object.keys(MUSCLES).filter(id => !trained.has(id));
   }, [projectedData]);
 
-  const showForslag = untrainedMuscleIds.length >= 2 && sessionCount > 0;
-
   const forslagTemplates = useMemo(() => {
-    if (!showForslag) return [];
+    if (sessionCount === 0 || untrainedMuscleIds.length < 2) return [];
     const untrainedSet = new Set(untrainedMuscleIds);
     return templates
       .map(tpl => {
@@ -314,19 +301,17 @@ export default function Planlegger() {
       .sort((a, b) => b.covered - a.covered)
       .slice(0, 3)
       .map(x => x.tpl);
-  }, [showForslag, untrainedMuscleIds, templates]);
+  }, [sessionCount, untrainedMuscleIds, templates]);
 
   const loadPlan = useCallback(async (iso) => {
     setLoading(true);
     setSaveError(null);
     try {
-      const [{ days }, tpls, sessions] = await Promise.all([
+      const [{ days }, tpls] = await Promise.all([
         fetchWeekPlan(iso),
         fetchTemplates(),
-        fetchSessionsForWeek(iso),
       ]);
       setTemplates(tpls);
-      setWeekSessions(sessions);
       const map = {};
       (days || []).forEach(d => {
         map[d.day_of_week] = d.session_templates || null;
@@ -419,140 +404,6 @@ export default function Planlegger() {
           <InlineLoading description={t("planlegger.loadingPlan")} status="active" style={{ padding: "0 16px" }} />
         ) : (
           <>
-            {/* Untrained this week */}
-            <SectionLabel>{t("planlegger.notTrainedThisWeek")}</SectionLabel>
-
-            <div style={{ padding: "0 16px", marginBottom: 24, minHeight: 32 }}>
-              {untrainedThisWeekIds.length === 0 ? (
-                <p style={{
-                  fontFamily: "var(--cds-font-mono)",
-                  fontSize: 11,
-                  letterSpacing: "0.06em",
-                  color: "var(--text-muted-wl)",
-                  margin: 0,
-                }}>
-                  {t("planlegger.allMusclesTrained")}
-                </p>
-              ) : (
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {untrainedThisWeekIds.map(id => (
-                    <span
-                      key={id}
-                      style={{
-                        flexShrink: 0,
-                        padding: "5px 13px",
-                        borderRadius: "var(--r-pill)",
-                        border: "1px solid var(--border-subtle-wl)",
-                        background: "transparent",
-                        color: "var(--text-muted-wl)",
-                        fontFamily: "var(--cds-font-mono)",
-                        fontSize: 11,
-                        letterSpacing: "0.06em",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Projected coverage */}
-            <SectionLabel>{t("planlegger.projectedCoverage")}</SectionLabel>
-
-            <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", padding: "0 16px", marginBottom: 12 }}>
-              {t("planlegger.weekSummary", { count: sessionCount, muscleCount: muscleGroupCount })}
-            </p>
-
-            {/* Body map */}
-            {isMobile ? (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 8, marginBottom: 8, paddingLeft: 16 }}>
-                  {["front", "back"].map(v => (
-                    <Button key={v} kind={mobileBodyView === v ? "primary" : "ghost"} size="sm"
-                      onClick={() => setMobileBodyView(v)}>
-                      {v === "front" ? t("bodyPanel.front") : t("bodyPanel.back")}
-                    </Button>
-                  ))}
-                </div>
-                <div style={{ maxWidth: 240, margin: "0 auto", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                  <HeatmapBodySVG
-                    view={mobileBodyView}
-                    counts={projectedData.counts}
-                    maxCount={1}
-                    exerciseMap={projectedData.muscleMap}
-                    onHover={setHoveredMuscle}
-                    hovered={hoveredMuscle}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", gap: 12, marginBottom: 16, padding: "0 16px" }}>
-                {["front", "back"].map(view => (
-                  <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
-                    <HeatmapBodySVG
-                      view={view}
-                      counts={projectedData.counts}
-                      maxCount={1}
-                      exerciseMap={projectedData.muscleMap}
-                      onHover={setHoveredMuscle}
-                      hovered={hoveredMuscle}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div style={{ height: 48, margin: "0 16px 12px", overflow: "hidden" }}>
-              {hoveredMuscle && projectedData.muscleMap[hoveredMuscle]?.length > 0 && (
-                <div style={{
-                  padding: "10px 14px",
-                  background: "var(--accent-bg-08)",
-                  border: "1px solid var(--accent-bg-30)",
-                  fontSize: 13,
-                  color: "var(--cds-text-primary)",
-                }}>
-                  <span style={{ fontWeight: 600 }}>{t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}:</span>{" "}
-                  {projectedData.muscleMap[hoveredMuscle].join(", ")}
-                </div>
-              )}
-            </div>
-
-            {/* Gaps card */}
-            {showForslag && (
-              <div style={{
-                margin: "0 16px 16px",
-                padding: "14px 16px",
-                background: "var(--cds-notification-background-warning, #1c1500)",
-                border: "1px solid var(--cds-support-warning, #f1c21b)",
-                borderInlineStart: "3px solid var(--cds-support-warning, #f1c21b)",
-              }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "var(--cds-text-primary)", marginBottom: 8 }}>
-                  {t("planlegger.gapsCard", { count: untrainedMuscleIds.length })}
-                </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: forslagTemplates.length > 0 ? 10 : 0 }}>
-                  {untrainedMuscleIds.map(id => (
-                    <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
-                  ))}
-                </div>
-                {forslagTemplates.length > 0 && (
-                  <>
-                    <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", marginBottom: 6 }}>
-                      {t("planlegger.templatesCovering")}
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {forslagTemplates.map(tpl => (
-                        <span key={tpl.id} style={{ fontSize: 13, color: "var(--cds-text-primary)" }}>
-                          · {tpl.name}
-                        </span>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
             {/* Week plan */}
             <SectionLabel>{t("planlegger.weekPlan")}</SectionLabel>
 
@@ -574,6 +425,103 @@ export default function Planlegger() {
               ))}
             </div>
 
+            {sessionCount > 0 && (
+              <>
+                {/* Gaps card */}
+                {untrainedMuscleIds.length > 0 && (
+                  <div style={{
+                    margin: "16px 16px 0",
+                    padding: "14px 16px",
+                    background: "var(--cds-notification-background-warning, #1c1500)",
+                    border: "1px solid var(--cds-support-warning, #f1c21b)",
+                    borderInlineStart: "3px solid var(--cds-support-warning, #f1c21b)",
+                  }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--cds-text-primary)", marginBottom: 8 }}>
+                      {t("planlegger.gapsCard", { count: untrainedMuscleIds.length })}
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: forslagTemplates.length > 0 ? 10 : 0 }}>
+                      {untrainedMuscleIds.map(id => (
+                        <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
+                      ))}
+                    </div>
+                    {forslagTemplates.length > 0 && (
+                      <>
+                        <p style={{ fontSize: 12, color: "var(--cds-text-secondary)", marginBottom: 6 }}>
+                          {t("planlegger.templatesCovering")}
+                        </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          {forslagTemplates.map(tpl => (
+                            <span key={tpl.id} style={{ fontSize: 13, color: "var(--cds-text-primary)" }}>
+                              · {tpl.name}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Projected coverage */}
+                <SectionLabel style={{ marginTop: 24 }}>{t("planlegger.projectedCoverage")}</SectionLabel>
+
+                <p style={{ fontSize: 13, color: "var(--cds-text-secondary)", padding: "0 16px", marginBottom: 12 }}>
+                  {t("planlegger.weekSummary", { count: sessionCount, muscleCount: muscleGroupCount })}
+                </p>
+
+                {isMobile ? (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8, paddingLeft: 16 }}>
+                      {["front", "back"].map(v => (
+                        <Button key={v} kind={mobileBodyView === v ? "primary" : "ghost"} size="sm"
+                          onClick={() => setMobileBodyView(v)}>
+                          {v === "front" ? t("bodyPanel.front") : t("bodyPanel.back")}
+                        </Button>
+                      ))}
+                    </div>
+                    <div style={{ maxWidth: 240, margin: "0 auto", background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                      <HeatmapBodySVG
+                        view={mobileBodyView}
+                        counts={projectedData.counts}
+                        maxCount={1}
+                        exerciseMap={projectedData.muscleMap}
+                        onHover={setHoveredMuscle}
+                        hovered={hoveredMuscle}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: 12, marginBottom: 16, padding: "0 16px" }}>
+                    {["front", "back"].map(view => (
+                      <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "10px 6px" }}>
+                        <HeatmapBodySVG
+                          view={view}
+                          counts={projectedData.counts}
+                          maxCount={1}
+                          exerciseMap={projectedData.muscleMap}
+                          onHover={setHoveredMuscle}
+                          hovered={hoveredMuscle}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ height: 48, margin: "0 16px 12px", overflow: "hidden" }}>
+                  {hoveredMuscle && projectedData.muscleMap[hoveredMuscle]?.length > 0 && (
+                    <div style={{
+                      padding: "10px 14px",
+                      background: "var(--accent-bg-08)",
+                      border: "1px solid var(--accent-bg-30)",
+                      fontSize: 13,
+                      color: "var(--cds-text-primary)",
+                    }}>
+                      <span style={{ fontWeight: 600 }}>{t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}:</span>{" "}
+                      {projectedData.muscleMap[hoveredMuscle].join(", ")}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
