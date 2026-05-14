@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Button, Theme } from "@carbon/react";
-import { Camera, RecentlyViewed, Analytics, EventSchedule, Book } from "@carbon/icons-react";
+import { Camera, RecentlyViewed, Analytics, EventSchedule, Notebook } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../theme";
 import { PageHeading } from "./PageShell";
@@ -10,7 +10,7 @@ const SLIDES = [
   { Icon: RecentlyViewed, titleKey: "intro.slide2Title", bodyKey: "intro.slide2Body" },
   { Icon: Analytics, titleKey: "intro.slide3Title", bodyKey: "intro.slide3Body" },
   { Icon: EventSchedule, titleKey: "intro.slide4Title", bodyKey: "intro.slide4Body" },
-  { Icon: Book, titleKey: "intro.slide5Title", bodyKey: "intro.slide5Body" },
+  { Icon: Notebook, titleKey: "intro.slide5Title", bodyKey: "intro.slide5Body" },
 ];
 
 export default function IntroModal({ open, onClose }) {

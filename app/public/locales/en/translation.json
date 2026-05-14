@@ -279,16 +279,16 @@
     "next": "Next",
     "start": "Get started",
     "replayHint": "You can always reopen this guide from Settings.",
-    "slide1Title": "Upload a training session",
-    "slide1Body": "Take a photo of the gym whiteboard or add exercises manually. Claude recognises the exercises and maps which muscles you trained.",
+    "slide1Title": "Log a group class",
+    "slide1Body": "Photo the gym whiteboard after class, or add exercises manually. Claude reads the program and maps which muscles were trained.",
     "slide2Title": "View your history",
-    "slide2Body": "All your sessions are collected in History. Edit exercises, change the date, and see which muscles were activated.",
+    "slide2Body": "All sessions are collected in History. Edit exercises and muscles afterwards, and navigate the monthly overview to see your activation pattern over time.",
     "slide3Title": "Analyse your training",
-    "slide3Body": "Period reports show which muscles you hit regularly, which you neglect, and give you personalised recommendations.",
+    "slide3Body": "See which muscles you hit regularly and which you neglect. Get Claude-powered recommendations based on muscle gaps in the selected period.",
     "slide4Title": "Plan the week",
-    "slide4Body": "Build weekly plans from your templates and see projected muscle coverage before you train.",
-    "slide5Title": "Build a library",
-    "slide5Body": "Save your own exercises with muscle mappings and build templates you can reuse week after week."
+    "slide4Body": "Build weekly plans from your templates. See what's already been trained this week, projected muscle coverage for your plan, and suggested templates to fill the gaps.",
+    "slide5Title": "Build your sessions",
+    "slide5Body": "Build group-class templates and save your own exercises with muscle mappings. Useful when you have exercises Claude doesn't recognise, or want to log a session without taking a photo."
   },
   "settings": {
     "heading": "Settings",

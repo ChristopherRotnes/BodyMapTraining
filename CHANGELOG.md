@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.2] — 2026-05-14
+
+### Changed
+- **Intro guide rewrite (issue #212)** — all 5 slides updated to reflect the current app. Slide 1 now frames the group-class whiteboard context. Slide 2 mentions editing muscles. Slide 4 covers the untrained-this-week indicator and template suggestions. Slide 5 icon fixed (`Book` → `Notebook`) and text rewritten to describe «Sett sammen» (templates + exercise library) including the use case of logging without a photo. All three locales (nb, en, fa) updated.
+
 ## [1.5.1] — 2026-05-14
 
 ### Changed
