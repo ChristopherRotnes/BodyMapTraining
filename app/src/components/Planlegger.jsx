@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
-import { ChevronLeft, ChevronRight, Add, Close } from "@carbon/icons-react";
+import { ChevronLeft, ChevronRight, Add, Close, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
 import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale } from "../lib/utils";
@@ -9,6 +9,18 @@ import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 
 function TemplatePickerSheet({ templates, onSelect, onClose }) {
   const { t } = useTranslation();
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 200);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const filtered = debouncedSearch
+    ? templates.filter(tpl => tpl.name.toLowerCase().includes(debouncedSearch))
+    : templates;
+
   return (
     <div
       onClick={onClose}
@@ -54,13 +66,41 @@ function TemplatePickerSheet({ templates, onSelect, onClose }) {
           </button>
         </div>
 
+        {templates.length > 10 && (
+          <div style={{ position: "relative", padding: "8px 16px", borderBottom: "1px solid var(--cds-border-subtle-01)" }}>
+            <Search size={16} style={{ position: "absolute", left: 28, top: "50%", transform: "translateY(-50%)", color: "var(--cds-icon-secondary)", pointerEvents: "none" }} />
+            <input
+              type="search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={t("common.search", { defaultValue: "Søk…" })}
+              autoFocus
+              style={{
+                width: "100%",
+                padding: "7px 12px 7px 34px",
+                background: "var(--surface-card)",
+                border: "1px solid var(--border-subtle-wl)",
+                color: "var(--cds-text-primary)",
+                fontFamily: "var(--cds-font-sans)",
+                fontSize: 14,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        )}
+
         {templates.length === 0 ? (
           <p style={{ padding: "16px", fontSize: 14, color: "var(--cds-text-secondary)" }}>
             {t("planlegger.noTemplates")}
           </p>
+        ) : filtered.length === 0 ? (
+          <p style={{ padding: "16px", fontSize: 14, color: "var(--cds-text-secondary)" }}>
+            {t("planlegger.noSearchResults", { defaultValue: "Ingen maler funnet." })}
+          </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {templates.map(tpl => (
+            {filtered.map(tpl => (
               <button
                 key={tpl.id}
                 onClick={() => onSelect(tpl)}
@@ -68,12 +108,12 @@ function TemplatePickerSheet({ templates, onSelect, onClose }) {
                   background: "none",
                   border: "none",
                   borderBottom: "1px solid var(--cds-border-subtle-01)",
-                  padding: "12px 16px",
+                  padding: "8px 16px",
                   textAlign: "left",
                   cursor: "pointer",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 3,
+                  gap: 2,
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = "var(--cds-layer-hover-01)"}
                 onMouseLeave={e => e.currentTarget.style.background = "none"}
