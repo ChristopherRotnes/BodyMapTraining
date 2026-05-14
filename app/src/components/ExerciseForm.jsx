@@ -88,10 +88,21 @@ export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
           <InlineLoading description={t("exercise.musclesAI")} status="finished" />
         </div>
       )}
-      {!inferStatus && aiInferred && (
-        <p style={{ marginTop: 6, fontSize: 11, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)" }}>
-          {t("exercise.musclesAI")}
-        </p>
+      {!inferStatus && aiInferred && !noMuscles && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, padding: "6px 10px", background: "var(--accent-bg-08)", border: "1px solid var(--accent-bg-30)", borderRadius: 6 }}>
+          <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--accent-soft)", background: "var(--accent-bg-14)", borderRadius: "var(--r-pill)", padding: "2px 7px", flexShrink: 0 }}>
+            AI
+          </span>
+          <span style={{ fontFamily: "var(--cds-font-sans)", fontSize: 12, color: "var(--cds-text-secondary)", flex: 1 }}>
+            {t("exercise.musclesAI")}
+          </span>
+          <button
+            onClick={() => { setPrimary([]); setSecondary([]); setAiInferred(false); }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "var(--cds-font-mono)", fontSize: 11, color: "var(--accent-soft)", letterSpacing: "0.06em", padding: "2px 4px", flexShrink: 0 }}
+          >
+            {t("exerciseForm.aiReset")}
+          </button>
+        </div>
       )}
       {!inferStatus && !aiInferred && noMuscles && name.trim() && (
         <InlineNotification

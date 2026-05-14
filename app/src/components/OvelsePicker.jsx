@@ -4,6 +4,7 @@ import { Add, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, BackButton, AccentChip } from "./PageShell";
 import ExerciseForm from "./ExerciseForm";
+import OvelseDetail from "./OvelseDetail";
 import { MUSCLES } from "../lib/bodymap.jsx";
 import { fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise } from "../lib/db";
 import { logDevError } from "../lib/utils";
@@ -30,6 +31,7 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [region, setRegion] = useState("alle");
   const [showNew, setShowNew] = useState(initialShowNew);
+  const [detailEx, setDetailEx] = useState(null);
   const [editingEx, setEditingEx] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -87,6 +89,16 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
     { key: "underkropp",label: t("settSammen.regionLower") },
     { key: "kondisjon", label: t("settSammen.regionCardio") },
   ];
+
+  if (detailEx) {
+    return (
+      <OvelseDetail
+        exercise={detailEx}
+        onBack={() => setDetailEx(null)}
+        onEdit={(ex) => { setDetailEx(null); setEditingEx(ex); }}
+      />
+    );
+  }
 
   return (
     <PageShell>
@@ -180,7 +192,7 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
                     />
                   ) : (
                     <button
-                      onClick={() => { setEditingEx(ex); setShowNew(false); }}
+                      onClick={() => { setDetailEx(ex); setShowNew(false); }}
                       style={{
                         background: "var(--cds-layer-01)",
                         border: "1px solid var(--cds-border-subtle-01)",

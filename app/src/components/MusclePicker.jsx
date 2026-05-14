@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { MUSCLES, SHAPES, BODY_PATH, PRIMARY_FILL, PRIMARY_HOVER, PRIMARY_STROKE, SEC_STROKE } from "../lib/bodymap.jsx";
+import { MUSCLES, SHAPES, BODY_PATH, PRIMARY_FILL, PRIMARY_HOVER, PRIMARY_STROKE, SEC_STROKE, useIsMobile } from "../lib/bodymap.jsx";
 import { Tag } from "@carbon/react";
 
 function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
@@ -120,6 +120,8 @@ function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {
 
 export default function MusclePicker({ primary = [], secondary = [], onChange, instanceId = "0" }) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = React.useState("front");
 
   const toggle = (id) => {
     const isPrimary = primary.includes(id);
@@ -148,19 +150,49 @@ export default function MusclePicker({ primary = [], secondary = [], onChange, i
           {t("musclePicker.helpText")}
         </span>
       </div>
-      <div aria-describedby={helpId} style={{ display: "flex", gap: 8 }}>
-        {["front", "back"].map(view => (
-          <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "6px 4px" }}>
+
+      {isMobile ? (
+        <div aria-describedby={helpId}>
+          <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
+            {["front", "back"].map(v => (
+              <button key={v} onClick={() => setMobileView(v)} style={{
+                flex: 1, padding: "5px 0",
+                background: mobileView === v ? "var(--accent-bg-14)" : "transparent",
+                border: mobileView === v ? "1px solid var(--accent)" : "1px solid var(--border-subtle-wl)",
+                borderRadius: "var(--r-pill)",
+                color: mobileView === v ? "var(--accent-soft)" : "var(--text-muted-wl)",
+                fontFamily: "var(--cds-font-mono)", fontSize: 11, letterSpacing: "0.06em",
+                cursor: "pointer",
+              }}>
+                {v === "front" ? t("bodyPanel.front") : t("bodyPanel.back")}
+              </button>
+            ))}
+          </div>
+          <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "6px 4px" }}>
             <MusclePickerView
-              view={view}
+              view={mobileView}
               primary={primary}
               secondary={secondary}
               onToggle={toggle}
-              instanceId={`${instanceId}-${view}`}
+              instanceId={`${instanceId}-${mobileView}`}
             />
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div aria-describedby={helpId} style={{ display: "flex", gap: 8 }}>
+          {["front", "back"].map(view => (
+            <div key={view} style={{ flex: 1, background: "var(--cds-layer-01)", border: "1px solid var(--cds-border-subtle-01)", padding: "6px 4px" }}>
+              <MusclePickerView
+                view={view}
+                primary={primary}
+                secondary={secondary}
+                onToggle={toggle}
+                instanceId={`${instanceId}-${view}`}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

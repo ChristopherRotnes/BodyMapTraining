@@ -408,7 +408,16 @@
     "saveExercise": "Lagre øvelse",
     "noMusclesWarning": "Ingen muskler valgt — klikk på figuren for å registrere",
     "headerNew": "Ny øvelse",
-    "headerEdit": "Rediger øvelse"
+    "headerEdit": "Rediger øvelse",
+    "aiReset": "Nullstill"
+  },
+  "ovelseDetail": {
+    "usedInTemplates_zero": "Ikke brukt i noen maler",
+    "usedInTemplates_one": "Brukt i {{count}} mal",
+    "usedInTemplates_other": "Brukt i {{count}} maler",
+    "edit": "Rediger øvelse",
+    "loadingTemplates": "Sjekker maler…",
+    "templateListTitle": "Maler som bruker denne øvelsen"
   },
   "libraryPicker": {
     "searchLabel": "Søk i øvelsesbiblioteket",
@@ -477,6 +486,8 @@
     "exFlytAdd": "Legg til"
   },
   "settSammen": {
+    "gruppetimerKicker": "GRUPPETIME",
+    "ovelseKicker": "ØVELSE",
     "lagGruppetime": "Lag en gruppetime",
     "lagGruppetimerBody": "Opprett eller rediger en mal for gymtimen",
     "nyOvelse": "Ny øvelse",

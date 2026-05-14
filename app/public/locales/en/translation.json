@@ -408,7 +408,16 @@
     "saveExercise": "Save exercise",
     "noMusclesWarning": "No muscles selected — click the figure to register",
     "headerNew": "New exercise",
-    "headerEdit": "Edit exercise"
+    "headerEdit": "Edit exercise",
+    "aiReset": "Reset"
+  },
+  "ovelseDetail": {
+    "usedInTemplates_zero": "Not used in any templates",
+    "usedInTemplates_one": "Used in {{count}} template",
+    "usedInTemplates_other": "Used in {{count}} templates",
+    "edit": "Edit exercise",
+    "loadingTemplates": "Checking templates…",
+    "templateListTitle": "Templates using this exercise"
   },
   "libraryPicker": {
     "searchLabel": "Search exercise library",
@@ -477,6 +486,8 @@
     "exFlytAdd": "Add"
   },
   "settSammen": {
+    "gruppetimerKicker": "GROUP SESSION",
+    "ovelseKicker": "EXERCISE",
     "lagGruppetime": "Create group session",
     "lagGruppetimerBody": "Create or edit a session template",
     "nyOvelse": "New exercise",
