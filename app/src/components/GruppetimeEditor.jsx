@@ -10,13 +10,6 @@ import { MUSCLES } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises, logDevError, getIntlLocale } from "../lib/utils";
 import { fetchLibraryExercises, replaceTemplateExercises, updateTemplateDetails, touchTemplate } from "../lib/db";
 
-const TEMPLATE_TYPES = [
-  { key: "crossfit",     labelKey: "gruppetimerEditor.typeCrossfit" },
-  { key: "styrke",       labelKey: "gruppetimerEditor.typeStyrke" },
-  { key: "kondisjon",    labelKey: "gruppetimerEditor.typeKondisjon" },
-  { key: "yoga",         labelKey: "gruppetimerEditor.typeYoga" },
-  { key: "sirkeltrening",labelKey: "gruppetimerEditor.typeSirkel" },
-];
 
 function templateExToEditorShape(te) {
   return {
@@ -39,7 +32,6 @@ export default function GruppetimeEditor({ template, onBack }) {
   );
   const [name, setName] = useState(template.name);
   const [editingName, setEditingName] = useState(false);
-  const [templateType, setTemplateType] = useState(template.template_type || null);
   const [libraryExercises, setLibraryExercises] = useState([]);
   const [showExFlyt, setShowExFlyt] = useState(false);
   const [newExId, setNewExId] = useState(null);
@@ -108,10 +100,7 @@ export default function GruppetimeEditor({ template, onBack }) {
     setSaveError(null);
     try {
       const enabled = exercises.filter(e => e.enabled && e.name);
-      await updateTemplateDetails(template.id, {
-        name,
-        template_type: templateType,
-      });
+      await updateTemplateDetails(template.id, { name });
       await replaceTemplateExercises(template.id, enabled);
       touchTemplate(template.id).catch(() => {});
       onBack();
@@ -165,28 +154,6 @@ export default function GruppetimeEditor({ template, onBack }) {
               )}
             </div>
 
-            {/* Type picker */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {TEMPLATE_TYPES.map(tt => (
-                <button
-                  key={tt.key}
-                  onClick={() => setTemplateType(prev => prev === tt.key ? null : tt.key)}
-                  style={{
-                    padding: "5px 14px",
-                    borderRadius: "var(--r-pill)",
-                    border: templateType === tt.key ? "1px solid var(--accent)" : "1px solid var(--border-subtle-wl)",
-                    background: templateType === tt.key ? "var(--accent-bg-14)" : "transparent",
-                    color: templateType === tt.key ? "var(--accent-soft)" : "var(--text-muted-wl)",
-                    fontFamily: "var(--cds-font-mono)",
-                    fontSize: 11,
-                    letterSpacing: "0.06em",
-                    cursor: "pointer",
-                  }}
-                >
-                  {t(tt.labelKey)}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Live muscle coverage */}
