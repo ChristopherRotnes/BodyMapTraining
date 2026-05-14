@@ -6,7 +6,7 @@ import { toIsoDate, weekIsoToMonday, toWeekIso } from "./utils";
 export async function fetchLibraryExercises() {
   const { data, error } = await supabase
     .from("exercise_library")
-    .select("*")
+    .select("*, profiles!user_id(display_name)")
     .order("name", { ascending: true });
   if (error) throw error;
   return data;
@@ -24,12 +24,10 @@ export async function saveLibraryExercise({ name, primary_muscles, secondary_mus
 }
 
 export async function updateLibraryExercise(id, { name, primary_muscles, secondary_muscles, default_sets, default_reps }) {
-  const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("exercise_library")
     .update({ name, primary_muscles, secondary_muscles, default_sets, default_reps })
     .eq("id", id)
-    .eq("user_id", user.id)
     .select()
     .single();
   if (error) throw error;
@@ -46,14 +44,12 @@ export async function fetchTemplateNamesUsingExercise(exerciseId) {
 }
 
 export async function deleteLibraryExercise(id) {
-  const { data: { user } } = await supabase.auth.getUser();
   // Remove from any templates that reference this exercise
   await supabase.from("session_template_exercises").delete().eq("library_exercise_id", id);
   const { error } = await supabase
     .from("exercise_library")
     .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -63,7 +59,8 @@ export async function fetchTemplates() {
   const { data, error } = await supabase
     .from("session_templates")
     .select(`
-      id, name, sort_order, used_at, created_at,
+      id, name, sort_order, used_at, created_at, user_id,
+      profiles!user_id(display_name),
       session_template_exercises(
         id, library_exercise_id, name, primary_muscles, secondary_muscles, sets, reps, sort_order
       )
@@ -90,12 +87,10 @@ export async function saveTemplate(name) {
 }
 
 export async function updateTemplateName(id, name) {
-  const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("session_templates")
     .update({ name })
     .eq("id", id)
-    .eq("user_id", user.id)
     .select()
     .single();
   if (error) throw error;
@@ -103,22 +98,18 @@ export async function updateTemplateName(id, name) {
 }
 
 export async function deleteTemplate(id) {
-  const { data: { user } } = await supabase.auth.getUser();
   const { error } = await supabase
     .from("session_templates")
     .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) throw error;
 }
 
 export async function touchTemplate(id) {
-  const { data: { user } } = await supabase.auth.getUser();
   const { error } = await supabase
     .from("session_templates")
     .update({ used_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
   if (error) throw error;
 }
 

@@ -6,6 +6,7 @@ import {
 import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { logDevError } from "../lib/utils";
+import { supabase } from "../lib/supabase";
 import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
@@ -44,8 +45,10 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const [exVisible, setExVisible] = useState(20);
   const [tplSearch, setTplSearch] = useState("");
   const [tplVisible, setTplVisible] = useState(12);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null));
     fetchLibraryExercises()
       .then(setExercises)
       .catch(e => { logDevError("Bibliotek/fetchExercises", e); setExError(e.message); })
@@ -280,6 +283,11 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                                 <span style={{ fontSize: 11, color: "var(--text-muted-wl)" }}>{t("bibliotek.noMuscles")}</span>
                               )}
                             </div>
+                            {currentUserId && ex.user_id !== currentUserId && ex.profiles?.display_name && (
+                              <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", marginTop: 3 }}>
+                                {t("bibliotek.createdBy", { name: ex.profiles.display_name })}
+                              </div>
+                            )}
                           </div>
                           {(ex.default_sets && ex.default_reps) && (
                             <span style={{ fontSize: 11, color: "var(--text-muted-wl)", flexShrink: 0, fontFamily: "var(--cds-font-mono)" }}>
@@ -408,6 +416,11 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
                         <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                           {t("bibliotek.exerciseCount", { count: exCount })} · {muscleCount} MUS
                         </div>
+                        {currentUserId && tpl.user_id !== currentUserId && tpl.profiles?.display_name && (
+                          <div style={{ fontSize: 11, color: "var(--cds-text-secondary)", fontFamily: "var(--cds-font-mono)", marginTop: 3 }}>
+                            {t("bibliotek.createdBy", { name: tpl.profiles.display_name })}
+                          </div>
+                        )}
                       </div>
                       <Button kind="ghost" hasIconOnly renderIcon={ChevronRight}
                         iconDescription={t("bibliotek.deleteTemplateTitle")} size="sm"

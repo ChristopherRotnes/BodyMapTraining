@@ -52,7 +52,7 @@ Fully migrated to IBM Carbon Design System (issue #8, resolved 2026-04-29).
 - `Login.jsx` → Carbon `TextInput`, `Button`, `InlineNotification`, `Email` icon; `getDailyQuote()` renders a date-aware motivational quote below the subtitle — English only (hardcoded; language preference is unknown before login); keyed by `MM-DD` for special dates (`01-01`, `12-24`), falls back to a per-weekday quote; 13px italic `var(--cds-text-secondary)`
 - `MuscleMap.jsx` → Carbon `Header` + `HeaderGlobalBar` (with `RecentlyViewed` history nav, `Book` library nav, light/dark toggle), `ProgressIndicator` (horizontal stepper with step labels), `Button`, `Tag`, `InlineLoading`, `InlineNotification`; dashed-border dropzone on upload step; sticky action bar on confirm step; exercise rows delegated to `ExerciseRow`
 - `History.jsx` → `SectionLabel` + `PageHeading` hero (context-aware: default shows month count; filter active + date selected shows "N av total økter den dato"; filter active + no date shows month count with "med disse filtrene"); `PageHeading` has `minHeight: 72` to prevent layout shift; muscle filter chips use `flexWrap: wrap` (all always visible); `borderBottom` separator below chip section; session rows always have 3px left strip (accent when filter-matched); session title in Cond 700; custom `MonthGrid` calendar; expanded sessions are always editable — per-session edit state in a `Map<sessionId, editState>` (no global `editMode` boolean); a dirty-state Save / Discard bar appears when changes are detected; "Legg til øvelse manuelt" (`Add` icon) and "Last opp nytt bilde" (`Camera` icon) rendered as sibling `Button kind="ghost"` on one row below the exercise list; session header chips capped at 2 visible with `+N` overflow span; library exercises pre-fetched on mount (not on first expand) to ensure autocomplete is ready when user adds first exercise to a session with 0 exercises; exercise rows delegated to `ExerciseRowWithAutocomplete`; all date formatting via `Intl.DateTimeFormat` driven by `i18n.language`
-- `Bibliotek.jsx` → custom pill tab strip (replaces Carbon `Tabs`; keyboard ArrowLeft/ArrowRight); tabs: "Øvelser" and "Mine maler"; `PageHeading` hero; live search input on exercises tab with load-more (batches of 20 when >20 shown); "Ny øvelse" button below search input; no Snarveier carousel; search input on templates tab with load-more (batches of 12 when >12); template cards show exercise count + muscle count only (no `used_at` date); exercise rows use `AccentChip` for primary muscles + Cond 700 name + 3px accent left strip; template cards use `borderRadius: var(--r-card)`; exercise form via `ExerciseForm`
+- `Bibliotek.jsx` → custom pill tab strip (replaces Carbon `Tabs`; keyboard ArrowLeft/ArrowRight); tabs: "Øvelser" and "Maler"; `PageHeading` hero; live search input on exercises tab with load-more (batches of 20 when >20 shown); "Ny øvelse" button below search input; no Snarveier carousel; search input on templates tab with load-more (batches of 12 when >12); template cards show exercise count + muscle count only (no `used_at` date); exercise rows use `AccentChip` for primary muscles + Cond 700 name + 3px accent left strip; template cards use `borderRadius: var(--r-card)`; exercise form via `ExerciseForm`; creator attribution ("Av [name]") shown on exercise rows and template cards when the item was created by a different co-instructor
 - `TemplatePicker.jsx` → Carbon `Button`, `InlineLoading`, `InlineNotification`
 - `TemplateSessionEditor.jsx` → `layer-02` + 2px accent top border container; `SectionLabel renderIcon={Edit}` header; Carbon `TextInput` for template name (inline rename); step indicator in use mode ("Steg 2 av 3"); no "Lagre mal" in use mode; body map via `BodyPanel`; exercise rows via `ExerciseRowWithAutocomplete`; library search via `LibraryPicker`
 - `MuscleMap.jsx` confirm step → wrapped in `layer-02` + 2px accent top border container; `SectionLabel renderIcon={Edit}` header; Carbon `DatePicker`/`DatePickerInput` for session date (defaults to today, max = today)
@@ -163,6 +163,18 @@ week_plan_days
 ```
 
 `week_plan_days.template_id` nullable — an empty slot is a valid row with `template_id = null`. RLS on both tables restricts all operations to the owning user (`auth.uid() = user_id` / exists check via join).
+
+## Gym-wide shared templates and exercise library (2026-05-14)
+
+`session_templates` and `exercise_library` are **gym-wide**: any co-instructor at the same gym (via `user_gyms` join) can SELECT, INSERT, UPDATE, and DELETE. `user_id` is retained on both tables as "created by" for attribution display only — it is no longer an ownership gate.
+
+RLS policies replaced (migration `gym_wide_templates_and_exercises`):
+- Old: `auth.uid() = user_id` (ALL ops) on all three tables
+- New: separate INSERT policy (`auth.uid() = user_id`) + SELECT/UPDATE/DELETE policies using the same-gym EXISTS subquery already used for sessions; `session_template_exercises` uses a JOIN via `session_templates.user_id`
+
+`db.js` changes: removed `.eq("user_id", user.id)` defensive filters from `updateTemplateName`, `deleteTemplate`, `touchTemplate`, `updateLibraryExercise`, `deleteLibraryExercise`; added `profiles!user_id(display_name)` join to `fetchTemplates` and `fetchLibraryExercises`.
+
+**Editing an exercise does NOT rewrite historical sessions.** `muscle_activations` rows are permanent snapshots written at log time with no FK to `exercise_library`. Correcting a muscle mapping in the library only affects future sessions.
 
 `db.js` functions:
 | Function | Description |
