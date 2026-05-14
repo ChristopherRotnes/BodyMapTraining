@@ -385,6 +385,8 @@ export default function Planlegger() {
   return (
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
+        <SectionLabel>{t("nav.planner")}</SectionLabel>
+        <PageHeading>{t("planlegger.heading")}</PageHeading>
 
         {/* Week navigation */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>
@@ -413,8 +415,6 @@ export default function Planlegger() {
             <ChevronRight size={20} />
           </button>
         </div>
-
-        <PageHeading>{t("planlegger.heading")}</PageHeading>
 
         {loading ? (
           <InlineLoading description={t("planlegger.loadingPlan")} status="active" style={{ padding: "0 16px" }} />
