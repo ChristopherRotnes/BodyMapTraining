@@ -219,6 +219,8 @@ RLS policies replaced (migration `gym_wide_templates_and_exercises`):
 
 `db.js` changes: removed `.eq("user_id", user.id)` defensive filters from `updateTemplateName`, `deleteTemplate`, `touchTemplate`, `updateLibraryExercise`, `deleteLibraryExercise`; added `profiles!user_id(display_name)` join to `fetchTemplates` and `fetchLibraryExercises`.
 
+**FK pitfall (migration `rewire_user_id_fk_to_profiles`):** `session_templates.user_id` and `exercise_library.user_id` originally referenced `auth.users(id)`. PostgREST cannot traverse `auth.users → profiles` so the `profiles!user_id(display_name)` join failed at runtime. Both FKs were rewired to reference `profiles(id)` instead — matching the pattern used by `sessions.trainer_id`. Do not change these back to `auth.users`.
+
 **Editing an exercise does NOT rewrite historical sessions.** `muscle_activations` rows are permanent snapshots written at log time with no FK to `exercise_library`. Correcting a muscle mapping in the library only affects future sessions.
 
 `db.js` functions:
