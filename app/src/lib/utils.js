@@ -116,6 +116,7 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
         ? img.decode()
         : new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
       ready.then(() => {
+        console.log("[diag] compressImage naturalWidth:", img.naturalWidth, "naturalHeight:", img.naturalHeight);
         const nw = img.naturalWidth || 1600;
         const nh = img.naturalHeight || 1200;
         // Target 4.5 MB to stay safely below the 5 MB API limit; iOS ignores

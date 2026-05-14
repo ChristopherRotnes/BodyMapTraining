@@ -199,6 +199,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         type: "image",
         source: { type: "base64", media_type: img.mediaType, data: img.base64 },
       }));
+      console.log("[diag] pre-fetch sizes:", images.map(img => (img.base64.length * 0.75 / 1024 / 1024).toFixed(2) + " MB"));
       const res = await callClaude({
         model: CLAUDE_MODEL_VISION,
         max_tokens: 1500,
