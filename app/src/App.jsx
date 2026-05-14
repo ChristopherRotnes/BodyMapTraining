@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase";
 import { ensureGymMembership, ensureDisplayName } from "./lib/db";
 import { NavContext } from "./lib/NavContext";
@@ -24,19 +24,21 @@ function App() {
   const [reportPrefill, setReportPrefill] = useState(null);
   const [introOpen, setIntroOpen] = useState(false);
 
+  const ensuredRef = useRef(false);
   useEffect(() => {
+    const runEnsures = () => {
+      if (ensuredRef.current) return;
+      ensuredRef.current = true;
+      ensureGymMembership().catch(() => {});
+      ensureDisplayName().catch(() => {});
+    };
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
+      if (session) runEnsures();
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      // Only run on actual sign-in — INITIAL_SESSION, TOKEN_REFRESHED, etc. fire on
-      // every page load and would trigger redundant upserts on every auth event.
-      if (event === "SIGNED_IN" && session) {
-        ensureGymMembership().catch(() => {});
-        ensureDisplayName().catch(() => {});
-      }
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) runEnsures();
     });
     return () => subscription.unsubscribe();
   }, []);
