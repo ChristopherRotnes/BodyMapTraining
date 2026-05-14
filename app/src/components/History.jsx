@@ -189,13 +189,14 @@ export default function History({ initialDate }) {
   });
 
   useEffect(() => {
-    fetchSessions()
-      .then(setSessions)
-      .catch(e => logDevError("History/fetchSessions", e))
+    Promise.all([fetchSessions(), fetchLibraryExercises()])
+      .then(([sessions, library]) => {
+        setSessions(sessions);
+        libraryCache.current = library;
+        setLibraryExercises(library);
+      })
+      .catch(e => logDevError("History/init", e))
       .finally(() => setLoading(false));
-    fetchLibraryExercises()
-      .then(data => { libraryCache.current = data; setLibraryExercises(data); })
-      .catch(() => {});
   }, []);
 
   const sessionMuscleIdMap = useMemo(

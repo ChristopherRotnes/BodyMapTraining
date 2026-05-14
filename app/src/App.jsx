@@ -29,19 +29,21 @@ function App() {
 
   const ensuredRef = useRef(false);
   useEffect(() => {
-    const runEnsures = () => {
+    const runEnsures = (user) => {
       if (ensuredRef.current) return;
       ensuredRef.current = true;
-      ensureGymMembership().catch(() => {});
-      ensureDisplayName().catch(() => {});
+      Promise.all([
+        ensureGymMembership(undefined, user),
+        ensureDisplayName(user),
+      ]).catch(() => {});
     };
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) runEnsures();
+      if (session) runEnsures(session.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) runEnsures();
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) runEnsures(session.user);
     });
     return () => subscription.unsubscribe();
   }, []);
