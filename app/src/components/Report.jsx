@@ -103,6 +103,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
+    setSelectedInstructors(new Set());
     const to = new Date().toISOString().slice(0, 10);
     const from = new Date(Date.now() - (periodDays - 1) * 86400_000).toISOString().slice(0, 10);
     fetchSessionsForReport(from, to)
