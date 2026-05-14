@@ -10,13 +10,6 @@ import { MUSCLES } from "../lib/bodymap.jsx";
 import { buildMuscleMapFromExercises, logDevError, getIntlLocale } from "../lib/utils";
 import { fetchLibraryExercises, replaceTemplateExercises, updateTemplateDetails, touchTemplate } from "../lib/db";
 
-const TEMPLATE_TYPES = [
-  { key: "crossfit",     labelKey: "gruppetimerEditor.typeCrossfit" },
-  { key: "styrke",       labelKey: "gruppetimerEditor.typeStyrke" },
-  { key: "kondisjon",    labelKey: "gruppetimerEditor.typeKondisjon" },
-  { key: "yoga",         labelKey: "gruppetimerEditor.typeYoga" },
-  { key: "sirkeltrening",labelKey: "gruppetimerEditor.typeSirkel" },
-];
 
 function templateExToEditorShape(te) {
   return {
@@ -39,7 +32,6 @@ export default function GruppetimeEditor({ template, onBack }) {
   );
   const [name, setName] = useState(template.name);
   const [editingName, setEditingName] = useState(false);
-  const [templateType, setTemplateType] = useState(template.template_type || null);
   const [libraryExercises, setLibraryExercises] = useState([]);
   const [showExFlyt, setShowExFlyt] = useState(false);
   const [newExId, setNewExId] = useState(null);
@@ -55,10 +47,21 @@ export default function GruppetimeEditor({ template, onBack }) {
     [exercises]
   );
 
+  // buildMuscleMapFromExercises returns { [muscleId]: string[] } — derive primary/secondary arrays separately
+  const { coveredPrimary, coveredSecondary } = useMemo(() => {
+    const pSet = new Set();
+    const sSet = new Set();
+    exercises.filter(e => e.enabled && e.name).forEach(ex => {
+      (ex.primary || []).forEach(id => pSet.add(id));
+      (ex.secondary || []).forEach(id => { if (!pSet.has(id)) sSet.add(id); });
+    });
+    return { coveredPrimary: [...pSet], coveredSecondary: [...sSet] };
+  }, [exercises]);
+
   const gapIds = useMemo(() => {
-    const trained = new Set([...muscleMap.primary, ...muscleMap.secondary]);
+    const trained = new Set([...coveredPrimary, ...coveredSecondary]);
     return Object.keys(MUSCLES).filter(id => !trained.has(id));
-  }, [muscleMap]);
+  }, [coveredPrimary, coveredSecondary]);
 
   function moveUp(idx) {
     if (idx === 0) return;
@@ -97,10 +100,7 @@ export default function GruppetimeEditor({ template, onBack }) {
     setSaveError(null);
     try {
       const enabled = exercises.filter(e => e.enabled && e.name);
-      await updateTemplateDetails(template.id, {
-        name,
-        template_type: templateType,
-      });
+      await updateTemplateDetails(template.id, { name });
       await replaceTemplateExercises(template.id, enabled);
       touchTemplate(template.id).catch(() => {});
       onBack();
@@ -154,35 +154,13 @@ export default function GruppetimeEditor({ template, onBack }) {
               )}
             </div>
 
-            {/* Type picker */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {TEMPLATE_TYPES.map(tt => (
-                <button
-                  key={tt.key}
-                  onClick={() => setTemplateType(prev => prev === tt.key ? null : tt.key)}
-                  style={{
-                    padding: "5px 14px",
-                    borderRadius: "var(--r-pill)",
-                    border: templateType === tt.key ? "1px solid var(--accent)" : "1px solid var(--border-subtle-wl)",
-                    background: templateType === tt.key ? "var(--accent-bg-14)" : "transparent",
-                    color: templateType === tt.key ? "var(--accent-soft)" : "var(--text-muted-wl)",
-                    fontFamily: "var(--cds-font-mono)",
-                    fontSize: 11,
-                    letterSpacing: "0.06em",
-                    cursor: "pointer",
-                  }}
-                >
-                  {t(tt.labelKey)}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Live muscle coverage */}
           <BodyPanel
-            primary={[...muscleMap.primary]}
-            secondary={[...muscleMap.secondary]}
-            muscleMap={{}}
+            primary={coveredPrimary}
+            secondary={coveredSecondary}
+            muscleMap={muscleMap}
             marginBottom={8}
           />
 
@@ -262,12 +240,41 @@ export default function GruppetimeEditor({ template, onBack }) {
           {/* Add controls */}
           {!showExFlyt && (
             <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-              <Button kind="primary" renderIcon={Add} size="sm" onClick={() => setShowExFlyt(true)} style={{ flex: 1 }}>
-                {t("gruppetimerEditor.addFromLibrary")}
-              </Button>
-              <Button kind="ghost" renderIcon={Add} size="sm" onClick={addManual} style={{ flex: 1 }}>
-                {t("gruppetimerEditor.addManual")}
-              </Button>
+              {[
+                { label: t("gruppetimerEditor.addFromLibrary"), onClick: () => setShowExFlyt(true) },
+                { label: t("gruppetimerEditor.addManual"), onClick: addManual },
+              ].map(({ label, onClick }) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  style={{
+                    flex: 1,
+                    background: "var(--cds-layer-01)",
+                    border: "1px solid var(--cds-border-subtle-01)",
+                    borderInlineStart: "3px solid var(--exercise)",
+                    borderRadius: "0 var(--r-card) var(--r-card) 0",
+                    padding: "10px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: "var(--exercise-soft)",
+                    border: "1px solid var(--exercise)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <Add size={14} style={{ color: "var(--exercise)" }} />
+                  </div>
+                  <span style={{ fontFamily: "var(--cond)", fontSize: 13, fontWeight: 700, color: "var(--cds-text-primary)", flex: 1, minWidth: 0 }}>
+                    {label}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 

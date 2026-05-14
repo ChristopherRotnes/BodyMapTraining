@@ -2,7 +2,8 @@ import { useTranslation } from "react-i18next";
 import { Camera, Add, Notebook } from "@carbon/icons-react";
 import PageShell, { SectionLabel } from "./PageShell";
 
-function ActionCard({ icon: Icon, label, body, accent, disabled, badge, onClick }) {
+function ActionCard({ icon: Icon, kicker, label, body, color, disabled, badge, onClick }) {
+  const activeColor = color || "var(--cds-border-subtle-01)";
   return (
     <button
       onClick={disabled ? undefined : onClick}
@@ -10,7 +11,7 @@ function ActionCard({ icon: Icon, label, body, accent, disabled, badge, onClick 
       style={{
         background: "var(--cds-layer-01)",
         border: "1px solid var(--cds-border-subtle-01)",
-        borderInlineStart: accent ? "3px solid var(--accent)" : "3px solid var(--cds-border-subtle-01)",
+        borderInlineStart: `3px solid ${activeColor}`,
         borderRadius: "0 var(--r-card) var(--r-card) 0",
         padding: "20px 16px",
         display: "flex",
@@ -22,7 +23,18 @@ function ActionCard({ icon: Icon, label, body, accent, disabled, badge, onClick 
         width: "100%",
       }}
     >
-      <Icon size={20} style={{ color: accent ? "var(--accent)" : "var(--cds-text-secondary)" }} />
+      {kicker && (
+        <span style={{
+          fontFamily: "var(--cds-font-mono)",
+          fontSize: 10,
+          letterSpacing: "0.12em",
+          color: activeColor,
+          marginBottom: -2,
+        }}>
+          {kicker}
+        </span>
+      )}
+      <Icon size={20} style={{ color: color ? activeColor : "var(--cds-text-secondary)" }} />
       <p style={{
         fontFamily: "var(--cond)",
         fontSize: 15,
@@ -61,7 +73,7 @@ function ActionCard({ icon: Icon, label, body, accent, disabled, badge, onClick 
   );
 }
 
-export default function SetSammen({ onShowGruppetimePicker, onShowNewOvelse }) {
+export default function SetSammen({ onShowGruppetimePicker, onShowOvelsePicker }) {
   const { t } = useTranslation();
 
   return (
@@ -72,17 +84,19 @@ export default function SetSammen({ onShowGruppetimePicker, onShowNewOvelse }) {
         <div style={{ padding: "0 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <ActionCard
             icon={Notebook}
+            kicker={t("settSammen.gruppetimerKicker")}
             label={t("settSammen.lagGruppetime")}
             body={t("settSammen.lagGruppetimerBody")}
-            accent
+            color="var(--accent)"
             onClick={onShowGruppetimePicker}
           />
           <ActionCard
             icon={Add}
+            kicker={t("settSammen.ovelseKicker")}
             label={t("settSammen.nyOvelse")}
             body={t("settSammen.nyOvelseBody")}
-            accent
-            onClick={onShowNewOvelse}
+            color="var(--exercise)"
+            onClick={onShowOvelsePicker}
           />
           <ActionCard
             icon={Camera}

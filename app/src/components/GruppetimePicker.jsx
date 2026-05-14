@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchTemplates, saveTemplate } from "../lib/db";
-import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
+import { logDevError } from "../lib/utils";
 
 export default function GruppetimePicker({ onBack, onEditTemplate }) {
   const { t } = useTranslation();
@@ -65,9 +65,42 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
           )}
 
           {!showNew && (
-            <Button kind="primary" renderIcon={Add} onClick={() => setShowNew(true)} style={{ marginBottom: 16 }}>
-              {t("settSammen.newGruppetime")}
-            </Button>
+            <button
+              onClick={() => setShowNew(true)}
+              style={{
+                width: "100%",
+                background: "var(--cds-layer-01)",
+                border: "1px solid var(--cds-border-subtle-01)",
+                borderInlineStart: "3px solid var(--accent)",
+                borderRadius: "0 var(--r-card) var(--r-card) 0",
+                padding: "14px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                textAlign: "left",
+                marginBottom: 16,
+              }}
+            >
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "var(--accent-bg-14)",
+                border: "1px solid var(--accent)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <Add size={18} style={{ color: "var(--accent)" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", margin: "0 0 2px" }}>
+                  {t("settSammen.newGruppetime")}
+                </p>
+                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--accent-soft)", margin: 0 }}>
+                  {t("gruppetimePicker.nySubtitle")}
+                </p>
+              </div>
+              <ChevronRight size={16} style={{ color: "var(--cds-text-secondary)", flexShrink: 0 }} />
+            </button>
           )}
 
           {showNew && (
@@ -132,13 +165,13 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {filtered.map(tpl => {
-                const exs = (tpl.session_template_exercises || []).map(e => ({
-                  primary: e.primary_muscles || [],
-                  secondary: e.secondary_muscles || [],
-                  enabled: true,
-                }));
-                const muscleMap = buildMuscleMapFromExercises(exs);
-                const hasMuscles = muscleMap.primary.size > 0 || muscleMap.secondary.size > 0;
+                const pSet = new Set();
+                const sSet = new Set();
+                (tpl.session_template_exercises || []).forEach(e => {
+                  (e.primary_muscles || []).forEach(id => pSet.add(id));
+                  (e.secondary_muscles || []).forEach(id => { if (!pSet.has(id)) sSet.add(id); });
+                });
+                const hasMuscles = pSet.size > 0 || sSet.size > 0;
                 return (
                   <button
                     key={tpl.id}
@@ -169,8 +202,8 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
                       <div style={{ width: 36, flexShrink: 0, opacity: 0.85 }}>
                         <BodySVG
                           view="front"
-                          primary={[...muscleMap.primary]}
-                          secondary={[...muscleMap.secondary]}
+                          primary={[...pSet]}
+                          secondary={[...sSet]}
                         />
                       </div>
                     )}

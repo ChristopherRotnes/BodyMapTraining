@@ -408,7 +408,16 @@
     "saveExercise": "ذخیره تمرین",
     "noMusclesWarning": "هیچ عضله‌ای انتخاب نشده — روی شکل کلیک کنید",
     "headerNew": "تمرین جدید",
-    "headerEdit": "ویرایش تمرین"
+    "headerEdit": "ویرایش تمرین",
+    "aiReset": "بازنشانی"
+  },
+  "ovelseDetail": {
+    "usedInTemplates_zero": "در هیچ الگویی استفاده نشده",
+    "usedInTemplates_one": "استفاده شده در {{count}} الگو",
+    "usedInTemplates_other": "استفاده شده در {{count}} الگو",
+    "edit": "ویرایش تمرین",
+    "loadingTemplates": "بررسی الگوها…",
+    "templateListTitle": "الگوهایی که از این تمرین استفاده می‌کنند"
   },
   "libraryPicker": {
     "searchLabel": "جستجو در کتابخانه تمرین‌ها",
@@ -464,7 +473,7 @@
     "typeSirkel": "دایره‌ای",
     "gapHints": "پوشش داده نشده:",
     "allTrained": "همه عضلات پوشش داده شده",
-    "addFromLibrary": "از کتابخانه",
+    "addFromLibrary": "انتخاب تمرین",
     "addManual": "تمرین جدید",
     "createdBy": "توسط {{name}}",
     "lastUsed": "آخرین استفاده {{date}}",
@@ -477,6 +486,8 @@
     "exFlytAdd": "افزودن"
   },
   "settSammen": {
+    "gruppetimerKicker": "جلسه گروهی",
+    "ovelseKicker": "تمرین",
     "lagGruppetime": "ساختن جلسه گروهی",
     "lagGruppetimerBody": "ایجاد یا ویرایش الگوی جلسه",
     "nyOvelse": "تمرین جدید",
@@ -494,5 +505,13 @@
     "regionCore": "مرکزی",
     "regionLower": "پایین‌تنه",
     "regionCardio": "کاردیو"
+  },
+  "ovelsePicker": {
+    "eyebrow": "تمرین · جدید یا ویرایش",
+    "nyOvelseSubtitle": "نام + عضلات",
+    "usedInGT": "استفاده در {{count}} جلسه"
+  },
+  "gruppetimePicker": {
+    "nySubtitle": "نام + تمرینات"
   }
 }
