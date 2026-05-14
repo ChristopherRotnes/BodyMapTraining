@@ -7,7 +7,6 @@ import Home from "./components/Home";
 import MuscleMap from "./components/MuscleMap";
 import History from "./components/History";
 import Report from "./components/Report";
-import Bibliotek from "./components/Bibliotek";
 import SetSammen from "./components/SetSammen";
 import GruppetimePicker from "./components/GruppetimePicker";
 import OvelsePicker from "./components/OvelsePicker";
