@@ -209,7 +209,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
       try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
       if (!res.ok) {
         const detail = data?.detail || data?.error?.message;
-        const serverMB = data?.serverImageMB ? ` [server saw: ${data.serverImageMB} MB]` : '';
+        const serverMB = data?.serverImageMB ? ` [server: ${data.serverImageMB} MB, body: ${data.requestBodyMB} MB]` : '';
         throw new Error(res.status === 401 ? "Ikke innlogget. Logg inn på nytt." : detail ? `Serverfeil (${res.status}): ${detail}${serverMB}` : `Serverfeil (${res.status})${serverMB}`);
       }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();

@@ -66,7 +66,8 @@ app.http('claude', {
     }
 
     const requestBody = JSON.stringify(body);
-    context.warn(`[diag] requestBody length: ${requestBody.length} chars`);
+    const requestBodyMB = (requestBody.length * 0.75 / 1024 / 1024).toFixed(2);
+    context.warn(`[diag] requestBody length: ${requestBody.length} chars (${requestBodyMB} MB)`);
     let upstream;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2 ** attempt * 1000));
@@ -89,7 +90,7 @@ app.http('claude', {
       const errorType = data?.error?.type || 'unknown';
       context.error(`Anthropic error [${errorType}]: ${detail}`);
       return new Response(
-        JSON.stringify({ error: 'Claude request failed', detail, serverImageMB }),
+        JSON.stringify({ error: 'Claude request failed', detail, serverImageMB, requestBodyMB }),
         { status: upstream.status, headers: { 'Content-Type': 'application/json' } }
       );
     }
