@@ -127,8 +127,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
         name: r.name,
         primary_muscles: r.primary || [],
         secondary_muscles: r.secondary || [],
-        default_sets: null,
-        default_reps: null,
       });
       setSavedRecs(prev => new Set([...prev, r.name]));
     } catch (err) {
@@ -218,22 +216,19 @@ export default function Report({ prefill, onPrefillConsumed }) {
     });
   }, [sessions, selectedDays, selectedTypes, selectedInstructors]);
 
-  const { muscleCounts, maxPrimaryCount, muscleExercises, muscleVolume, muscleLastDate } = useMemo(() => {
+  const { muscleCounts, maxPrimaryCount, muscleExercises, muscleLastDate } = useMemo(() => {
     const primarySessions = {};
     const secondarySessions = {};
     const exercises = {};
-    const volumeSets = {};
     const lastDates = {};
 
     filteredSessions.forEach(s => {
       (s.session_exercises || []).forEach(ex => {
-        const exSets = Math.max(1, parseInt(ex.sets) || 1);
         (ex.muscle_activations || []).forEach(ma => {
           const id = ma.muscle_id;
           if (ma.activation_type === "primary") {
             if (!primarySessions[id]) primarySessions[id] = new Set();
             primarySessions[id].add(s.id);
-            volumeSets[id] = (volumeSets[id] || 0) + exSets;
           } else {
             if (!secondarySessions[id]) secondarySessions[id] = new Set();
             secondarySessions[id].add(s.id);
@@ -246,17 +241,15 @@ export default function Report({ prefill, onPrefillConsumed }) {
     });
 
     const counts = {};
-    const volume = {};
     Object.keys(MUSCLES).forEach(id => {
       counts[id] = {
         primary: primarySessions[id]?.size || 0,
         secondary: secondarySessions[id]?.size || 0,
       };
-      volume[id] = volumeSets[id] || 0;
     });
 
     const maxPrimary = Math.max(1, ...Object.values(counts).map(c => c.primary));
-    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises, muscleVolume: volume, muscleLastDate: lastDates };
+    return { muscleCounts: counts, maxPrimaryCount: maxPrimary, muscleExercises: exercises, muscleLastDate: lastDates };
   }, [filteredSessions]);
 
   const toggleDay = (day) => {
@@ -404,7 +397,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
               <div style={{ display: "flex", gap: 8, marginBottom: 0 }}>
                 {["front", "back"].map(view => (
                   <div key={view} style={{ flex: 1, background: "var(--surface-card)", border: "1px solid var(--border-subtle-wl)", padding: "10px 6px", borderRadius: "var(--r-tile)" }}>
-                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} volumeMap={muscleVolume} onHover={setHoveredMuscle} hovered={hoveredMuscle} />
+                    <HeatmapBodySVG view={view} counts={muscleCounts} maxCount={maxPrimaryCount} exerciseMap={muscleExercises} onHover={setHoveredMuscle} hovered={hoveredMuscle} />
                   </div>
                 ))}
               </div>
@@ -472,7 +465,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
                       <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "left", paddingBottom: 6, width: 140 }}>{t("report.colMuscle")}</th>
                       <th scope="col" aria-label={t("report.frequencyTable")} style={{ width: "100%" }} />
                       <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 36 }}>{t("report.colSession")}</th>
-                      <th scope="col" style={{ fontSize: 10, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", letterSpacing: "1px", textAlign: "right", paddingBottom: 6, width: 40 }}>{t("report.colSets")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -506,9 +498,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
                           </td>
                           <td style={{ fontSize: 11, color: countColor, fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
                             {countLabel}
-                          </td>
-                          <td style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", textAlign: "right", padding: "6px 0" }}>
-                            {muscleVolume[id] > 0 ? muscleVolume[id] : "—"}
                           </td>
                         </tr>
                       );

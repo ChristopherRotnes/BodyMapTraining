@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.0] — 2026-05-14
+
+### Changed
+- **Remove sets and reps (issue #200)** — sets and reps are no longer collected, stored, or displayed anywhere in the app. Group class instructors log *what exercises were in the program*, not how many reps each participant did. Affected surfaces: `ExerciseRow` (inputs removed), `ExerciseForm` (default sets/reps fields removed), `LibraryPicker` and `ExerciseRowWithAutocomplete` (sets/reps hints in autocomplete removed), MuscleMap and History confirm-step summaries (volume display removed), Report frequency table («Sett»-column removed), HeatmapBodySVG tooltip (volume line removed). The analyze prompt no longer asks Claude to extract sets/reps. All three Supabase RPC payloads (`save_session`, `update_session`, `replace_template_exercises`) omit sets/reps and also strip other null/zero fields (`standard_name`, `library_exercise_id`) to reduce request payload size. DB columns (`sets`, `reps`, `default_sets`, `default_reps`) are kept nullable for historical data — no destructive migration.
+
 ## [1.4.0] — 2026-05-14
 
 ### Added

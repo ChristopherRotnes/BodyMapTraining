@@ -11,8 +11,6 @@ export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
   const [name, setName] = useState(initial?.name || "");
   const [primary, setPrimary] = useState(initial?.primary_muscles || []);
   const [secondary, setSecondary] = useState(initial?.secondary_muscles || []);
-  const [defaultSets, setDefaultSets] = useState(initial?.default_sets || "");
-  const [defaultReps, setDefaultReps] = useState(initial?.default_reps || "");
   const [inferStatus, setInferStatus] = useState(null); // null | "active" | "finished"
   const [aiInferred, setAiInferred] = useState(false);
 
@@ -54,24 +52,6 @@ export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
         placeholder={t("exerciseForm.namePlaceholder")}
         style={{ marginBottom: 12 }}
       />
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <TextInput
-          id={`ex-form-sets-${initial?.id || "new"}`}
-          labelText={t("exerciseForm.defaultSets")}
-          value={defaultSets}
-          onChange={(e) => setDefaultSets(e.target.value)}
-          placeholder="–"
-          size="sm"
-        />
-        <TextInput
-          id={`ex-form-reps-${initial?.id || "new"}`}
-          labelText={t("exerciseForm.defaultReps")}
-          value={defaultReps}
-          onChange={(e) => setDefaultReps(e.target.value)}
-          placeholder="–"
-          size="sm"
-        />
-      </div>
       <MusclePicker
         primary={primary}
         secondary={secondary}
@@ -122,8 +102,6 @@ export default function ExerciseForm({ initial, onSave, onCancel, saving }) {
             name: name.trim(),
             primary_muscles: primary,
             secondary_muscles: secondary,
-            default_sets: defaultSets || null,
-            default_reps: defaultReps || null,
           })}
         >
           {saving ? t("common.saving") : t("exerciseForm.saveExercise")}

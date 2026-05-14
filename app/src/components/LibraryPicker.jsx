@@ -52,11 +52,6 @@ export default function LibraryPicker({ libraryExercises, onAdd, onClose }) {
               onMouseLeave={e => e.currentTarget.style.background = "var(--cds-layer-01)"}
             >
               <span style={{ fontSize: 13, fontWeight: 500, color: "var(--cds-text-primary)" }}>{ex.name}</span>
-              {(ex.default_sets || ex.default_reps) && (
-                <span style={{ fontSize: 11, color: "var(--cds-text-secondary)" }}>
-                  {ex.default_sets || "–"}×{ex.default_reps || "–"}
-                </span>
-              )}
             </button>
           ))
         )}

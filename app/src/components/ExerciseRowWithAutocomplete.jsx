@@ -49,8 +49,6 @@ export default function ExerciseRowWithAutocomplete({
     onChange({
       name: lib.name,
       standardName: lib.name,
-      sets: lib.default_sets ? String(lib.default_sets) : null,
-      reps: lib.default_reps ? String(lib.default_reps) : null,
       primary: lib.primary_muscles || [],
       secondary: lib.secondary_muscles || [],
     });
@@ -134,11 +132,6 @@ export default function ExerciseRowWithAutocomplete({
               <span style={{ fontSize: 13, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
                 {lib.name}
               </span>
-              {(lib.default_sets || lib.default_reps) && (
-                <span style={{ fontSize: 11, fontFamily: "var(--cds-font-mono)", color: "var(--cds-text-secondary)" }}>
-                  {[lib.default_sets && `${lib.default_sets}×`, lib.default_reps].filter(Boolean).join("")}
-                </span>
-              )}
             </button>
           ))}
         </div>

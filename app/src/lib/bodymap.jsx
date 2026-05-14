@@ -122,7 +122,7 @@ function Shape({ sh, i, fill, stroke, strokeWidth = "0.8", strokeDasharray }) {
   return <ellipse key={i} cx={sh.cx} cy={sh.cy} rx={sh.rx} ry={sh.ry} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} />;
 }
 
-export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, volumeMap = {}, onHover, hovered, gaps = [] }) {
+export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = {}, onHover, hovered, gaps = [] }) {
   const { t } = useTranslation();
   const [tooltip, setTooltip] = React.useState(null);
   const [focused, setFocused] = React.useState(null);
@@ -282,11 +282,6 @@ export function HeatmapBodySVG({ view, counts = {}, maxCount = 1, exerciseMap = 
                 {secondary > 0 && (
                   <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
                     {t("bodymap.secondaryLabel")}: {secondary} {secondary === 1 ? t("common.session") : t("common.sessions")}
-                  </div>
-                )}
-                {volumeMap[tooltip.id] > 0 && (
-                  <div style={{ fontSize: 12, color: "var(--cds-text-secondary)" }}>
-                    {t("bodymap.totalLabel")}: {volumeMap[tooltip.id]} {t("common.sets")}
                   </div>
                 )}
                 {primary === 0 && secondary === 0 && (
