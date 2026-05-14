@@ -81,6 +81,82 @@ export async function detectMediaType(file) {
   return file.type || "image/jpeg";
 }
 
+// Compress an image to JPEG and ensure decoded size is under Anthropic's 5 MB limit.
+// Strategy:
+//   1. Read via FileReader — iOS auto-converts HEIF/HEIC to JPEG at full native
+//      resolution. If the result is already under 5 MB, use it directly.
+//   2. Only if over 5 MB: load the data URL into a canvas img (the data URL is already
+//      in memory; blob URLs can have quirks with HEIC files on some iOS versions).
+//      iOS Safari ignores the quality param in canvas.toDataURL, so dimension reduction
+//      is the only reliable lever. We target 4.5 MB (not 5 MB) for a safety margin.
+//      We start at 1200 px — the 1600 px step is a no-op for typical 1440 px-wide photos
+//      and just wastes a round-trip through the iOS JPEG encoder at the same size.
+export function compressImage(file) {
+  // Anthropic enforces a 5 MB limit on the base64 string character count, not
+  // the decoded byte size. A 3.75 MB decoded image produces ~5.25 M base64 chars
+  // and is rejected. All checks must compare b64.length directly, not b64.length * 0.75.
+  const MAX_B64_CHARS = 5 * 1024 * 1024;
+  // Target 90 % of the limit for a safety margin; iOS ignores the quality param
+  // on canvas.toDataURL so dimension reduction is the only reliable lever.
+  const TARGET_B64_CHARS = Math.round(MAX_B64_CHARS * 0.9);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Kunne ikke laste bildet'));
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+      const b64 = dataUrl.split(',')[1];
+      if (b64.length <= MAX_B64_CHARS) {
+        resolve({ base64: b64, mediaType });
+        return;
+      }
+      // Over limit — compress via canvas.
+      // Use a blob URL so iOS Safari correctly decodes the image dimensions.
+      // img.decode() is more reliable than onload on mobile WebKit — it waits
+      // until the bitmap is fully available to the rendering pipeline, preventing
+      // drawImage from pulling stale/zero pixel data after a premature onload.
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      const ready = typeof img.decode === 'function'
+        ? img.decode()
+        : new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      ready.then(() => {
+        URL.revokeObjectURL(objectUrl);
+        const nw = img.naturalWidth || 1600;
+        const nh = img.naturalHeight || 1200;
+        let resolved = false;
+        for (const maxEdge of [1200, 960, 768, 600]) {
+          const scale = Math.min(1, maxEdge / Math.max(nw, nh));
+          const w = Math.max(1, Math.round(nw * scale));
+          const h = Math.max(1, Math.round(nh * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const d = canvas.toDataURL('image/jpeg', 0.85);
+          const b = d.split(',')[1];
+          if (b.length <= TARGET_B64_CHARS) {
+            resolve({ base64: b, mediaType: 'image/jpeg' });
+            resolved = true;
+            break;
+          }
+        }
+        if (!resolved) {
+          // Fallback: 600px at 0.7 quality — accept regardless of size.
+          const canvas = document.createElement('canvas');
+          const scale = Math.min(1, 600 / Math.max(nw, nh));
+          canvas.width = Math.max(1, Math.round(nw * scale));
+          canvas.height = Math.max(1, Math.round(nh * scale));
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve({ base64: canvas.toDataURL('image/jpeg', 0.7).split(',')[1], mediaType: 'image/jpeg' });
+        }
+      }).catch(() => { URL.revokeObjectURL(objectUrl); reject(new Error('Kunne ikke laste bildet')); });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // Builds muscle-ID → exercise-name map from a live exercises array (confirm/edit step).
 // Falls back to EX_DB keyword matching for exercises without Claude-assigned muscle data.
 export function buildMuscleMapFromExercises(exercises) {

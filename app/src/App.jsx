@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase";
 import { ensureGymMembership, ensureDisplayName } from "./lib/db";
 import { NavContext } from "./lib/NavContext";
@@ -24,14 +24,21 @@ function App() {
   const [reportPrefill, setReportPrefill] = useState(null);
   const [introOpen, setIntroOpen] = useState(false);
 
+  const ensuredRef = useRef(false);
   useEffect(() => {
+    const runEnsures = () => {
+      if (ensuredRef.current) return;
+      ensuredRef.current = true;
+      ensureGymMembership().catch(() => {});
+      ensureDisplayName().catch(() => {});
+    };
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
+      if (session) runEnsures();
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (session) { ensureGymMembership().catch(() => {}); ensureDisplayName().catch(() => {}); }
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) runEnsures();
     });
     return () => subscription.unsubscribe();
   }, []);

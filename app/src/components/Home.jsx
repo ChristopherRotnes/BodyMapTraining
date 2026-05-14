@@ -262,7 +262,7 @@ export default function Home({ onShowHistoryWithDate }) {
               )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 <AccentChip>{t("history.exerciseCount", { count: exCount })}</AccentChip>
-                <AccentChip>{t("history.exerciseCount", { count: muscleCount })}</AccentChip>
+                <AccentChip>{t("home.muscleCount", { count: muscleCount })}</AccentChip>
               </div>
             </div>
           </div>

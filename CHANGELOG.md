@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.9] — 2026-05-14
+
+### Fixed
+- **HEIF/iPhone photo exceeds 5 MB limit** — root cause: Anthropic enforces the 5 MB limit on the **base64 string character count**, not the decoded byte size. A 3.75 MB decoded image produces ~5.25 M base64 chars and is rejected. `compressImage` was checking `b64.length * 0.75 <= 5 MB` (decoded bytes), which passes an image up to ~6.67 M base64 chars — well over the limit. Fixed by changing all checks to compare the base64 string length directly: `b64.length <= MAX_B64_CHARS`. Additionally fixed iOS-specific canvas source issue: `img.src = dataUrl` (large base64 data URL) causes iOS Safari to silently zero `naturalWidth`/`naturalHeight`, producing a blank canvas — fixed by using `URL.createObjectURL(file)` instead.
+- **ALL CAPS exercise names** — when canvas quality reduction degrades the image enough for Claude to return exercise names in ALL CAPS, `normalizeExName` in `MuscleMap.jsx` converts fully-uppercase strings to title case before they reach the exercise list. Acts as a permanent safety net.
+- **Anthropic error detail not shown** — the error message surfaced to the user read `data?.error?.message`, but the Anthropic API returns the detail in `data.detail` (string). Fixed to read `data.detail || data?.error?.message`.
+- **"Siste økt" showing empty despite a session existing** — `fetchLastSession` in `db.js` used `.maybeSingle()` which sends PostgREST `Accept: application/vnd.pgrst.object+json`. PostgREST returns 406 when multiple rows exist even with `limit=1` (the 406 check precedes limit application). `.maybeSingle()` silently converts 406 to `{ data: null, error: null }`. Fixed by removing `.maybeSingle()` and using `data?.[0] ?? null` on a plain array query.
+- **Slow app load after gym-wide templates deploy** — `onAuthStateChange` in `App.jsx` called `ensureGymMembership()` and `ensureDisplayName()` on every Supabase auth event (INITIAL_SESSION, TOKEN_REFRESHED, etc.), causing 3–4 redundant DB upserts per page load. These calls now only fire on `SIGNED_IN` events.
+
 ## [1.2.8] — 2026-05-14
 
 ### Added

@@ -1,7 +1,7 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { EX_DB, MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, detectMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
+import { compressImage, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Button, Select, SelectItem,
@@ -22,8 +22,17 @@ const localDateStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
 
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+
+// Gym whiteboards are written in ALL CAPS by convention. Normalize to title
+// case when the entire string is uppercase so names display consistently.
+const toTitleCase = (str) =>
+  str.toLowerCase().split(' ').map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(' ');
+const normalizeExName = (str) => {
+  if (!str) return str;
+  const t = str.trim();
+  return t === t.toUpperCase() && /[A-ZÆØÅ]{2,}/.test(t) ? toTitleCase(t) : t;
+};
 
 function getConfidenceColor(ex) {
   if (ex.primary?.length || ex.secondary?.length) return "var(--heat-4)";
@@ -170,13 +179,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
   const addImage = useCallback(async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      setSizeError(`Bildet er for stort (maks ${MAX_FILE_SIZE_MB} MB). Komprimer eller velg et annet bilde.`);
-      return;
+    try {
+      const { base64: b64, mediaType: mt } = await compressImage(file);
+      dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
+    } catch (e) {
+      setSizeError(e.message || "Kunne ikke laste bildet.");
     }
-    const mt = await detectMediaType(file);
-    const b64 = await toBase64(file);
-    dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
   }, [setSizeError]);
 
   const handleFiles = useCallback(async (files) => {
@@ -199,7 +207,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
       let data;
       try { data = await res.json(); } catch { throw new Error(`Serverfeil (${res.status}): Ugyldig svar fra server`); }
       if (!res.ok) {
-        const detail = data?.error?.message;
+        const detail = data?.detail || data?.error?.message;
         throw new Error(res.status === 401 ? "Ikke innlogget. Logg inn på nytt." : detail ? `Serverfeil (${res.status}): ${detail}` : `Serverfeil (${res.status})`);
       }
       const text = (data.content || []).map(b => b.text || "").join("").replace(/```json|```/g, "").trim();
@@ -208,7 +216,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       if (!Array.isArray(parsed)) throw new Error("Uventet svarformat fra Claude.");
-      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1" })) });
+      dispatch({ type: "ANALYZE_SUCCESS", exercises: parsed.map((ex, i) => ({ ...ex, id: i, enabled: true, sets: ex.sets ?? "1", name: normalizeExName(ex.name), standardName: normalizeExName(ex.standardName) })) });
       setUseTodayDate(true);
     } catch (err) {
       logDevError("MuscleMap/analyse", err);
@@ -359,6 +367,7 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   {images.map((img, idx) => (
                     <div key={img.id} style={{ position: "relative", overflow: "hidden", aspectRatio: "1", background: "var(--cds-layer-01)" }}>
                       <img src={img.preview} alt={t("muscleMap.imageAlt", { n: idx + 1 })} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+
                       <button
                         aria-label={t("muscleMap.removeImage", { n: idx + 1 })}
                         onClick={() => dispatch({ type: "REMOVE_IMAGE", id: img.id })}

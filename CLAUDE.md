@@ -412,3 +412,23 @@ Carbon's compiled CSS from `@carbon/styles` emits dark skeleton token overrides 
 
 **Pattern to watch:** Any new Carbon token that Carbon's SCSS emits only under `.cds--g100` (not `:root`) must be explicitly added to the `[data-theme="g100"]` block in `carbon-tokens.css`. Run a visual check in dark mode whenever a new Carbon component is introduced.
 
+### Issue #173 — HEIF photo exceeds Anthropic 5 MB limit (resolved 2026-05-14)
+Symptom: uploading an iPhone 17 Pro photo failed with `Serverfeil (400): image exceeds 5 MB maximum: 5246896 bytes > 5242880 bytes`.
+
+**Root cause 1 — Wrong comparison unit in `compressImage`:** Anthropic enforces the 5 MB limit on the **base64 string character count**, not the decoded byte size. `compressImage` was checking `b64.length * 0.75 <= 5 MB` (decoded bytes ≤ 5 MB), which allows base64 strings up to ~6.67 M chars. A 3.75 MB decoded image produces ~5.25 M base64 chars — passes our check, fails Anthropic's. Fixed by changing all checks to `b64.length <= MAX_B64_CHARS` (5,242,880) and setting the canvas compression target to 90% of that limit.
+
+**Root cause 2 — iOS silently ignores large data URLs as `img.src`:** The original canvas fallback path set `img.src = dataUrl` (the ~9 MB base64 string from FileReader). iOS Safari silently fails to decode a data URL this large: `img.naturalWidth` and `img.naturalHeight` both become 0. The canvas is created as 0×0, `toDataURL` returns a near-empty result that passes the size check, and the original un-compressed data stays in state. No error is thrown. Fixed by using `URL.createObjectURL(file)` as the image source instead.
+
+**Root cause 3 — iOS Safari ignores `canvas.toDataURL` quality parameter:** iOS Safari on some versions silently ignores the `quality` argument and always outputs at default quality (~0.92). Dimension reduction (canvas pixel dimensions) is the only reliable lever on iOS — not quality stepping.
+
+**Never revert to `img.src = dataUrl` for large images** — iOS will silently zero out naturalWidth/Height. Do not use `b64.length * 0.75` to compare against Anthropic's limit — compare `b64.length` directly.
+
+### Issue #173 — fetchLastSession returning null (resolved 2026-05-14)
+Symptom: Home → "Siste økt" showed "Ingen økter logget ennå" even though sessions existed in the DB and the weekly strip showed the correct session count.
+
+**Root cause — `.maybeSingle()` with multiple rows in the sessions table:** `fetchLastSession` used `.limit(1).maybeSingle()`. `.maybeSingle()` sends PostgREST `Accept: application/vnd.pgrst.object+json`. PostgREST evaluates the "single row" constraint and returns 406 when the base query (before LIMIT) would produce multiple rows — the LIMIT is not applied before this check. `.maybeSingle()` in Supabase JS v2 silently converts a 406 (PGRST116) to `{ data: null, error: null }`, so `fetchLastSession` returned null without any error. Works fine with 1 session in the DB; silently breaks once there are 2+ sessions.
+
+**Fix:** Removed `.maybeSingle()`. Changed to a plain array query (`.limit(1)` without `.maybeSingle()`) and returned `data?.[0] ?? null`. The simpler approach avoids the `Accept: application/vnd.pgrst.object+json` header entirely.
+
+**Pattern to watch:** Do not combine `.limit(1)` with `.maybeSingle()` in Supabase JS v2 when the table can have multiple rows. Use `.limit(1)` with an array query and take `data?.[0]` instead. `.maybeSingle()` is only safe on queries where the base set is already guaranteed to be 0 or 1 rows (e.g. `.eq("id", id)` on a primary key).
+
