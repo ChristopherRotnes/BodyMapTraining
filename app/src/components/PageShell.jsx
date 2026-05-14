@@ -3,7 +3,6 @@ import { Camera, RecentlyViewed, Analytics, Notebook, EventSchedule, Settings, A
 import { Button } from "@carbon/react";
 import { useTranslation } from "react-i18next";
 import { useNav } from "../lib/NavContext";
-import { useIsMobile } from "../lib/bodymap";
 
 export function useNavHints() {
   const [hints, setHints] = useState(() => localStorage.getItem("wl-nav-hints") !== "false");

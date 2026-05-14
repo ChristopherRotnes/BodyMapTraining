@@ -21,6 +21,8 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const [tabIndex, setTabIndex] = useState(initialTab);
   const [exSearch, setExSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [tplSearch, setTplSearch] = useState("");
+  const [debouncedTplSearch, setDebouncedTplSearch] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(exSearch), 200);
@@ -48,8 +50,6 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const [savingTpl, setSavingTpl] = useState(false);
   const [showNewTpl, setShowNewTpl] = useState(false);
   const [exVisible, setExVisible] = useState(20);
-  const [tplSearch, setTplSearch] = useState("");
-  const [debouncedTplSearch, setDebouncedTplSearch] = useState("");
   const [tplVisible, setTplVisible] = useState(12);
   const [currentUserId, setCurrentUserId] = useState(null);
 
