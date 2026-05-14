@@ -455,5 +455,24 @@
     "useSession": "شروع جلسه",
     "saveTemplate": "ذخیره قالب",
     "nameLabel": "نام قالب"
+  },
+  "settSammen": {
+    "lagGruppetime": "ساختن جلسه گروهی",
+    "lagGruppetimerBody": "ایجاد یا ویرایش الگوی جلسه",
+    "nyOvelse": "تمرین جدید",
+    "nyOvelseBody": "تمرین‌ها را به کتابخانه اضافه کنید",
+    "knipsTavla": "عکس از تابلو",
+    "knipsTavlaBody": "تابلوی تمرین را با دوربین اسکن کنید",
+    "comingSoon": "به زودی",
+    "newGruppetime": "جلسه گروهی جدید",
+    "searchGruppetimer": "جستجو در جلسات گروهی…",
+    "gruppetimerEmpty": "هنوز هیچ جلسه گروهی ایجاد نشده.",
+    "searchOvelser": "جستجو در تمرین‌ها…",
+    "ovelserEmpty": "هنوز هیچ تمرینی اضافه نشده.",
+    "regionAll": "همه",
+    "regionUpper": "بالاتنه",
+    "regionCore": "مرکزی",
+    "regionLower": "پایین‌تنه",
+    "regionCardio": "کاردیو"
   }
 }
