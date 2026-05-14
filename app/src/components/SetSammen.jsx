@@ -61,7 +61,7 @@ function ActionCard({ icon: Icon, label, body, accent, disabled, badge, onClick 
   );
 }
 
-export default function SetSammen({ onShowGruppetimePicker, onShowOvelsePicker, onShowNewOvelse }) {
+export default function SetSammen({ onShowGruppetimePicker, onShowNewOvelse }) {
   const { t } = useTranslation();
 
   return (
