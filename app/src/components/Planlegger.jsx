@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates, fetchSessionsForWeek } from "../lib/db";
 import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale, extractMuscles } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
-import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
+import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 
 function TemplatePickerSheet({ templates, onSelect, onClose }) {
   const { t } = useTranslation();
@@ -386,7 +386,6 @@ export default function Planlegger() {
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <SectionLabel>{t("nav.planner")}</SectionLabel>
-        <PageHeading>{t("planlegger.heading")}</PageHeading>
 
         {/* Week navigation */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 4 }}>

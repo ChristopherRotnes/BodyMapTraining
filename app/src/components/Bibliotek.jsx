@@ -7,7 +7,7 @@ import { Add, TrashCan, Edit as EditIcon, ChevronRight, Search } from "@carbon/i
 import { useTranslation } from "react-i18next";
 import { logDevError } from "../lib/utils";
 import { supabase } from "../lib/supabase";
-import PageShell, { SectionLabel, PageHeading, AccentChip } from "./PageShell";
+import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
   fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
@@ -155,7 +155,6 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
         <SectionLabel>{t("bibliotek.sectionLabel")}</SectionLabel>
-        <PageHeading>{t("bibliotek.heading")}</PageHeading>
 
         {/* Pill tab strip */}
         <div
