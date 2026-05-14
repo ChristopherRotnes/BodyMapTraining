@@ -455,5 +455,24 @@
     "useSession": "Use session",
     "saveTemplate": "Save template",
     "nameLabel": "Template name"
+  },
+  "settSammen": {
+    "lagGruppetime": "Create group session",
+    "lagGruppetimerBody": "Create or edit a session template",
+    "nyOvelse": "New exercise",
+    "nyOvelseBody": "Add exercises to your library",
+    "knipsTavla": "Snap the board",
+    "knipsTavlaBody": "Scan a training board with the camera",
+    "comingSoon": "Coming soon",
+    "newGruppetime": "New group session",
+    "searchGruppetimer": "Search group sessions…",
+    "gruppetimerEmpty": "No group sessions created yet.",
+    "searchOvelser": "Search exercises…",
+    "ovelserEmpty": "No exercises added yet.",
+    "regionAll": "All",
+    "regionUpper": "Upper body",
+    "regionCore": "Core",
+    "regionLower": "Lower body",
+    "regionCardio": "Cardio"
   }
 }

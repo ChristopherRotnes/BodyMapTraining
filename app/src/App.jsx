@@ -7,7 +7,9 @@ import Home from "./components/Home";
 import MuscleMap from "./components/MuscleMap";
 import History from "./components/History";
 import Report from "./components/Report";
-import Bibliotek from "./components/Bibliotek";
+import SetSammen from "./components/SetSammen";
+import GruppetimePicker from "./components/GruppetimePicker";
+import OvelsePicker from "./components/OvelsePicker";
 import TemplatePicker from "./components/TemplatePicker";
 import TemplateSessionEditor from "./components/TemplateSessionEditor";
 import Settings from "./components/Settings";
@@ -20,8 +22,8 @@ function App() {
   const [templateEditorState, setTemplateEditorState] = useState(null);
   const [pendingTemplateExercises, setPendingTemplateExercises] = useState(null);
   const [historyInitialDate, setHistoryInitialDate] = useState(null);
-  const [bibliotekInitialTab, setBibliotekInitialTab] = useState(0);
   const [reportPrefill, setReportPrefill] = useState(null);
+  const [ovelsePickerShowNew, setOvelsePickerShowNew] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
 
   const ensuredRef = useRef(false);
@@ -61,7 +63,7 @@ function App() {
     onShowLogger: () => setView("logger"),
     onShowHistory: () => { setHistoryInitialDate(null); setView("history"); },
     onShowReport: () => setView("report"),
-    onShowSetSammen: () => { setBibliotekInitialTab(0); setView("sett-sammen"); },
+    onShowSetSammen: () => setView("sett-sammen"),
     onShowHistoryWithDate: (dateStr) => { setHistoryInitialDate(dateStr); setView("history"); },
     onShowTemplatePicker: () => setView("template-picker"),
     onShowReportWithPrefill: (prefill) => { setReportPrefill(prefill); setView("report"); },
@@ -78,12 +80,24 @@ function App() {
   else if (view === "report")
     content = <Report prefill={reportPrefill} onPrefillConsumed={() => setReportPrefill(null)} />;
   else if (view === "sett-sammen")
-    content = <Bibliotek
-      initialTab={bibliotekInitialTab}
+    content = <SetSammen
+      onShowGruppetimePicker={() => setView("gruppetime-picker")}
+      onShowOvelsePicker={() => { setOvelsePickerShowNew(false); setView("ovelse-picker"); }}
+      onShowNewOvelse={() => { setOvelsePickerShowNew(true); setView("ovelse-picker"); }}
+    />;
+  else if (view === "gruppetime-picker")
+    content = <GruppetimePicker
+      onBack={() => setView("sett-sammen")}
       onEditTemplate={(tpl) => {
         setTemplateEditorState({ template: tpl, mode: "edit" });
         setView("template-editor");
       }}
+    />;
+  else if (view === "ovelse-picker")
+    content = <OvelsePicker
+      key={ovelsePickerShowNew ? "new" : "browse"}
+      onBack={() => setView("sett-sammen")}
+      initialShowNew={ovelsePickerShowNew}
     />;
   else if (view === "template-picker")
     content = <TemplatePicker
@@ -101,8 +115,7 @@ function App() {
       mode={templateEditorState.mode}
       onBack={() => {
         if (templateEditorState.mode === "edit") {
-          setBibliotekInitialTab(1);
-          setView("sett-sammen");
+          setView("gruppetime-picker");
         } else {
           setView("template-picker");
         }

@@ -455,5 +455,24 @@
     "useSession": "Bruk økt",
     "saveTemplate": "Lagre mal",
     "nameLabel": "Navn på mal"
+  },
+  "settSammen": {
+    "lagGruppetime": "Lag en gruppetime",
+    "lagGruppetimerBody": "Opprett eller rediger en mal for gymtimen",
+    "nyOvelse": "Ny øvelse",
+    "nyOvelseBody": "Legg til øvelser i biblioteket ditt",
+    "knipsTavla": "Knips tavla",
+    "knipsTavlaBody": "Scan en treningstavle med kameraet",
+    "comingSoon": "Kommer snart",
+    "newGruppetime": "Ny gruppetime",
+    "searchGruppetimer": "Søk i gruppetimer…",
+    "gruppetimerEmpty": "Ingen gruppetimer opprettet ennå.",
+    "searchOvelser": "Søk i øvelser…",
+    "ovelserEmpty": "Ingen øvelser lagt til ennå.",
+    "regionAll": "Alle",
+    "regionUpper": "Overkropp",
+    "regionCore": "Kjerne",
+    "regionLower": "Underkropp",
+    "regionCardio": "Kondisjon"
   }
 }
