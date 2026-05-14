@@ -22,7 +22,7 @@ function matchesRegion(ex, region) {
   return [...(ex.primary_muscles || []), ...(ex.secondary_muscles || [])].some(m => set.has(m));
 }
 
-export default function OvelsePicker({ onBack, initialShowNew = false }) {
+export default function OvelsePicker({ onBack }) {
   const { t } = useTranslation();
   const [exercises, setExercises] = useState([]);
   const [templateCounts, setTemplateCounts] = useState({});
@@ -31,7 +31,7 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [region, setRegion] = useState("alle");
-  const [showNew, setShowNew] = useState(initialShowNew);
+  const [showNew, setShowNew] = useState(false);
   const [detailEx, setDetailEx] = useState(null);
   const [editingEx, setEditingEx] = useState(null);
   const [saving, setSaving] = useState(false);

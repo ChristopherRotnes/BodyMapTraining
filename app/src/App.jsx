@@ -24,7 +24,6 @@ function App() {
   const [pendingTemplateExercises, setPendingTemplateExercises] = useState(null);
   const [historyInitialDate, setHistoryInitialDate] = useState(null);
   const [reportPrefill, setReportPrefill] = useState(null);
-  const [ovelsePickerShowNew, setOvelsePickerShowNew] = useState(false);
   const [gruppetimerEditorTemplate, setGruppetimerEditorTemplate] = useState(null);
   const [introOpen, setIntroOpen] = useState(false);
 
@@ -84,8 +83,7 @@ function App() {
   else if (view === "sett-sammen")
     content = <SetSammen
       onShowGruppetimePicker={() => setView("gruppetime-picker")}
-      onShowOvelsePicker={() => { setOvelsePickerShowNew(false); setView("ovelse-picker"); }}
-      onShowNewOvelse={() => { setOvelsePickerShowNew(true); setView("ovelse-picker"); }}
+      onShowOvelsePicker={() => setView("ovelse-picker")}
     />;
   else if (view === "gruppetime-picker")
     content = <GruppetimePicker
@@ -102,9 +100,7 @@ function App() {
     />;
   else if (view === "ovelse-picker")
     content = <OvelsePicker
-      key={ovelsePickerShowNew ? "new" : "browse"}
       onBack={() => setView("sett-sammen")}
-      initialShowNew={ovelsePickerShowNew}
     />;
   else if (view === "template-picker")
     content = <TemplatePicker

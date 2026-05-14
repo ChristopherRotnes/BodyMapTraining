@@ -73,7 +73,7 @@ function ActionCard({ icon: Icon, kicker, label, body, color, disabled, badge, o
   );
 }
 
-export default function SetSammen({ onShowGruppetimePicker, onShowNewOvelse }) {
+export default function SetSammen({ onShowGruppetimePicker, onShowOvelsePicker }) {
   const { t } = useTranslation();
 
   return (
@@ -96,7 +96,7 @@ export default function SetSammen({ onShowGruppetimePicker, onShowNewOvelse }) {
             label={t("settSammen.nyOvelse")}
             body={t("settSammen.nyOvelseBody")}
             color="var(--exercise)"
-            onClick={onShowNewOvelse}
+            onClick={onShowOvelsePicker}
           />
           <ActionCard
             icon={Camera}
