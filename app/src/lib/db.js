@@ -197,10 +197,9 @@ export async function fetchLastSession() {
       )
     `)
     .order("session_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
   if (error) throw error;
-  return data;
+  return data?.[0] ?? null;
 }
 
 export async function fetchSessionsForWeek(weekIso) {
