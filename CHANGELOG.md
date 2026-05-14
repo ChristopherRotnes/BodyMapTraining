@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.2.8] — 2026-05-14
+
+### Added
+- **Gym-wide shared templates and exercise library** — `session_templates` and `exercise_library` are now fully shared across co-instructors at the same gym. Any instructor can create, edit, rename, and delete any template or exercise. `user_id` is retained as "created by" for attribution only. Creator name ("Av [name]") is shown on template cards and exercise rows in Bibliotek when the item was created by a colleague. Bibliotek "Mine maler" tab renamed to "Maler".
+- **RLS migration (`gym_wide_templates_and_exercises`)** — replaced `auth.uid() = user_id` all-ops policies on `session_templates`, `session_template_exercises`, and `exercise_library` with gym-aware policies using the same-gym `user_gyms` EXISTS subquery pattern already used for sessions. INSERT still requires `auth.uid() = user_id`; SELECT/UPDATE/DELETE allow any co-instructor at the same gym.
+
+### Note
+Editing an exercise's muscle mapping does **not** retroactively update historical session data. `muscle_activations` rows are permanent snapshots written at log time with no FK to `exercise_library`.
+
 ## [1.2.7] — 2026-05-13
 
 ### Developer
