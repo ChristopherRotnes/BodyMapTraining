@@ -62,10 +62,10 @@
   },
   "nav": {
     "logSession": "Logg økt",
-    "history": "Treningshistorikk",
-    "report": "Perioderapport",
+    "history": "Bla i historikken",
+    "report": "Analyser perioden",
     "library": "Sett sammen gruppetimer",
-    "planner": "Planlegg uke",
+    "planner": "Planlegg uka",
     "settings": "Tilpass appen"
   },
   "login": {
@@ -158,7 +158,7 @@
     "confirmLabel": "Bekreft økt"
   },
   "history": {
-    "sectionLabel": "HISTORIKK",
+    "sectionLabel": "Bla i historikken",
     "noSessions": "Ingen økter lagret ennå.",
     "prevMonth": "Forrige måned",
     "nextMonth": "Neste måned",
@@ -206,7 +206,7 @@
     "reanalyzeImageError": "Kunne ikke tolke bildet. Prøv igjen med et tydeligere bilde."
   },
   "bibliotek": {
-    "sectionLabel": "BIBLIOTEK",
+    "sectionLabel": "Sett sammen gruppetimer",
     "heading": "Dine byggeklosser.",
     "tabExercises": "Øvelser",
     "tabTemplates": "Maler",
@@ -291,7 +291,7 @@
     "slide5Body": "Lagre dine egne øvelser med muskeltilknytning og bygg maler du kan gjenbruke uke etter uke."
   },
   "settings": {
-    "heading": "Innstillinger",
+    "heading": "Tilpass appen",
     "appearance": "Utseende",
     "darkTheme": "Mørkt tema",
     "darkThemeOff": "Av",
@@ -349,7 +349,7 @@
     "allMusclesSecondaryNote": "Alle primærmuskelgrupper er trent. Disse er bare trent sekundært:",
     "toCta": "Disse bør du legge inn i programmet →",
     "refreshRecs": "Oppdater anbefalinger",
-    "period": "PERIODE",
+    "period": "Analyser perioden",
     "activeDays": "AKTIVE DAGER",
     "days": {
       "mon": "Man",

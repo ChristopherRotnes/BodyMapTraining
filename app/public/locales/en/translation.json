@@ -62,10 +62,10 @@
   },
   "nav": {
     "logSession": "Log session",
-    "history": "Training history",
-    "report": "Period report",
+    "history": "Browse history",
+    "report": "Analyse period",
     "library": "Compose group sessions",
-    "planner": "Plan week",
+    "planner": "Plan the week",
     "settings": "Customize app"
   },
   "login": {
@@ -158,7 +158,7 @@
     "confirmLabel": "Confirm session"
   },
   "history": {
-    "sectionLabel": "HISTORY",
+    "sectionLabel": "Browse history",
     "noSessions": "No sessions saved yet.",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
@@ -206,7 +206,7 @@
     "reanalyzeImageError": "Could not interpret the image. Try again with a clearer image."
   },
   "bibliotek": {
-    "sectionLabel": "LIBRARY",
+    "sectionLabel": "Compose group sessions",
     "heading": "Your building blocks.",
     "tabExercises": "Exercises",
     "tabTemplates": "Templates",
@@ -349,7 +349,7 @@
     "allMusclesSecondaryNote": "All primary muscles trained. These are secondary only:",
     "toCta": "Add these to your program →",
     "refreshRecs": "Refresh recommendations",
-    "period": "PERIOD",
+    "period": "Analyse period",
     "activeDays": "ACTIVE DAYS",
     "days": {
       "mon": "Mon",

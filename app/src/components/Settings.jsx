@@ -108,6 +108,7 @@ export default function Settings({ onShowIntro }) {
 
   return (
     <PageShell>
+      <SectionLabel>{t("nav.settings")}</SectionLabel>
       <PageHeading>{t("settings.heading")}</PageHeading>
 
       <CollapsibleSection label={t("settings.language")}>
