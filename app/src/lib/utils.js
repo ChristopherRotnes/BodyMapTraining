@@ -24,6 +24,10 @@ export function getDevErrors() { return _devErrors; }
 // Azure SWA replaces the Authorization header with its own managed identity token).
 // Retries once after a forced token refresh on 401 to recover from expired tokens.
 export async function callClaude(body) {
+  const imagePart = body?.messages?.[0]?.content?.[0];
+  if (imagePart?.type === 'image') {
+    alert('[diag] callClaude data: ' + (imagePart.source.data.length * 0.75 / 1024 / 1024).toFixed(2) + ' MB | starts: ' + imagePart.source.data.slice(0, 20));
+  }
   const makeRequest = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     return fetch("/api/claude", {
