@@ -444,8 +444,8 @@ export async function updateDisplayName(displayName) {
   if (error) throw error;
 }
 
-export async function ensureDisplayName() {
-  const { data: { user } } = await supabase.auth.getUser();
+export async function ensureDisplayName(user = null) {
+  if (!user) ({ data: { user } } = await supabase.auth.getUser());
   if (!user) return;
   const { data } = await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle();
   if (data?.display_name) return;
@@ -480,8 +480,8 @@ export async function fetchActiveRoles(buId = DEFAULT_SPORTY_BUSINESS_UNIT_ID) {
   return data || [];
 }
 
-export async function ensureGymMembership(buId = DEFAULT_SPORTY_BUSINESS_UNIT_ID) {
-  const { data: { user } } = await supabase.auth.getUser();
+export async function ensureGymMembership(buId = DEFAULT_SPORTY_BUSINESS_UNIT_ID, user = null) {
+  if (!user) ({ data: { user } } = await supabase.auth.getUser());
   if (!user) return null;
   const { data, error } = await supabase
     .from("user_gyms")

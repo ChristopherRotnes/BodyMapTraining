@@ -2,6 +2,12 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.1] — 2026-05-14
+
+### Changed
+- **Parallel fetches on History mount (issue #208)** — `fetchSessions` and `fetchLibraryExercises` are now fired in parallel via `Promise.all`, cutting the History load from two serial round-trips to one.
+- **Parallel app-init ensures (issue #209)** — `ensureGymMembership` and `ensureDisplayName` now accept an optional `user` param. `App.jsx` passes `session.user` and fires both in a single `Promise.all`, eliminating two redundant `supabase.auth.getUser()` network calls on every login.
+
 ## [1.5.0] — 2026-05-14
 
 ### Changed
