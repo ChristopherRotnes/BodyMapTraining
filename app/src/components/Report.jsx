@@ -358,8 +358,8 @@ export default function Report({ prefill, onPrefillConsumed }) {
               ))}
             </div>
           )}
-          {/* Row 4: instructors — only when >1 instructor present */}
-          {availableInstructors.length > 1 && (
+          {/* Row 4: instructors — when any instructor is present */}
+          {availableInstructors.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 8, paddingBottom: 8, borderTop: "1px solid var(--border-subtle-wl)" }}>
               {availableInstructors.map(name => (
                 <FilterChip key={name} label={name} active={selectedInstructors.has(name)} onClick={() => toggleInstructor(name)} />
