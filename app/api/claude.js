@@ -20,7 +20,7 @@ app.http('claude', {
     // Azure SWA replaces the Authorization header with its own managed identity
     // token, so the Supabase JWT is passed in X-Supabase-Token instead.
     const diagImageBytes = request.headers.get('X-Diag-Image-Bytes');
-    if (diagImageBytes) context.log(`[diag] client-reported image bytes: ${diagImageBytes} (${(parseInt(diagImageBytes) / 1024 / 1024).toFixed(2)} MB)`);
+    if (diagImageBytes) context.warn(`[diag] client-reported image bytes: ${diagImageBytes} (${(parseInt(diagImageBytes) / 1024 / 1024).toFixed(2)} MB)`);
     const token = request.headers.get('X-Supabase-Token');
     const userId = await verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey);
     if (!userId) {
@@ -45,7 +45,7 @@ app.http('claude', {
       if (serverImagePart?.type === 'image') {
         const serverBytes = Math.round(serverImagePart.source.data.length * 0.75);
         serverImageMB = (serverBytes / 1024 / 1024).toFixed(2);
-        context.log(`[diag] server-received image bytes: ${serverBytes} (${serverImageMB} MB)`);
+        context.warn(`[diag] server-received image bytes: ${serverBytes} (${serverImageMB} MB)`);
       }
     } catch {
       return new Response(
@@ -66,7 +66,7 @@ app.http('claude', {
     }
 
     const requestBody = JSON.stringify(body);
-    context.log(`[diag] requestBody length: ${requestBody.length} chars`);
+    context.warn(`[diag] requestBody length: ${requestBody.length} chars`);
     let upstream;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2 ** attempt * 1000));
