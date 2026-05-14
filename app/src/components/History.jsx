@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
 import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, detectMediaType, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
+import { compressImage, buildMuscleMapFromSession, buildMuscleMapFromExercises, isInvalidNum, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
   Button, Tag, InlineNotification, InlineLoading,
@@ -374,8 +374,7 @@ export default function History({ initialDate }) {
     if (!file) return;
     patchSessionEdit(session.id, { analyzing: true, analyzeError: null });
     try {
-      const mt = await detectMediaType(file);
-      const b64 = await toBase64(file);
+      const { base64: b64, mediaType: mt } = await compressImage(file);
       const res = await callClaude({
         model: CLAUDE_MODEL_VISION,
         max_tokens: 1500,

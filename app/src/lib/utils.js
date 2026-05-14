@@ -81,6 +81,47 @@ export async function detectMediaType(file) {
   return file.type || "image/jpeg";
 }
 
+// Compress an image to JPEG, reducing quality then dimensions until decoded
+// byte size is under maxDecodedBytes (default 5 MB = Anthropic's hard limit).
+// Always outputs image/jpeg — this also converts HEIF/HEIC (iPhone default
+// format) to JPEG, since iOS Safari converts HEIF→JPEG via FileReader/canvas
+// but the resulting JPEG can be larger than the original compressed HEIF.
+export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+
+      const tryEncode = (quality) => {
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const b64 = dataUrl.split(',')[1];
+        // base64 decoded bytes ≈ b64.length × 3/4
+        if (b64.length * 0.75 <= maxDecodedBytes || (quality <= 0.3 && w <= 800)) {
+          resolve({ base64: b64, mediaType: 'image/jpeg' });
+          return;
+        }
+        if (quality > 0.45) {
+          tryEncode(parseFloat((quality - 0.15).toFixed(2)));
+        } else {
+          w = Math.round(w * 0.75);
+          h = Math.round(h * 0.75);
+          tryEncode(0.75);
+        }
+      };
+      tryEncode(0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Kunne ikke laste bildet')); };
+    img.src = url;
+  });
+}
+
 // Builds muscle-ID → exercise-name map from a live exercises array (confirm/edit step).
 // Falls back to EX_DB keyword matching for exercises without Claude-assigned muscle data.
 export function buildMuscleMapFromExercises(exercises) {

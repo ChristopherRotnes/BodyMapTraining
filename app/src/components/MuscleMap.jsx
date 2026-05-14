@@ -1,7 +1,7 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
 import { EX_DB, MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
-import { toBase64, detectMediaType, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
+import { compressImage, buildMuscleMapFromExercises, buildRecMuscleMap, callClaude, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import {
   Button, Select, SelectItem,
@@ -22,8 +22,6 @@ const localDateStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 };
 
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 function getConfidenceColor(ex) {
   if (ex.primary?.length || ex.secondary?.length) return "var(--heat-4)";
@@ -170,13 +168,12 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
 
   const addImage = useCallback(async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      setSizeError(`Bildet er for stort (maks ${MAX_FILE_SIZE_MB} MB). Komprimer eller velg et annet bilde.`);
-      return;
+    try {
+      const { base64: b64, mediaType: mt } = await compressImage(file);
+      dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
+    } catch (e) {
+      setSizeError(e.message || "Kunne ikke laste bildet.");
     }
-    const mt = await detectMediaType(file);
-    const b64 = await toBase64(file);
-    dispatch({ type: "ADD_IMAGE", image: { id: Date.now() + Math.random(), base64: b64, mediaType: mt, preview: `data:${mt};base64,${b64}` } });
   }, [setSizeError]);
 
   const handleFiles = useCallback(async (files) => {
