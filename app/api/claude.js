@@ -19,8 +19,6 @@ app.http('claude', {
 
     // Azure SWA replaces the Authorization header with its own managed identity
     // token, so the Supabase JWT is passed in X-Supabase-Token instead.
-    const diagImageBytes = request.headers.get('X-Diag-Image-Bytes');
-    if (diagImageBytes) context.warn(`[diag] client-reported image bytes: ${diagImageBytes} (${(parseInt(diagImageBytes) / 1024 / 1024).toFixed(2)} MB)`);
     const token = request.headers.get('X-Supabase-Token');
     const userId = await verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey);
     if (!userId) {
@@ -38,15 +36,8 @@ app.http('claude', {
     }
 
     let body;
-    let serverImageMB = null;
     try {
       body = await request.json();
-      const serverImagePart = body?.messages?.[0]?.content?.[0];
-      if (serverImagePart?.type === 'image') {
-        const exactBytes = Buffer.from(serverImagePart.source.data, 'base64').length;
-        serverImageMB = (exactBytes / 1024 / 1024).toFixed(2);
-        context.warn(`[diag] server exact decoded bytes: ${exactBytes} (${serverImageMB} MB)`);
-      }
     } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid JSON' }),
@@ -66,8 +57,6 @@ app.http('claude', {
     }
 
     const requestBody = JSON.stringify(body);
-    const requestBodyMB = (requestBody.length * 0.75 / 1024 / 1024).toFixed(2);
-    context.warn(`[diag] requestBody length: ${requestBody.length} chars (${requestBodyMB} MB)`);
     let upstream;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2 ** attempt * 1000));
@@ -90,7 +79,7 @@ app.http('claude', {
       const errorType = data?.error?.type || 'unknown';
       context.error(`Anthropic error [${errorType}]: ${detail}`);
       return new Response(
-        JSON.stringify({ error: 'Claude request failed', detail, serverImageMB, requestBodyMB }),
+        JSON.stringify({ error: 'Claude request failed', detail }),
         { status: upstream.status, headers: { 'Content-Type': 'application/json' } }
       );
     }

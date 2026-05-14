@@ -415,15 +415,13 @@ Carbon's compiled CSS from `@carbon/styles` emits dark skeleton token overrides 
 ### Issue #173 — HEIF photo exceeds Anthropic 5 MB limit (resolved 2026-05-14)
 Symptom: uploading an iPhone 17 Pro photo failed with `Serverfeil (400): image exceeds 5 MB maximum: 5246896 bytes > 5242880 bytes`.
 
-**Root cause 1 — iOS FileReader HEIF → JPEG inflation:** `FileReader.readAsDataURL` triggers an automatic HEIF → JPEG conversion at full native resolution. A 2.6 MB HEIF image inflates to 5.25 MB — just over the 5,242,880 decoded-byte limit.
+**Root cause 1 — Wrong comparison unit in `compressImage`:** Anthropic enforces the 5 MB limit on the **base64 string character count**, not the decoded byte size. `compressImage` was checking `b64.length * 0.75 <= 5 MB` (decoded bytes ≤ 5 MB), which allows base64 strings up to ~6.67 M chars. A 3.75 MB decoded image produces ~5.25 M base64 chars — passes our check, fails Anthropic's. Fixed by changing all checks to `b64.length <= MAX_B64_CHARS` (5,242,880) and setting the canvas compression target to 90% of that limit.
 
-**Root cause 2 — iOS silently ignores large data URLs as `img.src`:** The original canvas fallback path set `img.src = dataUrl` (the ~9 MB base64 string from FileReader). iOS Safari silently fails to decode a data URL this large: `img.naturalWidth` and `img.naturalHeight` both become 0. The canvas is created as 0×0, `toDataURL` returns a near-empty result that passes the size check, and the original un-compressed data stays in state. No error is thrown.
+**Root cause 2 — iOS silently ignores large data URLs as `img.src`:** The original canvas fallback path set `img.src = dataUrl` (the ~9 MB base64 string from FileReader). iOS Safari silently fails to decode a data URL this large: `img.naturalWidth` and `img.naturalHeight` both become 0. The canvas is created as 0×0, `toDataURL` returns a near-empty result that passes the size check, and the original un-compressed data stays in state. No error is thrown. Fixed by using `URL.createObjectURL(file)` as the image source instead.
 
-**Root cause 3 — iOS Safari ignores `canvas.toDataURL` quality parameter:** Even with the blob URL fix, iOS Safari on some versions silently ignores the `quality` argument to `canvas.toDataURL('image/jpeg', quality)` and always outputs at its default quality (~0.92). Quality stepping 0.9→0.3 has no effect — all steps produce the same ~5.25 MB result. The `|| quality <= 0.3` fallback in the old `tryQuality` function then resolved the Promise with the still-oversize image.
+**Root cause 3 — iOS Safari ignores `canvas.toDataURL` quality parameter:** iOS Safari on some versions silently ignores the `quality` argument and always outputs at default quality (~0.92). Dimension reduction (canvas pixel dimensions) is the only reliable lever on iOS — not quality stepping.
 
-**Fix:** Use `URL.createObjectURL(file)` as the canvas image source (fixes root cause 2). Start at 2048 px long edge (not 4500 px) so even worst-case iOS default quality produces < 5 MB. After quality steps are exhausted, shrink canvas to 70% long edge and retry from quality 0.9. Repeat down to 800 px, then resolve unconditionally. Dimension reduction is the reliable fallback when quality is ignored.
-
-**Never revert to `img.src = dataUrl` for large images** — iOS will silently zero out naturalWidth/Height. Do not rely on quality-only stepping for iOS — dimension reduction is the only reliable size control.
+**Never revert to `img.src = dataUrl` for large images** — iOS will silently zero out naturalWidth/Height. Do not use `b64.length * 0.75` to compare against Anthropic's limit — compare `b64.length` directly.
 
 ### Issue #173 — fetchLastSession returning null (resolved 2026-05-14)
 Symptom: Home → "Siste økt" showed "Ingen økter logget ennå" even though sessions existed in the DB and the weekly strip showed the correct session count.

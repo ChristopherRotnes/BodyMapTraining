@@ -24,13 +24,6 @@ export function getDevErrors() { return _devErrors; }
 // Azure SWA replaces the Authorization header with its own managed identity token).
 // Retries once after a forced token refresh on 401 to recover from expired tokens.
 export async function callClaude(body) {
-  const imagePart = body?.messages?.[0]?.content?.[0];
-  if (imagePart?.type === 'image') {
-    alert('[diag] callClaude data: ' + (imagePart.source.data.length * 0.75 / 1024 / 1024).toFixed(2) + ' MB | starts: ' + imagePart.source.data.slice(0, 20));
-  }
-  const diagImageBytes = imagePart?.type === 'image'
-    ? String(Math.round(imagePart.source.data.length * 0.75))
-    : null;
   const makeRequest = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     return fetch("/api/claude", {
@@ -38,7 +31,6 @@ export async function callClaude(body) {
       headers: {
         "Content-Type": "application/json",
         ...(session?.access_token ? { "X-Supabase-Token": session.access_token } : {}),
-        ...(diagImageBytes ? { "X-Diag-Image-Bytes": diagImageBytes } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -99,7 +91,14 @@ export async function detectMediaType(file) {
 //      is the only reliable lever. We target 4.5 MB (not 5 MB) for a safety margin.
 //      We start at 1200 px — the 1600 px step is a no-op for typical 1440 px-wide photos
 //      and just wastes a round-trip through the iOS JPEG encoder at the same size.
-export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
+export function compressImage(file) {
+  // Anthropic enforces a 5 MB limit on the base64 string character count, not
+  // the decoded byte size. A 3.75 MB decoded image produces ~5.25 M base64 chars
+  // and is rejected. All checks must compare b64.length directly, not b64.length * 0.75.
+  const MAX_B64_CHARS = 5 * 1024 * 1024;
+  // Target 90 % of the limit for a safety margin; iOS ignores the quality param
+  // on canvas.toDataURL so dimension reduction is the only reliable lever.
+  const TARGET_B64_CHARS = Math.round(MAX_B64_CHARS * 0.9);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Kunne ikke laste bildet'));
@@ -107,8 +106,7 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
       const dataUrl = reader.result;
       const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
       const b64 = dataUrl.split(',')[1];
-      // base64 decoded bytes ≈ b64.length × 3/4
-      if (b64.length * 0.75 <= maxDecodedBytes) {
+      if (b64.length <= MAX_B64_CHARS) {
         resolve({ base64: b64, mediaType });
         return;
       }
@@ -125,12 +123,8 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
         : new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
       ready.then(() => {
         URL.revokeObjectURL(objectUrl);
-        alert("[diag] compressImage naturalW: " + img.naturalWidth + " naturalH: " + img.naturalHeight);
         const nw = img.naturalWidth || 1600;
         const nh = img.naturalHeight || 1200;
-        // Target 4.5 MB to stay safely below the 5 MB API limit; iOS ignores
-        // the quality param so only dimension reduction reliably shrinks output.
-        const target = 4.5 * 1024 * 1024;
         let resolved = false;
         for (const maxEdge of [1200, 960, 768, 600]) {
           const scale = Math.min(1, maxEdge / Math.max(nw, nh));
@@ -142,7 +136,7 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
           const d = canvas.toDataURL('image/jpeg', 0.85);
           const b = d.split(',')[1];
-          if (b.length * 0.75 <= target) {
+          if (b.length <= TARGET_B64_CHARS) {
             resolve({ base64: b, mediaType: 'image/jpeg' });
             resolved = true;
             break;
