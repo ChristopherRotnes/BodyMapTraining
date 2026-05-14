@@ -390,7 +390,7 @@ export default function History({ initialDate }) {
       let data;
       try { data = await res.json(); } catch { throw new Error(t("history.reanalyzeServerError", { status: res.status })); }
       if (!res.ok) {
-        const detail = data?.error?.message;
+        const detail = data?.detail || data?.error?.message;
         throw new Error(detail
           ? t("history.reanalyzeServerErrorDetail", { status: res.status, detail })
           : t("history.reanalyzeServerErrorCode", { status: res.status }));
