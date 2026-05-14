@@ -21,6 +21,51 @@ All GitHub issues follow this structure:
 - **`## Out of scope`** — explicit exclusions to prevent scope creep (optional but recommended for larger issues)
 
 
+## Glossary
+
+Canonical definitions for domain terms. When a term is ambiguous in an issue or conversation, refer here — or ask for clarification before implementing.
+
+### People & roles
+
+| Term | Definition |
+|---|---|
+| **User** | The person logged into Workout Lens. A gym instructor employed at a sporty.no gym. Maps to `auth.uid()`, `sessions.trainer_id`, `user_id` across all tables. |
+| **Trainer** | Avoid this term. It is ambiguous — could mean the app user or the gym class instructor. If someone says "trainer" in an issue or conversation, ask: do you mean the app user, or the instructor who led the class? In code, `trainer_id` is a legacy DB column name that refers to the app user. |
+| **Instructor** | The person who *leads* a gym class, sourced from sporty.no. Stored in `gym_calendar.instructor`. Has no account in the app. Example: "Linda Hatlevik." When unqualified, "instructor" always means this — the class leader, not the app user. |
+| **Co-instructor** | Another app user registered at the same gym (`sporty_business_unit_id`). Their sessions are cross-readable via RLS. |
+| **Display name** | A user's visible name in the app. Stored in `profiles.display_name`. Auto-set to email prefix on first login. |
+
+### Training concepts
+
+| Term | Definition |
+|---|---|
+| **Session** | One logged workout. One row in `sessions`. Logged by a user (`trainer_id`). Optionally linked to a gym class (`gym_calendar_id`). |
+| **Gym class** | A scheduled class from sporty.no. Stored in `gym_calendar`. Has a name, instructor, start/end time. Synced by `sportySync.js`. |
+| **Session exercise** | One exercise performed within a session. Stored in `session_exercises`. Has name, sets, reps, and muscle activations. |
+| **Library exercise** | A saved, reusable exercise with a standardised name and default muscle map. Stored in `exercise_library`. Can be referenced by templates. |
+| **Template** | A named, reusable workout skeleton owned by a user. Stored in `session_templates`. Contains ordered template exercises. |
+| **Template exercise** | An exercise slot inside a template. Stored in `session_template_exercises`. Name and muscles are a denormalised snapshot — renaming the library source doesn't affect it. |
+| **Week plan** | An assignment of templates to days of a specific ISO week. Stored in `week_plans` + `week_plan_days`. |
+
+### Muscle concepts
+
+| Term | Definition |
+|---|---|
+| **Muscle ID** | One of 17 fixed string keys (e.g. `chest`, `lats`, `quads`). The canonical identifier used in the DB, prompts, and bodymap. Full list in `MUSCLES` in `bodymap.jsx`. |
+| **Primary muscle** | A muscle directly targeted by an exercise. `muscle_activations.activation_type = 'primary'`. Shown as solid green on the body map. |
+| **Secondary muscle** | A muscle engaged in a supporting/stabilising role. `activation_type = 'secondary'`. Shown as blue diagonal hatch on the body map. |
+| **Muscle activation** | A DB record linking a session exercise to a muscle ID with a type. Stored in `muscle_activations`. |
+
+### System concepts
+
+| Term | Definition |
+|---|---|
+| **Business unit** | A gym location in sporty.no. Identified by `sporty_business_unit_id` (hardcoded as `8`). Used to scope RLS policies and the sporty sync. |
+| **Gym calendar** | The sporty.no schedule mirrored in the `gym_calendar` table. Populated by `sportySync.js` three times daily. |
+| **Recommendation** | A Claude-generated exercise suggestion based on untrained muscle gap analysis for a period. Cached in `recommendation_cache` keyed by prompt version + period + muscle coverage. |
+| **Period** | A filter duration on the Report page — 7, 30, or 90 days back from today. |
+| **View** | Front or back side of the body SVG. Not to be confused with React "views" (the full-page components). |
+
 ## Project overview
 **Workout Lens** — a workout-logging app. User photographs a handwritten training program from a gym whiteboard (sporty.no format), the app analyses the image via Claude Vision, displays which muscles were trained on a body figure, and gives next-session recommendations.
 
@@ -209,7 +254,7 @@ recommendation_cache
 - **i18n:** `app/src/lib/i18n.js` initialises `i18next` with `fallbackLng: "nb"` and three resource bundles (`nb`, `en`, `fa`). All components use `useTranslation()` for strings. All locale-aware date/time rendering uses `Intl.DateTimeFormat` with a `getIntlLocale()` helper that maps `"nb" → "no"` (the IETF tag `Intl` expects). Never use hardcoded locale strings like `"no-NO"` or `date-fns` locale objects — they break when the user switches language. The `i18n` singleton can be imported directly (`import i18n from "../lib/i18n"`) for `i18n.language` access outside hooks. RTL (`dir="rtl"`) is applied to `<html>` automatically on language change.
 - **Shared muscle/SVG module:** `app/src/lib/bodymap.jsx` exports `MUSCLES`, `SHAPES`, `EX_DB`, color constants (`PRIMARY_FILL`, `PRIMARY_HOVER`, `PRIMARY_STROKE`, heat vars), `calcMuscles`, `BodySVG`, `HeatmapBodySVG` (accepts `onHover(id|null)` and `hovered` props — when `onHover` is set the internal tooltip is suppressed), and `useIsMobile`. Do not duplicate these in component files.
 - **Shared utilities:** `app/src/lib/utils.js` — exports `toBase64`, `getMediaType`, `buildMuscleMapFromExercises` (with EX_DB fallback, for confirm/edit steps), `buildMuscleMapFromSession` (reads saved DB session for History read mode), `buildRecMuscleMap` (for recommendation body maps), `isInvalidNum` (validates sets/reps as integers 1–99), `callClaude(body)` (authenticated fetch to `/api/claude` — returns raw `Response`; always call `await res.json()` to read the body), `inferMusclesFromName(name)` (calls Claude Sonnet text API to infer muscle IDs for a single exercise name — returns `{ primary, secondary }` or `null`; handles markdown code fences defensively), `extractMuscles(session)` (splits `muscle_activations` into primary/secondary Sets, removes primary from secondary), `toWeekIso(date)` (Date → `"2026-W19"` ISO week string), `weekIsoToMonday(weekIso)` (`"2026-W19"` → Monday `Date`), `isoWeekMonday(date)` (Date → Monday `Date` of that ISO week, local time), `toIsoDate(date)` (Date → `"yyyy-MM-dd"` string using local time getters — replaces `date-fns` `format`), `getIntlLocale()` (maps `i18n.language` to the IETF tag `Intl` expects, e.g. `"nb" → "no"`). Do not redefine these locally in component files.
-- **Shared Claude config:** `app/src/lib/prompts.js` — exports `CLAUDE_MODEL_VISION` (opus, for image analysis), `CLAUDE_MODEL_TEXT` (sonnet, for recommendations), `RECS_PROMPT_VERSION` (integer — bump whenever `buildPeriodRecommendPrompt` or the model changes; old cache entries are swept by the weekly cleanup job; also keep `RECS_PROMPT_VERSION` in `app/api/recsCacheCleanup.js` in sync), `ANALYZE_PROMPT`, `buildRecommendPrompt(trained, untrained)`, `buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels)`, `buildMuscleInferencePrompt(name)` (cheap text-only call for single-exercise muscle inference). All model IDs and prompt text live here; update in one place.
+- **Shared Claude config:** `app/src/lib/prompts.js` — exports `CLAUDE_MODEL_VISION` (sonnet-4-6, for image analysis), `CLAUDE_MODEL_TEXT` (sonnet-4-6, for recommendations), `RECS_PROMPT_VERSION` (integer — bump whenever `buildPeriodRecommendPrompt` or the model changes; old cache entries are swept by the weekly cleanup job; also keep `RECS_PROMPT_VERSION` in `app/api/recsCacheCleanup.js` in sync), `ANALYZE_PROMPT`, `buildRecommendPrompt(trained, untrained)`, `buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels)`, `buildMuscleInferencePrompt(name)` (cheap text-only call for single-exercise muscle inference). All model IDs and prompt text live here; update in one place.
 - Claude returns muscle IDs directly in JSON — local keyword matching (EX_DB) was abandoned because Norwegian abbreviations and whiteboard variants didn't match reliably. EX_DB is kept only as fallback for manually added exercises.
 - SVG body uses `BODY_PATH` (bezier curves, viewBox `0 0 160 360`) — improved silhouette with curved shoulders, arms, waist and hips. Still simplified, not anatomically precise. `SHAPES` entries are either ellipses (`{ cx, cy, rx, ry }`) or SVG paths (`{ d }`); the render loop handles both. Key muscles with path shapes: `traps` (trapezoid with neck notch), `lats` (wing paths). `BodySVG` renders primary muscles as solid green glow, secondary as diagonal blue stripes (`<pattern id="sec-stripe-{view}">`).
 - `useIsMobile(breakpoint=500)` — exported hook from `bodymap.jsx`. Below breakpoint: single body view with Front/Bak toggle. Above: side-by-side. Consumed via `BodyPanel` — do not use directly in page components.
@@ -222,7 +267,7 @@ recommendation_cache
 - **ExerciseForm:** `app/src/components/ExerciseForm.jsx` — form for creating/editing a library exercise (name, default sets/reps, MusclePicker). Props: `initial`, `onSave(fields)`, `onCancel()`, `saving`. On name field blur, fires `inferMusclesFromName` if no muscles are set yet — shows `InlineLoading` spinner → finished flourish → static AI label. Shows a red warning when name is filled but muscles are still empty. Extracted from inline definition in `Bibliotek.jsx`.
 - **LibraryPicker:** `app/src/components/LibraryPicker.jsx` — searchable list of library exercises for adding to a template. Props: `libraryExercises[]`, `onAdd(exercise)`, `onClose()`. Extracted from inline definition in `TemplateSessionEditor.jsx`.
 - **ExerciseRowWithAutocomplete:** `app/src/components/ExerciseRowWithAutocomplete.jsx` — wrapper around `ExerciseRow` that adds an inline autocomplete dropdown and AI muscle inference when a new exercise name is typed. Only activates when `isNew` prop is true (IDs added during the current edit session, tracked via `newExerciseIds` Set in History). Props: all `ExerciseRow` props + `libraryExercises[]` + `isNew`. On name field blur (including tab-to-sets/reps), fires `inferMusclesFromName` if no muscles are set — shows spinner → finished flourish → static AI label; library autocomplete selection clears any AI inference. Library is fetched once when edit mode opens; failure degrades silently to manual entry. Uses `onMouseDown + e.preventDefault()` on suggestions to prevent input blur from closing the dropdown before the click fires. Used in `History.jsx` edit mode only — `ExerciseRow` is unchanged for `MuscleMap` and `TemplateSessionEditor`.
-- **API security:** `app/api/claude.js` requires a valid Supabase JWT on every request (`Authorization: Bearer <token>`). Verifies via `GET /auth/v1/user`. Also enforces a model allowlist (`claude-opus-4-5`, `claude-sonnet-4-6`) and caps `max_tokens` at 2000. The `callClaude(body)` helper in `utils.js` injects the token automatically — all Claude calls must go through it.
+- **API security:** `app/api/claude.js` requires a valid Supabase JWT on every request (`Authorization: Bearer <token>`). Verifies via `GET /auth/v1/user`. Also enforces a model allowlist (`claude-sonnet-4-6`) and caps `max_tokens` at 2000. The `callClaude(body)` helper in `utils.js` injects the token automatically — all Claude calls must go through it.
 - **Template navigation:** `App.jsx` manages views `"bibliotek"`, `"template-picker"`, `"template-editor"`, `"settings"`, `"planlegger"` alongside existing views. `App.jsx` also accumulates cross-cutting state as features land (`bibliotekInitialTab`, `pendingTemplateExercises`, history context state). This is acceptable at current scale — if more than 2–3 further pieces of cross-component state are needed, extract navigation and shared state to a React Context rather than continuing to lift into `App.jsx`. `bibliotekInitialTab` state ensures returning from template edit lands on the "Mal for gymtime" tab. When "Bruk økt" is pressed in `TemplateSessionEditor` (mode="use"), exercises pass to `MuscleMap` via `templatePreload` prop, triggering a `useEffect` that pre-fills the list and jumps to the confirm step.
 - Supabase Auth uses magic links (`emailRedirectTo: window.location.origin`)
 - Anthropic API calls go through `app/api/claude.js` — Azure Function v4 model, browser hits `/api/claude`
@@ -234,8 +279,9 @@ recommendation_cache
 - **Supabase client explicit apikey header:** `createClient` is called with `global: { headers: { apikey: supabaseKey } }` in `app/src/lib/supabase.js`. The Supabase JS v2 fetch interceptor should add this automatically, but it was not reaching browser requests — passing it in `global.headers` puts it directly on `PostgrestClient`'s base headers, bypassing the interceptor. Do not remove this option.
 - **Multi-instruktør gym membership:** `user_gyms` table links each user to a Sporty business unit (`sporty_business_unit_id`). Primary users are instruktører; sharing default is opt-out scoped to the same gym. `ensureGymMembership(buId)` in `db.js` does an idempotent upsert on sign-in (called in `App.jsx`). `DEFAULT_SPORTY_BUSINESS_UNIT_ID = 8` mirrors the hardcoded BU in `sportySync.js`; both must move to a DB config when multi-gym support lands. Backfilled rows exist for both current users.
 - **Roles (temporal):** `roles` table stores instruktør tenure — `user_id`, `sporty_business_unit_id`, `name` (default `'instruktor'`), `title`, `valid_from` (date), `valid_to` (nullable date). Active roles = `valid_from <= today AND (valid_to IS NULL OR valid_to >= today)`. `fetchActiveRoles(buId)` in `db.js` returns all active roles for the current user at the given gym. Existing placeholder rows were migrated from `user_gyms.role` (issue #140). RLS: users can only read/write their own rows.
-- **Display name:** `profiles` has `display_name text CHECK (char_length(display_name) <= 50)`. RLS: existing "Brukere ser sin egen profil" / "Brukere oppdaterer sin egen profil" policies cover self-reads and writes; new "Same-gym users can read profiles" SELECT policy exposes `display_name` to co-instructors at the same gym. `fetchDisplayName()` / `updateDisplayName(name)` in `db.js`. Settings → Konto exposes a TextInput.
+- **Display name:** `profiles` has `display_name text CHECK (char_length(display_name) <= 50)`. RLS: existing "Brukere ser sin egen profil" / "Brukere oppdaterer sin egen profil" policies cover self-reads and writes; new "Same-gym users can read profiles" SELECT policy exposes `display_name` to co-instructors at the same gym. `fetchDisplayName()` / `updateDisplayName(name)` in `db.js`. Settings → Konto exposes a TextInput. `ensureDisplayName()` runs on every login alongside `ensureGymMembership()` — if `display_name` is null it sets it to the email prefix (`user.email.split('@')[0]`); fire-and-forget, errors are silent.
 - **Session visibility (removed):** The `sessions.visibility` column exists in the DB but is no longer used. The "Same-gym users can read sessions" RLS policy was updated to remove the `visibility = 'shared'` filter — all sessions are cross-readable by co-instructors at the same gym. `updateSessionVisibility` is removed from `db.js`; the History visibility Toggle is gone. Settings → Konto shows an informational GDPR paragraph.
+- **Report instructor filter:** `fetchSessionsForReport` joins `trainer_id, profiles(display_name)` on every call. `Report.jsx` derives `availableInstructors` (unique `{ id, label }` pairs, sorted alphabetically, label falls back to `"Unnamed"`) from the fetched sessions and renders a fourth filter chip row only when `availableInstructors.length > 1`. `selectedInstructors` is a `Set<trainer_id>` — empty means all instructors shown (same pattern as `selectedDays`/`selectedTypes`). Reset button clears all three Sets. Recs cache key is unaffected — `sessionCount` already encodes the filtered result naturally.
 - **Joint class history:** `fetchClassHistory(gymCalendarId)` in `db.js` returns co-instructor sessions for a given gym class instance (excludes own), with joined `profiles(display_name)` and `session_exercises`. History lazy-fetches on first expand of a gym-linked session; cached in `classHistory` Map state (key: `gym_calendar_id`). Panel always renders in the expanded session view, showing display name + exercise list per colleague.
 
 ## Known limitations
@@ -265,6 +311,20 @@ supabase config push
 ```
 
 All templates use inline CSS only (no external stylesheets — email clients strip them). Colours match the app: `#161616` background, `#ee2c80` accent, `#262626` header. The `{{ .ConfirmationURL }}` and `{{ .SiteURL }}` variables are Supabase Go template syntax — do not change them.
+
+## Supabase migration hygiene
+
+From **October 30, 2026**, Supabase enforces explicit GRANTs on all new `public` schema tables — PostgREST returns `42501` without them. All 14 existing tables already have grants and are unaffected. Any future migration that creates a new table **must** include the following grant block:
+
+```sql
+grant select on public.your_table to anon;
+grant select, insert, update, delete on public.your_table to authenticated;
+grant select, insert, update, delete on public.your_table to service_role;
+
+alter table public.your_table enable row level security;
+```
+
+Adjust `anon` privileges to the minimum required (often no access at all — `anon` can typically be omitted for app tables that require login). Always enable RLS and add policies immediately after the grants.
 
 ## Local development
 

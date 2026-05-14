@@ -75,9 +75,11 @@ app.http('claude', {
 
     const data = await upstream.json();
     if (!upstream.ok) {
-      context.error('Anthropic error:', JSON.stringify(data));
+      const detail = data?.error?.message || 'Unknown error';
+      const errorType = data?.error?.type || 'unknown';
+      context.error(`Anthropic error [${errorType}]: ${detail}`);
       return new Response(
-        JSON.stringify({ error: 'Claude request failed' }),
+        JSON.stringify({ error: 'Claude request failed', detail }),
         { status: upstream.status, headers: { 'Content-Type': 'application/json' } }
       );
     }

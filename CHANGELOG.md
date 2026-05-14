@@ -2,7 +2,7 @@
 
 All notable changes to Workout Lens are documented here.
 
-## [1.2.5] — 2026-05-14
+## [1.2.8] — 2026-05-14
 
 ### Added
 - **Gym-wide shared templates and exercise library** — `session_templates` and `exercise_library` are now fully shared across co-instructors at the same gym. Any instructor can create, edit, rename, and delete any template or exercise. `user_id` is retained as "created by" for attribution only. Creator name ("Av [name]") is shown on template cards and exercise rows in Bibliotek when the item was created by a colleague. Bibliotek "Mine maler" tab renamed to "Maler".
@@ -10,6 +10,30 @@ All notable changes to Workout Lens are documented here.
 
 ### Note
 Editing an exercise's muscle mapping does **not** retroactively update historical session data. `muscle_activations` rows are permanent snapshots written at log time with no FK to `exercise_library`.
+
+## [1.2.7] — 2026-05-13
+
+### Developer
+
+- **Reliable SWA staging environment cleanup (#169)** — the close-PR workflow now retries the `action: "close"` step once on failure. A single transient Azure API error had left a stale staging environment alive (2026-05-12), filling one of the three available slots and blocking deploys. The retry catches transient failures automatically; a double failure still requires manual portal cleanup.
+
+## [1.2.6] — 2026-05-13
+
+### Fixed
+- **Exercise list missing in History on mobile** — when a day with a single session was loaded, `loadSession` auto-expanded it by setting `expandedIds` but never called `initSessionEdit`. The body map rendered correctly (reads directly from raw session data) but the exercise list stayed hidden because `edit.exercises` was `undefined`. Fixed by calling `initSessionEdit` alongside `setExpandedIds` in the single-session auto-expand branch.
+
+### Developer
+
+- **Supabase Data API grant audit (#167)** — audited all 14 public schema tables against Supabase's upcoming change (explicit GRANTs required from Oct 30 2026). All existing tables confirmed to have full grants for `anon`, `authenticated`, and `service_role` — no action needed on existing schema. Added migration hygiene section to `CLAUDE.md` documenting the required `GRANT` + `ALTER TABLE … ENABLE ROW LEVEL SECURITY` boilerplate for any future table.
+
+## [1.2.5] — 2026-05-13
+
+### Fixed
+- **Image analysis broken (400 error)** — `CLAUDE_MODEL_VISION` was set to `claude-opus-4-5`, which has been retired by Anthropic. Switched vision to `claude-sonnet-4-6` (same model as text recommendations) — sufficient for OCR + JSON extraction and significantly cheaper than Opus. API allowlist simplified to a single entry.
+
+### Added
+- **Instructor filter on Report** — the report page now includes a fourth filter row (instructor display names) when sessions from more than one co-instructor are present in the selected period. Default is all instructors (empty selection = no filter), consistent with the existing weekday and session-type filter pattern. `fetchSessionsForReport` now joins `trainer_id` and `profiles(display_name)` so instructor identity is available client-side without an extra query.
+- **Auto-set display name on login** — `ensureDisplayName()` in `db.js` runs alongside `ensureGymMembership()` on every auth state change. If the user's `profiles.display_name` is null, it is automatically set to the prefix before `@` in their email address. This ensures the instructor filter always has a meaningful label for every user without requiring manual action in Settings.
 
 ## [1.2.4] — 2026-05-12
 
