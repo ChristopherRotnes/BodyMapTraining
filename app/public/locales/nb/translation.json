@@ -505,5 +505,10 @@
     "regionCore": "Kjerne",
     "regionLower": "Underkropp",
     "regionCardio": "Kondisjon"
+  },
+  "ovelsePicker": {
+    "eyebrow": "ØVELSE · NY ELLER REDIGER",
+    "nyOvelseSubtitle": "NAVN + MUSKLER",
+    "usedInGT": "BRUKT I {{count}} GT"
   }
 }

@@ -43,6 +43,22 @@ export async function fetchTemplateNamesUsingExercise(exerciseId) {
   return [...new Set((data || []).map(r => r.session_templates?.name).filter(Boolean))];
 }
 
+export async function fetchExerciseTemplateCounts() {
+  const { data, error } = await supabase
+    .from("session_template_exercises")
+    .select("library_exercise_id, template_id")
+    .not("library_exercise_id", "is", null);
+  if (error) return {};
+  const templatesPerEx = {};
+  (data || []).forEach(({ library_exercise_id: eid, template_id: tid }) => {
+    if (!templatesPerEx[eid]) templatesPerEx[eid] = new Set();
+    templatesPerEx[eid].add(tid);
+  });
+  const counts = {};
+  Object.entries(templatesPerEx).forEach(([eid, set]) => { counts[eid] = set.size; });
+  return counts;
+}
+
 export async function deleteLibraryExercise(id) {
   // Remove from any templates that reference this exercise
   await supabase.from("session_template_exercises").delete().eq("library_exercise_id", id);

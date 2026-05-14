@@ -505,5 +505,10 @@
     "regionCore": "Core",
     "regionLower": "Lower body",
     "regionCardio": "Cardio"
+  },
+  "ovelsePicker": {
+    "eyebrow": "EXERCISE · NEW OR EDIT",
+    "nyOvelseSubtitle": "NAME + MUSCLES",
+    "usedInGT": "USED IN {{count}} SESSIONS"
   }
 }

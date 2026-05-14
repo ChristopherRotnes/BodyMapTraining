@@ -55,10 +55,21 @@ export default function GruppetimeEditor({ template, onBack }) {
     [exercises]
   );
 
+  // buildMuscleMapFromExercises returns { [muscleId]: string[] } — derive primary/secondary arrays separately
+  const { coveredPrimary, coveredSecondary } = useMemo(() => {
+    const pSet = new Set();
+    const sSet = new Set();
+    exercises.filter(e => e.enabled && e.name).forEach(ex => {
+      (ex.primary || []).forEach(id => pSet.add(id));
+      (ex.secondary || []).forEach(id => { if (!pSet.has(id)) sSet.add(id); });
+    });
+    return { coveredPrimary: [...pSet], coveredSecondary: [...sSet] };
+  }, [exercises]);
+
   const gapIds = useMemo(() => {
-    const trained = new Set([...muscleMap.primary, ...muscleMap.secondary]);
+    const trained = new Set([...coveredPrimary, ...coveredSecondary]);
     return Object.keys(MUSCLES).filter(id => !trained.has(id));
-  }, [muscleMap]);
+  }, [coveredPrimary, coveredSecondary]);
 
   function moveUp(idx) {
     if (idx === 0) return;
@@ -180,9 +191,9 @@ export default function GruppetimeEditor({ template, onBack }) {
 
           {/* Live muscle coverage */}
           <BodyPanel
-            primary={[...muscleMap.primary]}
-            secondary={[...muscleMap.secondary]}
-            muscleMap={{}}
+            primary={coveredPrimary}
+            secondary={coveredSecondary}
+            muscleMap={muscleMap}
             marginBottom={8}
           />
 

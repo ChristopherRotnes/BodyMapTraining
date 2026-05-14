@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button, InlineLoading, InlineNotification } from "@carbon/react";
-import { Add, Search } from "@carbon/icons-react";
+import { InlineLoading, InlineNotification } from "@carbon/react";
+import { Add, Edit, Search, ChevronRight } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import PageShell, { SectionLabel, BackButton, AccentChip } from "./PageShell";
+import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import ExerciseForm from "./ExerciseForm";
 import OvelseDetail from "./OvelseDetail";
 import { MUSCLES } from "../lib/bodymap.jsx";
-import { fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise } from "../lib/db";
+import { fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, fetchExerciseTemplateCounts } from "../lib/db";
 import { logDevError } from "../lib/utils";
 
 const REGION_MUSCLES = {
-  overkropp: new Set(["chest", "shoulders_front", "shoulders_side", "biceps", "forearms", "traps", "rear_delts", "lats", "triceps"]),
-  kjerne:    new Set(["abs", "obliques", "lower_back"]),
+  overkropp:  new Set(["chest", "shoulders_front", "shoulders_side", "biceps", "forearms", "traps", "rear_delts", "lats", "triceps"]),
+  kjerne:     new Set(["abs", "obliques", "lower_back"]),
   underkropp: new Set(["quads", "hamstrings", "glutes", "calves", "calves_back"]),
 };
 
@@ -25,6 +25,7 @@ function matchesRegion(ex, region) {
 export default function OvelsePicker({ onBack, initialShowNew = false }) {
   const { t } = useTranslation();
   const [exercises, setExercises] = useState([]);
+  const [templateCounts, setTemplateCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
@@ -36,8 +37,8 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchLibraryExercises()
-      .then(setExercises)
+    Promise.all([fetchLibraryExercises(), fetchExerciseTemplateCounts()])
+      .then(([exs, counts]) => { setExercises(exs); setTemplateCounts(counts); })
       .catch(e => { logDevError("OvelsePicker/fetch", e); setError(e.message); })
       .finally(() => setLoading(false));
   }, []);
@@ -46,6 +47,14 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
     const timer = setTimeout(() => setDebouncedSearch(search), 200);
     return () => clearTimeout(timer);
   }, [search]);
+
+  const regionCounts = useMemo(() => {
+    const c = { alle: exercises.length };
+    ["overkropp", "kjerne", "underkropp", "kondisjon"].forEach(r => {
+      c[r] = exercises.filter(e => matchesRegion(e, r)).length;
+    });
+    return c;
+  }, [exercises]);
 
   const filtered = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
@@ -82,14 +91,6 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
     }
   }
 
-  const regions = [
-    { key: "alle",      label: t("settSammen.regionAll") },
-    { key: "overkropp", label: t("settSammen.regionUpper") },
-    { key: "kjerne",    label: t("settSammen.regionCore") },
-    { key: "underkropp",label: t("settSammen.regionLower") },
-    { key: "kondisjon", label: t("settSammen.regionCardio") },
-  ];
-
   if (detailEx) {
     return (
       <OvelseDetail
@@ -100,10 +101,20 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
     );
   }
 
+  const regions = [
+    { key: "alle",       label: t("settSammen.regionAll") },
+    { key: "overkropp",  label: t("settSammen.regionUpper") },
+    { key: "kjerne",     label: t("settSammen.regionCore") },
+    { key: "underkropp", label: t("settSammen.regionLower") },
+    { key: "kondisjon",  label: t("settSammen.regionCardio") },
+  ];
+
+  const activeRegionLabel = regions.find(r => r.key === region)?.label || "";
+
   return (
     <PageShell>
       <div style={{ paddingBottom: 32 }}>
-        <SectionLabel>{t("nav.library")}</SectionLabel>
+        <SectionLabel>{t("ovelsePicker.eyebrow")}</SectionLabel>
         <div style={{ padding: "0 16px" }}>
           <BackButton onClick={onBack} />
 
@@ -111,10 +122,44 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
             <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={error} hideCloseButton style={{ marginBottom: 16 }} />
           )}
 
+          {/* New exercise featured card */}
           {!showNew && !editingEx && (
-            <Button kind="primary" renderIcon={Add} onClick={() => setShowNew(true)} style={{ marginBottom: 16 }}>
-              {t("bibliotek.newExercise")}
-            </Button>
+            <button
+              onClick={() => setShowNew(true)}
+              style={{
+                width: "100%",
+                background: "var(--cds-layer-01)",
+                border: "1px solid var(--cds-border-subtle-01)",
+                borderInlineStart: "3px solid var(--exercise)",
+                borderRadius: "0 var(--r-card) var(--r-card) 0",
+                padding: "14px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                textAlign: "left",
+                marginBottom: 16,
+              }}
+            >
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "var(--exercise-soft)",
+                border: "1px solid var(--exercise)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <Add size={18} style={{ color: "var(--exercise)" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", margin: "0 0 2px" }}>
+                  {t("settSammen.nyOvelse")}
+                </p>
+                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--exercise)", margin: 0 }}>
+                  {t("ovelsePicker.nyOvelseSubtitle")}
+                </p>
+              </div>
+              <ChevronRight size={16} style={{ color: "var(--cds-text-secondary)", flexShrink: 0 }} />
+            </button>
           )}
 
           {showNew && (
@@ -125,9 +170,9 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
             />
           )}
 
-          {/* Region filter chips */}
-          {!showNew && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+          {/* Region filter chips with counts */}
+          {!showNew && !editingEx && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
               {regions.map(r => (
                 <button
                   key={r.key}
@@ -144,15 +189,15 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
                     cursor: "pointer",
                   }}
                 >
-                  {r.label}
+                  {r.label}{regionCounts[r.key] > 0 ? ` ${regionCounts[r.key]}` : ""}
                 </button>
               ))}
             </div>
           )}
 
           {/* Search */}
-          {!loading && !showNew && exercises.length > 0 && (
-            <div style={{ position: "relative", marginBottom: 12 }}>
+          {!loading && !showNew && !editingEx && exercises.length > 0 && (
+            <div style={{ position: "relative", marginBottom: 8 }}>
               <Search size={16} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted-wl)", pointerEvents: "none" }} />
               <input
                 type="search"
@@ -175,70 +220,87 @@ export default function OvelsePicker({ onBack, initialShowNew = false }) {
 
           {loading ? (
             <InlineLoading description={t("bibliotek.loadingExercises")} status="active" />
-          ) : filtered.length === 0 && !showNew ? (
+          ) : filtered.length === 0 && !showNew && !editingEx ? (
             <p style={{ color: "var(--cds-text-secondary)", fontSize: 14 }}>
               {search.trim() || region !== "alle" ? t("bibliotek.noSearchResults") : t("settSammen.ovelserEmpty")}
             </p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {filtered.map(ex => (
-                <div key={ex.id}>
-                  {editingEx?.id === ex.id ? (
-                    <ExerciseForm
-                      initial={editingEx}
-                      onSave={fields => handleUpdate(ex.id, fields)}
-                      onCancel={() => setEditingEx(null)}
-                      saving={saving}
-                    />
-                  ) : (
-                    <button
-                      onClick={() => { setDetailEx(ex); setShowNew(false); }}
+          ) : !showNew && !editingEx && (
+            <>
+              {/* Count divider */}
+              <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.12em", color: "var(--cds-text-secondary)", margin: "4px 0 8px" }}>
+                · {activeRegionLabel.toUpperCase()} · {filtered.length}
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {filtered.map(ex => (
+                  <button
+                    key={ex.id}
+                    onClick={() => setDetailEx(ex)}
+                    style={{
+                      background: "var(--cds-layer-01)",
+                      border: "1px solid var(--cds-border-subtle-01)",
+                      borderInlineStart: "3px solid var(--exercise)",
+                      borderRadius: "0 var(--r-card) var(--r-card) 0",
+                      padding: "10px 12px 10px 16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", margin: "0 0 3px" }}>
+                        {ex.name}
+                      </p>
+                      <ExerciseSubtitle ex={ex} count={templateCounts[ex.id] || 0} t={t} />
+                    </div>
+                    <span
+                      role="button"
+                      onClick={e => { e.stopPropagation(); setEditingEx(ex); setShowNew(false); }}
+                      aria-label={t("common.edit")}
                       style={{
-                        background: "var(--cds-layer-01)",
-                        border: "1px solid var(--cds-border-subtle-01)",
-                        borderInlineStart: "3px solid var(--exercise)",
-                        borderRadius: "0 var(--r-card) var(--r-card) 0",
-                        padding: "10px 12px 10px 16px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        textAlign: "left",
-                        width: "100%",
+                        background: "none", border: "none", cursor: "pointer",
+                        color: "var(--cds-text-secondary)", padding: 6, display: "flex", flexShrink: 0,
                       }}
                     >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", margin: "0 0 4px" }}>
-                          {ex.name}
-                        </p>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {(ex.primary_muscles || []).slice(0, 4).map(id => (
-                            <AccentChip key={id}>{t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}</AccentChip>
-                          ))}
-                          {(ex.secondary_muscles || []).slice(0, 3).map(id => (
-                            <span key={id} style={{
-                              display: "inline-block", borderRadius: "var(--r-pill)",
-                              padding: "3px 10px",
-                              background: "rgba(69,137,255,.10)",
-                              border: "1px solid rgba(69,137,255,.25)",
-                              color: "#4589ff",
-                              fontFamily: "var(--cds-font-mono)",
-                              fontSize: 11,
-                              letterSpacing: "0.06em",
-                            }}>
-                              {t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
+                      <Edit size={14} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Edit form — shown full-width when editing, hides the list */}
+          {editingEx && (
+            <ExerciseForm
+              initial={editingEx}
+              onSave={fields => handleUpdate(editingEx.id, fields)}
+              onCancel={() => setEditingEx(null)}
+              saving={saving}
+            />
           )}
         </div>
       </div>
     </PageShell>
+  );
+}
+
+function ExerciseSubtitle({ ex, count, t }) {
+  const muscles = (ex.primary_muscles || []).slice(0, 3).map(id =>
+    t(`muscles.${id}`, { defaultValue: MUSCLES[id]?.label || id })
+  );
+  const creator = ex.profiles?.display_name;
+  const parts = [];
+  if (muscles.length) parts.push(muscles.join(", "));
+  if (count > 0) parts.push(t("ovelsePicker.usedInGT", { count }));
+  if (creator) parts.push(creator.toUpperCase());
+  if (!parts.length) return null;
+  return (
+    <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--cds-text-secondary)", margin: 0 }}>
+      {parts.join(" · ")}
+    </p>
   );
 }

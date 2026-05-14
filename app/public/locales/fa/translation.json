@@ -505,5 +505,10 @@
     "regionCore": "مرکزی",
     "regionLower": "پایین‌تنه",
     "regionCardio": "کاردیو"
+  },
+  "ovelsePicker": {
+    "eyebrow": "تمرین · جدید یا ویرایش",
+    "nyOvelseSubtitle": "نام + عضلات",
+    "usedInGT": "استفاده در {{count}} جلسه"
   }
 }

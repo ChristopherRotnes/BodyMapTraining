@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchTemplates, saveTemplate } from "../lib/db";
-import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
+import { logDevError } from "../lib/utils";
 
 export default function GruppetimePicker({ onBack, onEditTemplate }) {
   const { t } = useTranslation();
@@ -132,13 +132,13 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {filtered.map(tpl => {
-                const exs = (tpl.session_template_exercises || []).map(e => ({
-                  primary: e.primary_muscles || [],
-                  secondary: e.secondary_muscles || [],
-                  enabled: true,
-                }));
-                const muscleMap = buildMuscleMapFromExercises(exs);
-                const hasMuscles = muscleMap.primary.size > 0 || muscleMap.secondary.size > 0;
+                const pSet = new Set();
+                const sSet = new Set();
+                (tpl.session_template_exercises || []).forEach(e => {
+                  (e.primary_muscles || []).forEach(id => pSet.add(id));
+                  (e.secondary_muscles || []).forEach(id => { if (!pSet.has(id)) sSet.add(id); });
+                });
+                const hasMuscles = pSet.size > 0 || sSet.size > 0;
                 return (
                   <button
                     key={tpl.id}
@@ -169,8 +169,8 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
                       <div style={{ width: 36, flexShrink: 0, opacity: 0.85 }}>
                         <BodySVG
                           view="front"
-                          primary={[...muscleMap.primary]}
-                          secondary={[...muscleMap.secondary]}
+                          primary={[...pSet]}
+                          secondary={[...sSet]}
                         />
                       </div>
                     )}
