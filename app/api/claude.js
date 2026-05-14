@@ -19,6 +19,8 @@ app.http('claude', {
 
     // Azure SWA replaces the Authorization header with its own managed identity
     // token, so the Supabase JWT is passed in X-Supabase-Token instead.
+    const diagImageBytes = request.headers.get('X-Diag-Image-Bytes');
+    if (diagImageBytes) context.log(`[diag] client-reported image bytes: ${diagImageBytes} (${(parseInt(diagImageBytes) / 1024 / 1024).toFixed(2)} MB)`);
     const token = request.headers.get('X-Supabase-Token');
     const userId = await verifySupabaseJwt(token, supabaseUrl, supabaseAnonKey);
     if (!userId) {
@@ -38,6 +40,11 @@ app.http('claude', {
     let body;
     try {
       body = await request.json();
+      const serverImagePart = body?.messages?.[0]?.content?.[0];
+      if (serverImagePart?.type === 'image') {
+        const serverBytes = Math.round(serverImagePart.source.data.length * 0.75);
+        context.log(`[diag] server-received image bytes: ${serverBytes} (${(serverBytes / 1024 / 1024).toFixed(2)} MB)`);
+      }
     } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid JSON' }),

@@ -28,6 +28,9 @@ export async function callClaude(body) {
   if (imagePart?.type === 'image') {
     alert('[diag] callClaude data: ' + (imagePart.source.data.length * 0.75 / 1024 / 1024).toFixed(2) + ' MB | starts: ' + imagePart.source.data.slice(0, 20));
   }
+  const diagImageBytes = imagePart?.type === 'image'
+    ? String(Math.round(imagePart.source.data.length * 0.75))
+    : null;
   const makeRequest = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     return fetch("/api/claude", {
@@ -35,6 +38,7 @@ export async function callClaude(body) {
       headers: {
         "Content-Type": "application/json",
         ...(session?.access_token ? { "X-Supabase-Token": session.access_token } : {}),
+        ...(diagImageBytes ? { "X-Diag-Image-Bytes": diagImageBytes } : {}),
       },
       body: JSON.stringify(body),
     });
