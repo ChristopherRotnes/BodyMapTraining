@@ -43,9 +43,9 @@ app.http('claude', {
       body = await request.json();
       const serverImagePart = body?.messages?.[0]?.content?.[0];
       if (serverImagePart?.type === 'image') {
-        const serverBytes = Math.round(serverImagePart.source.data.length * 0.75);
-        serverImageMB = (serverBytes / 1024 / 1024).toFixed(2);
-        context.warn(`[diag] server-received image bytes: ${serverBytes} (${serverImageMB} MB)`);
+        const exactBytes = Buffer.from(serverImagePart.source.data, 'base64').length;
+        serverImageMB = (exactBytes / 1024 / 1024).toFixed(2);
+        context.warn(`[diag] server exact decoded bytes: ${exactBytes} (${serverImageMB} MB)`);
       }
     } catch {
       return new Response(
