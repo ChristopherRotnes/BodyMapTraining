@@ -107,9 +107,15 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
       // Over limit — compress via canvas.
       // Use the data URL we already have rather than a new blob URL; avoids
       // HEIC blob-URL load quirks seen on some iOS Safari versions.
+      // img.decode() is more reliable than onload on mobile WebKit — it waits
+      // until the bitmap is fully available to the rendering pipeline, preventing
+      // drawImage from pulling stale/zero pixel data after a premature onload.
       const img = new Image();
-      img.onerror = () => reject(new Error('Kunne ikke laste bildet'));
-      img.onload = () => {
+      img.src = dataUrl;
+      const ready = typeof img.decode === 'function'
+        ? img.decode()
+        : new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      ready.then(() => {
         const nw = img.naturalWidth || 1600;
         const nh = img.naturalHeight || 1200;
         // Target 4.5 MB to stay safely below the 5 MB API limit; iOS ignores
@@ -141,8 +147,7 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
           resolve({ base64: canvas.toDataURL('image/jpeg', 0.7).split(',')[1], mediaType: 'image/jpeg' });
         }
-      };
-      img.src = dataUrl;
+      }).catch(() => reject(new Error('Kunne ikke laste bildet')));
     };
     reader.readAsDataURL(file);
   });

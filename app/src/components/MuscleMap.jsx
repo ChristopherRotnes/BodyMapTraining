@@ -367,6 +367,9 @@ export default function MuscleMap({ templatePreload, onTemplatePreloadConsumed }
                   {images.map((img, idx) => (
                     <div key={img.id} style={{ position: "relative", overflow: "hidden", aspectRatio: "1", background: "var(--cds-layer-01)" }}>
                       <img src={img.preview} alt={t("muscleMap.imageAlt", { n: idx + 1 })} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.65)", color: "#fff", fontSize: 9, textAlign: "center", padding: "2px 0", fontFamily: "var(--cds-font-mono)", letterSpacing: "0.04em", pointerEvents: "none" }}>
+                        {(img.base64.length * 0.75 / 1024 / 1024).toFixed(2)} MB
+                      </div>
                       <button
                         aria-label={t("muscleMap.removeImage", { n: idx + 1 })}
                         onClick={() => dispatch({ type: "REMOVE_IMAGE", id: img.id })}
