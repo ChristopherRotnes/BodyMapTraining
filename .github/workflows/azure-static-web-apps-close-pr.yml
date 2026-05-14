@@ -1,4 +1,5 @@
 name: Azure Static Web Apps — Close PR
+run-name: "Cleanup staging env — ${{ github.event.pull_request.title }}"
 
 on:
   pull_request:
