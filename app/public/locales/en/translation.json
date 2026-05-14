@@ -85,6 +85,8 @@
     "seeAll": "SEE ALL →",
     "loading": "Loading last session…",
     "noSessions": "No sessions logged yet. Log your first session!",
+    "muscleCount_one": "{{count}} muscle group",
+    "muscleCount_other": "{{count}} muscle groups",
     "ownTraining": "Personal training",
     "train": "Train.",
     "today": "Today.",

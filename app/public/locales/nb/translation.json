@@ -85,6 +85,8 @@
     "seeAll": "SE ALLE →",
     "loading": "Laster siste økt…",
     "noSessions": "Ingen økter logget ennå. Logg din første økt!",
+    "muscleCount_one": "{{count}} muskelgruppe",
+    "muscleCount_other": "{{count}} muskelgrupper",
     "ownTraining": "Egentrening",
     "train": "Tren.",
     "today": "I dag.",

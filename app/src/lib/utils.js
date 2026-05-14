@@ -98,10 +98,11 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
     reader.onerror = () => reject(new Error('Kunne ikke laste bildet'));
     reader.onload = () => {
       const dataUrl = reader.result;
+      const mediaType = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
       const b64 = dataUrl.split(',')[1];
       // base64 decoded bytes ≈ b64.length × 3/4
       if (b64.length * 0.75 <= maxDecodedBytes) {
-        resolve({ base64: b64, mediaType: 'image/jpeg' });
+        resolve({ base64: b64, mediaType });
         return;
       }
       // Over limit — use a blob URL so iOS can decode the image reliably.

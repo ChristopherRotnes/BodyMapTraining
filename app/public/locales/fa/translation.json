@@ -85,6 +85,8 @@
     "seeAll": "مشاهده همه →",
     "loading": "در حال بارگذاری آخرین جلسه…",
     "noSessions": "هنوز جلسه‌ای ثبت نشده. اولین جلسه خود را ثبت کنید!",
+    "muscleCount_one": "{{count}} گروه عضلانی",
+    "muscleCount_other": "{{count}} گروه عضلانی",
     "ownTraining": "تمرین شخصی",
     "train": "تمرین کن.",
     "today": "امروز.",
