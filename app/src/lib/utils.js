@@ -85,13 +85,12 @@ export async function detectMediaType(file) {
 // Strategy:
 //   1. Read via FileReader — iOS auto-converts HEIF/HEIC to JPEG at full native
 //      resolution. If the result is already under 5 MB, use it directly.
-//   2. Only if over 5 MB: load the original file via a blob URL (NOT the large data URL
-//      string — iOS Safari silently zeros naturalWidth for large data URLs) and draw onto
-//      a canvas, shrinking until the output fits. iOS Safari ignores the quality param in
-//      canvas.toDataURL, so dimension reduction is the only reliable lever. We iterate
-//      over fixed target sizes rather than a recursive 0.7× factor — this handles photos
-//      that are already smaller than 2048px (e.g. 1440×1080) where the old factor
-//      produced almost no size reduction between steps.
+//   2. Only if over 5 MB: load the data URL into a canvas img (the data URL is already
+//      in memory; blob URLs can have quirks with HEIC files on some iOS versions).
+//      iOS Safari ignores the quality param in canvas.toDataURL, so dimension reduction
+//      is the only reliable lever. We target 4.5 MB (not 5 MB) for a safety margin.
+//      We start at 1200 px — the 1600 px step is a no-op for typical 1440 px-wide photos
+//      and just wastes a round-trip through the iOS JPEG encoder at the same size.
 export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -105,18 +104,19 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
         resolve({ base64: b64, mediaType });
         return;
       }
-      // Over limit — compress via canvas using a blob URL.
-      const blobUrl = URL.createObjectURL(file);
+      // Over limit — compress via canvas.
+      // Use the data URL we already have rather than a new blob URL; avoids
+      // HEIC blob-URL load quirks seen on some iOS Safari versions.
       const img = new Image();
-      img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error('Kunne ikke laste bildet')); };
+      img.onerror = () => reject(new Error('Kunne ikke laste bildet'));
       img.onload = () => {
-        URL.revokeObjectURL(blobUrl);
         const nw = img.naturalWidth || 1600;
         const nh = img.naturalHeight || 1200;
-        // Try each target size in order. scale = 1 when photo is already smaller than
-        // the target — the canvas is drawn at native size and the next smaller target
-        // takes over if it still doesn't fit.
-        for (const maxEdge of [1600, 1200, 960, 768, 600]) {
+        // Target 4.5 MB to stay safely below the 5 MB API limit; iOS ignores
+        // the quality param so only dimension reduction reliably shrinks output.
+        const target = 4.5 * 1024 * 1024;
+        let resolved = false;
+        for (const maxEdge of [1200, 960, 768, 600]) {
           const scale = Math.min(1, maxEdge / Math.max(nw, nh));
           const w = Math.max(1, Math.round(nw * scale));
           const h = Math.max(1, Math.round(nh * scale));
@@ -126,20 +126,23 @@ export function compressImage(file, maxDecodedBytes = 5 * 1024 * 1024) {
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
           const d = canvas.toDataURL('image/jpeg', 0.85);
           const b = d.split(',')[1];
-          if (b.length * 0.75 <= maxDecodedBytes) {
+          if (b.length * 0.75 <= target) {
             resolve({ base64: b, mediaType: 'image/jpeg' });
-            return;
+            resolved = true;
+            break;
           }
         }
-        // Fallback: 600px at 0.7 quality — accept regardless of size.
-        const canvas = document.createElement('canvas');
-        const scale = Math.min(1, 600 / Math.max(nw, nh));
-        canvas.width = Math.max(1, Math.round(nw * scale));
-        canvas.height = Math.max(1, Math.round(nh * scale));
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve({ base64: canvas.toDataURL('image/jpeg', 0.7).split(',')[1], mediaType: 'image/jpeg' });
+        if (!resolved) {
+          // Fallback: 600px at 0.7 quality — accept regardless of size.
+          const canvas = document.createElement('canvas');
+          const scale = Math.min(1, 600 / Math.max(nw, nh));
+          canvas.width = Math.max(1, Math.round(nw * scale));
+          canvas.height = Math.max(1, Math.round(nh * scale));
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve({ base64: canvas.toDataURL('image/jpeg', 0.7).split(',')[1], mediaType: 'image/jpeg' });
+        }
       };
-      img.src = blobUrl;
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   });
