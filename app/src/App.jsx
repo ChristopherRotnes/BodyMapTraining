@@ -9,6 +9,7 @@ import History from "./components/History";
 import Report from "./components/Report";
 import SetSammen from "./components/SetSammen";
 import GruppetimePicker from "./components/GruppetimePicker";
+import GruppetimeEditor from "./components/GruppetimeEditor";
 import OvelsePicker from "./components/OvelsePicker";
 import TemplatePicker from "./components/TemplatePicker";
 import TemplateSessionEditor from "./components/TemplateSessionEditor";
@@ -24,6 +25,7 @@ function App() {
   const [historyInitialDate, setHistoryInitialDate] = useState(null);
   const [reportPrefill, setReportPrefill] = useState(null);
   const [ovelsePickerShowNew, setOvelsePickerShowNew] = useState(false);
+  const [gruppetimerEditorTemplate, setGruppetimerEditorTemplate] = useState(null);
   const [introOpen, setIntroOpen] = useState(false);
 
   const ensuredRef = useRef(false);
@@ -89,9 +91,14 @@ function App() {
     content = <GruppetimePicker
       onBack={() => setView("sett-sammen")}
       onEditTemplate={(tpl) => {
-        setTemplateEditorState({ template: tpl, mode: "edit" });
-        setView("template-editor");
+        setGruppetimerEditorTemplate(tpl);
+        setView("gruppetime-editor");
       }}
+    />;
+  else if (view === "gruppetime-editor" && gruppetimerEditorTemplate)
+    content = <GruppetimeEditor
+      template={gruppetimerEditorTemplate}
+      onBack={() => { setGruppetimerEditorTemplate(null); setView("gruppetime-picker"); }}
     />;
   else if (view === "ovelse-picker")
     content = <OvelsePicker

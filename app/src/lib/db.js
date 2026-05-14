@@ -97,6 +97,20 @@ export async function updateTemplateName(id, name) {
   return data;
 }
 
+export async function updateTemplateDetails(id, { name, template_type }) {
+  const patch = {};
+  if (name !== undefined) patch.name = name;
+  if (template_type !== undefined) patch.template_type = template_type;
+  const { data, error } = await supabase
+    .from("session_templates")
+    .update(patch)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteTemplate(id) {
   const { error } = await supabase
     .from("session_templates")
