@@ -1,4 +1,4 @@
-name: Azure Static Web Apps — Close PR
+name: Cleanup staging environment
 run-name: "Cleanup staging env — ${{ github.event.pull_request.title }}"
 
 on:
@@ -11,7 +11,8 @@ on:
 jobs:
   close_pull_request_job:
     runs-on: ubuntu-latest
-    name: Close Pull Request Job
+    timeout-minutes: 5
+    name: Close staging environment
     permissions:
       contents: read
       pull-requests: write
