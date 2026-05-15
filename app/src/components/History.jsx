@@ -75,7 +75,7 @@ export default function History({ initialDate }) {
   const [sessionEdits, setSessionEdits] = useState(new Map());
   const [libraryExercises, setLibraryExercises] = useState([]);
   const libraryCache = useRef(null);
-  const uploadingForSession = useRef(null);
+  const uploadingForSessionRef = useRef(null);
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const [classHistory, setClassHistory] = useState(new Map());
   const fileRef = useRef();
@@ -135,6 +135,41 @@ export default function History({ initialDate }) {
     }
   };
 
+  const initSessionEdit = (session) => {
+    setSessionEdits(prev => {
+      if (prev.has(session.id)) return prev;
+      const next = new Map(prev);
+      next.set(session.id, {
+        exercises: sessionExToEditFormat(session.session_exercises || []),
+        gymSessionId: session.gym_calendar_id || "",
+        gymSessions: [],
+        gymConflict: null,
+        dirty: false,
+        newExIds: new Set(),
+        saving: false,
+        saveError: null,
+        analyzing: false,
+        analyzeError: null,
+      });
+      return next;
+    });
+    fetchGymSessionsByDate(session.session_date)
+      .then(gymSessions => setSessionEdits(prev => {
+        if (!prev.has(session.id)) return prev;
+        const next = new Map(prev);
+        next.set(session.id, { ...next.get(session.id), gymSessions });
+        return next;
+      }))
+      .catch(() => {});
+    if (libraryCache.current) {
+      setLibraryExercises(libraryCache.current);
+    } else {
+      fetchLibraryExercises()
+        .then(data => { libraryCache.current = data; setLibraryExercises(data); })
+        .catch(() => {});
+    }
+  };
+
   const toggleExpand = (id) => {
     const isOpen = expandedIds.has(id);
     setExpandedIds(prev => {
@@ -189,48 +224,13 @@ export default function History({ initialDate }) {
   // mount-only: initialDate is a one-time navigation hint from the home screen
   useEffect(() => {
     if (initialDateRef.current) loadSession(initialDateRef.current);
-  }, []); // mount-only: initialDateRef is a ref, not reactive
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: initialDateRef is a ref, loadSession is stable
 
   const handleSelect = (dateStr) => {
     if (!dateStr || !filteredTrainedSet.has(dateStr)) return;
     setSelectedDate(new Date(dateStr + "T12:00:00"));
     setHoveredMuscle(null);
     loadSession(dateStr);
-  };
-
-  const initSessionEdit = (session) => {
-    setSessionEdits(prev => {
-      if (prev.has(session.id)) return prev;
-      const next = new Map(prev);
-      next.set(session.id, {
-        exercises: sessionExToEditFormat(session.session_exercises || []),
-        gymSessionId: session.gym_calendar_id || "",
-        gymSessions: [],
-        gymConflict: null,
-        dirty: false,
-        newExIds: new Set(),
-        saving: false,
-        saveError: null,
-        analyzing: false,
-        analyzeError: null,
-      });
-      return next;
-    });
-    fetchGymSessionsByDate(session.session_date)
-      .then(gymSessions => setSessionEdits(prev => {
-        if (!prev.has(session.id)) return prev;
-        const next = new Map(prev);
-        next.set(session.id, { ...next.get(session.id), gymSessions });
-        return next;
-      }))
-      .catch(() => {});
-    if (libraryCache.current) {
-      setLibraryExercises(libraryCache.current);
-    } else {
-      fetchLibraryExercises()
-        .then(data => { libraryCache.current = data; setLibraryExercises(data); })
-        .catch(() => {});
-    }
   };
 
   const discardEdit = (session) => {
@@ -500,7 +500,7 @@ export default function History({ initialDate }) {
                       libraryExercises={libraryExercises}
                       classHistory={classHistory}
                       fileRef={fileRef}
-                      uploadingForSession={uploadingForSession}
+                      uploadingForSessionRef={uploadingForSessionRef}
                       onPatch={(patch) => patchSessionEdit(session.id, patch)}
                       onDiscard={() => discardEdit(session)}
                       onSave={() => saveEdit(session)}

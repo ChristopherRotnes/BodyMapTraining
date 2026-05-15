@@ -12,7 +12,7 @@ export default function SessionEditPanel({
   sessionMuscles, sessionMuscleMap,
   hoveredMuscle, onHoverMuscle,
   libraryExercises, classHistory,
-  fileRef, uploadingForSession,
+  fileRef, uploadingForSessionRef,
   onPatch, onDiscard, onSave, onReanalyze,
 }) {
   const { t } = useTranslation();
@@ -145,7 +145,7 @@ export default function SessionEditPanel({
           {t("muscleMap.addManual")}
         </Button>
         <Button kind="ghost" renderIcon={isAnalyzing ? Renew : Camera} size="sm" disabled={isAnalyzing}
-          onClick={() => { uploadingForSession.current = session; fileRef.current?.click(); }}>
+          onClick={() => { uploadingForSessionRef.current = session; fileRef.current?.click(); }}>
           {isAnalyzing ? t("history.analyzing") : t("history.reuploadPhoto")}
         </Button>
       </div>
@@ -189,11 +189,11 @@ export default function SessionEditPanel({
 
       <input ref={fileRef} id="session-image-upload" name="session-image-upload" type="file" accept="image/*" style={{ display: "none" }}
         onChange={(e) => {
-          if (e.target.files[0] && uploadingForSession.current) {
+          if (e.target.files[0] && uploadingForSessionRef.current) {
             onReanalyze(e.target.files[0]);
           }
           e.target.value = "";
-          uploadingForSession.current = null;
+          uploadingForSessionRef.current = null;
         }} />
 
       {isDirty && (
