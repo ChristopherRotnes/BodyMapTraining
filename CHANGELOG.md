@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.10] — 2026-05-15
+
+### Security
+- **`VITE_SUPABASE_ANON_KEY` moved from GitHub secret to repository variable (issue #240)** — the Supabase anon key is intentionally public (it ships in the frontend bundle). Storing it as an encrypted secret masked its value in CI logs for no security benefit and added unnecessary surface area to the secrets inventory. Moved to `vars.VITE_SUPABASE_ANON_KEY` — requires adding it as a repository variable in GitHub Settings → Secrets and variables → Variables and removing the old secret.
+- **Cleanup-staging workflow no longer interpolates PR title (issue #240)** — `run-name` previously embedded `github.event.pull_request.title` directly. PR titles are user-controlled input; removed the interpolation to prevent any future hygiene risk if script steps are added to the workflow.
+
+### Developer / Infrastructure
+- **Retry jitter added to Anthropic 529 backoff (issue #239)** — the retry loop in `claude.js` used plain exponential backoff (`2^attempt * 1000ms`). During an Anthropic overload, all concurrent clients would retry at the same intervals. Now uses `min(2^attempt * 1000 + random(0–500ms), 32s)` to spread load.
+
 ## [1.5.9] — 2026-05-15
 
 ### Security

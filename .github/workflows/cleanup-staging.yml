@@ -1,5 +1,5 @@
 name: Cleanup staging environment
-run-name: "Cleanup staging env — ${{ github.event.pull_request.title }}"
+run-name: "Cleanup staging environment"
 
 on:
   pull_request:
