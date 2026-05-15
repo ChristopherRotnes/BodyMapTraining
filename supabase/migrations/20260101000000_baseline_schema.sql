@@ -1,4 +1,4 @@
--- Baseline schema snapshot for Workout Lens.
+﻿-- Baseline schema snapshot for Workout Lens.
 --
 -- This migration was added retroactively to allow Supabase preview branches and
 -- local `supabase db reset` to work. All previous schema changes were applied
@@ -34,15 +34,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.profiles TO anon, authenticated, service_role;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Brukere ser sin egen profil"
+DROP POLICY IF EXISTS "Brukere ser sin egen profil" ON public.profiles;
+CREATE POLICY "Brukere ser sin egen profil"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Brukere oppdaterer sin egen profil"
+DROP POLICY IF EXISTS "Brukere oppdaterer sin egen profil" ON public.profiles;
+CREATE POLICY "Brukere oppdaterer sin egen profil"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Same-gym users can read profiles"
+DROP POLICY IF EXISTS "Same-gym users can read profiles" ON public.profiles;
+CREATE POLICY "Same-gym users can read profiles"
   ON public.profiles FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -63,7 +66,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.training_groups TO anon, authenticated, service_role;
 ALTER TABLE public.training_groups ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Trenere ser egne grupper"
+DROP POLICY IF EXISTS "Trenere ser egne grupper" ON public.training_groups;
+CREATE POLICY "Trenere ser egne grupper"
   ON public.training_groups FOR ALL
   USING (trainer_id = auth.uid());
 
@@ -84,7 +88,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.gym_calendar TO anon, authenticated, service_role;
 ALTER TABLE public.gym_calendar ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can read gym_calendar"
+DROP POLICY IF EXISTS "Authenticated users can read gym_calendar" ON public.gym_calendar;
+CREATE POLICY "Authenticated users can read gym_calendar"
   ON public.gym_calendar FOR SELECT
   TO authenticated
   USING (true);
@@ -103,15 +108,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.user_gyms TO anon, authenticated, service_role;
 ALTER TABLE public.user_gyms ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "user_gyms self select"
+DROP POLICY IF EXISTS "user_gyms self select" ON public.user_gyms;
+CREATE POLICY "user_gyms self select"
   ON public.user_gyms FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "user_gyms self insert"
+DROP POLICY IF EXISTS "user_gyms self insert" ON public.user_gyms;
+CREATE POLICY "user_gyms self insert"
   ON public.user_gyms FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "user_gyms self delete"
+DROP POLICY IF EXISTS "user_gyms self delete" ON public.user_gyms;
+CREATE POLICY "user_gyms self delete"
   ON public.user_gyms FOR DELETE
   USING (auth.uid() = user_id);
 
@@ -134,17 +142,20 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.sessions TO anon, authenticated, service_role;
 ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Trenere ser egne økter"
+DROP POLICY IF EXISTS "Trenere ser egne økter" ON public.sessions;
+CREATE POLICY "Trenere ser egne økter"
   ON public.sessions FOR ALL
   USING (trainer_id = auth.uid());
 
-CREATE POLICY IF NOT EXISTS "Users can manage their own sessions"
+DROP POLICY IF EXISTS "Users can manage their own sessions" ON public.sessions;
+CREATE POLICY "Users can manage their own sessions"
   ON public.sessions FOR ALL
   TO authenticated
   USING (auth.uid() = trainer_id)
   WITH CHECK (auth.uid() = trainer_id);
 
-CREATE POLICY IF NOT EXISTS "Same-gym users can read sessions"
+DROP POLICY IF EXISTS "Same-gym users can read sessions" ON public.sessions;
+CREATE POLICY "Same-gym users can read sessions"
   ON public.sessions FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -168,7 +179,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.session_exercises TO anon, authenticated, service_role;
 ALTER TABLE public.session_exercises ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Tilgang via session"
+DROP POLICY IF EXISTS "Tilgang via session" ON public.session_exercises;
+CREATE POLICY "Tilgang via session"
   ON public.session_exercises FOR ALL
   USING (EXISTS (
     SELECT 1 FROM sessions
@@ -176,7 +188,8 @@ CREATE POLICY IF NOT EXISTS "Tilgang via session"
       AND sessions.trainer_id = auth.uid()
   ));
 
-CREATE POLICY IF NOT EXISTS "Users can manage exercises in their sessions"
+DROP POLICY IF EXISTS "Users can manage exercises in their sessions" ON public.session_exercises;
+CREATE POLICY "Users can manage exercises in their sessions"
   ON public.session_exercises FOR ALL
   TO authenticated
   USING (EXISTS (
@@ -198,7 +211,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.muscle_activations TO anon, authenticated, service_role;
 ALTER TABLE public.muscle_activations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Tilgang via session_exercise"
+DROP POLICY IF EXISTS "Tilgang via session_exercise" ON public.muscle_activations;
+CREATE POLICY "Tilgang via session_exercise"
   ON public.muscle_activations FOR ALL
   USING (EXISTS (
     SELECT 1 FROM session_exercises se
@@ -207,7 +221,8 @@ CREATE POLICY IF NOT EXISTS "Tilgang via session_exercise"
       AND s.trainer_id = auth.uid()
   ));
 
-CREATE POLICY IF NOT EXISTS "Users can manage activations in their sessions"
+DROP POLICY IF EXISTS "Users can manage activations in their sessions" ON public.muscle_activations;
+CREATE POLICY "Users can manage activations in their sessions"
   ON public.muscle_activations FOR ALL
   TO authenticated
   USING (EXISTS (
@@ -235,7 +250,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.exercise_library TO anon, authenticated, service_role;
 ALTER TABLE public.exercise_library ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Gym members select exercises"
+DROP POLICY IF EXISTS "Gym members select exercises" ON public.exercise_library;
+CREATE POLICY "Gym members select exercises"
   ON public.exercise_library FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -243,11 +259,13 @@ CREATE POLICY IF NOT EXISTS "Gym members select exercises"
     WHERE ug1.user_id = auth.uid() AND ug2.user_id = exercise_library.user_id
   ));
 
-CREATE POLICY IF NOT EXISTS "Gym members insert exercises"
+DROP POLICY IF EXISTS "Gym members insert exercises" ON public.exercise_library;
+CREATE POLICY "Gym members insert exercises"
   ON public.exercise_library FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Gym members update exercises"
+DROP POLICY IF EXISTS "Gym members update exercises" ON public.exercise_library;
+CREATE POLICY "Gym members update exercises"
   ON public.exercise_library FOR UPDATE
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -260,7 +278,8 @@ CREATE POLICY IF NOT EXISTS "Gym members update exercises"
     WHERE ug1.user_id = auth.uid() AND ug2.user_id = exercise_library.user_id
   ));
 
-CREATE POLICY IF NOT EXISTS "Gym members delete exercises"
+DROP POLICY IF EXISTS "Gym members delete exercises" ON public.exercise_library;
+CREATE POLICY "Gym members delete exercises"
   ON public.exercise_library FOR DELETE
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -285,7 +304,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.session_templates TO anon, authenticated, service_role;
 ALTER TABLE public.session_templates ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Gym members select templates"
+DROP POLICY IF EXISTS "Gym members select templates" ON public.session_templates;
+CREATE POLICY "Gym members select templates"
   ON public.session_templates FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -293,11 +313,13 @@ CREATE POLICY IF NOT EXISTS "Gym members select templates"
     WHERE ug1.user_id = auth.uid() AND ug2.user_id = session_templates.user_id
   ));
 
-CREATE POLICY IF NOT EXISTS "Gym members insert templates"
+DROP POLICY IF EXISTS "Gym members insert templates" ON public.session_templates;
+CREATE POLICY "Gym members insert templates"
   ON public.session_templates FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Gym members update templates"
+DROP POLICY IF EXISTS "Gym members update templates" ON public.session_templates;
+CREATE POLICY "Gym members update templates"
   ON public.session_templates FOR UPDATE
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -310,7 +332,8 @@ CREATE POLICY IF NOT EXISTS "Gym members update templates"
     WHERE ug1.user_id = auth.uid() AND ug2.user_id = session_templates.user_id
   ));
 
-CREATE POLICY IF NOT EXISTS "Gym members delete templates"
+DROP POLICY IF EXISTS "Gym members delete templates" ON public.session_templates;
+CREATE POLICY "Gym members delete templates"
   ON public.session_templates FOR DELETE
   USING (EXISTS (
     SELECT 1 FROM user_gyms ug1
@@ -337,7 +360,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.session_template_exercises TO anon, authenticated, service_role;
 ALTER TABLE public.session_template_exercises ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Gym members access template exercises"
+DROP POLICY IF EXISTS "Gym members access template exercises" ON public.session_template_exercises;
+CREATE POLICY "Gym members access template exercises"
   ON public.session_template_exercises FOR ALL
   USING (EXISTS (
     SELECT 1 FROM session_templates st
@@ -369,11 +393,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.roles TO anon, authenticated, service_role;
 ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "users see own roles"
+DROP POLICY IF EXISTS "users see own roles" ON public.roles;
+CREATE POLICY "users see own roles"
   ON public.roles FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "users manage own roles"
+DROP POLICY IF EXISTS "users manage own roles" ON public.roles;
+CREATE POLICY "users manage own roles"
   ON public.roles FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
@@ -391,17 +417,20 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.recommendation_cache TO anon, authenticated, service_role;
 ALTER TABLE public.recommendation_cache ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can read rec cache"
+DROP POLICY IF EXISTS "Authenticated users can read rec cache" ON public.recommendation_cache;
+CREATE POLICY "Authenticated users can read rec cache"
   ON public.recommendation_cache FOR SELECT
   USING (auth.role() = 'authenticated');
 
 -- Pre-ownership INSERT and UPDATE policies; replaced by 20260515_rec_cache_ownership.
-CREATE POLICY IF NOT EXISTS "Authenticated users can write rec cache"
+DROP POLICY IF EXISTS "Authenticated users can write rec cache" ON public.recommendation_cache;
+CREATE POLICY "Authenticated users can write rec cache"
   ON public.recommendation_cache FOR INSERT
   TO authenticated
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can update rec cache"
+DROP POLICY IF EXISTS "Authenticated users can update rec cache" ON public.recommendation_cache;
+CREATE POLICY "Authenticated users can update rec cache"
   ON public.recommendation_cache FOR UPDATE
   TO authenticated
   USING (auth.role() = 'authenticated');
@@ -419,7 +448,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.week_plans TO anon, authenticated, service_role;
 ALTER TABLE public.week_plans ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users manage own week_plans"
+DROP POLICY IF EXISTS "Users manage own week_plans" ON public.week_plans;
+CREATE POLICY "Users manage own week_plans"
   ON public.week_plans FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
@@ -437,7 +467,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
   ON public.week_plan_days TO anon, authenticated, service_role;
 ALTER TABLE public.week_plan_days ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users manage own week_plan_days"
+DROP POLICY IF EXISTS "Users manage own week_plan_days" ON public.week_plan_days;
+CREATE POLICY "Users manage own week_plan_days"
   ON public.week_plan_days FOR ALL
   USING (EXISTS (
     SELECT 1 FROM week_plans wp
@@ -615,7 +646,8 @@ $$;
 
 -- ── Auth trigger ──────────────────────────────────────────────────────────────
 -- Fires after every new auth.users row to create the matching profiles row.
-CREATE TRIGGER IF NOT EXISTS on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION handle_new_user();

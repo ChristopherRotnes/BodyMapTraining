@@ -21,7 +21,7 @@ ALTER TABLE public.recommendation_cache
 -- Tighten INSERT: written_by must equal the calling user.
 DROP POLICY IF EXISTS "Authenticated users can write rec cache" ON public.recommendation_cache;
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can write rec cache"
+CREATE POLICY "Authenticated users can write rec cache"
   ON public.recommendation_cache FOR INSERT
   TO authenticated
   WITH CHECK (written_by = auth.uid());
@@ -31,7 +31,7 @@ CREATE POLICY IF NOT EXISTS "Authenticated users can write rec cache"
 -- skipped (no error) — the existing entry stays, preventing poisoning.
 DROP POLICY IF EXISTS "Authenticated users can update rec cache" ON public.recommendation_cache;
 
-CREATE POLICY IF NOT EXISTS "Cache owner can update their entry"
+CREATE POLICY "Cache owner can update their entry"
   ON public.recommendation_cache FOR UPDATE
   TO authenticated
   USING (written_by = auth.uid());
