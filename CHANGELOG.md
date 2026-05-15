@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.8] — 2026-05-15
+
+### Developer / Infrastructure
+- **CI guard for `RECS_PROMPT_VERSION` sync (issue #241)** — `RECS_PROMPT_VERSION` is defined independently in `app/src/lib/prompts.js` and `app/api/recsCacheCleanup.js`. A new test (`app/api/__tests__/recsVersion.test.js`) reads both files via regex and fails the suite if the values drift. Forgetting to bump the cleanup job when changing the prompt version caused stale cache entries to never be swept.
+
 ## [1.5.7] — 2026-05-15
 
 ### Security
