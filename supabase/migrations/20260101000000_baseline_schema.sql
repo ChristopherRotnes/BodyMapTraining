@@ -1,4 +1,4 @@
-﻿-- Baseline schema snapshot for Workout Lens.
+-- Baseline schema snapshot for Workout Lens.
 --
 -- This migration was added retroactively to allow Supabase preview branches and
 -- local `supabase db reset` to work. All previous schema changes were applied
