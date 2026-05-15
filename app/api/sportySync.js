@@ -1,5 +1,6 @@
 import { app } from '@azure/functions';
 import { verifySupabaseJwt } from './claudeUtils.js';
+import { normalizeName } from './sportyUtils.js';
 
 // BU 8 is hardcoded for the single-gym MVP (Sporty Thon Senter Ski).
 // When multi-gym support lands, replace with a DB lookup via user_gyms.sporty_business_unit_id.
@@ -16,11 +17,6 @@ function buildSportyUrl(daysAhead = 10) {
   end.setUTCDate(end.getUTCDate() + daysAhead);
 
   return `${SPORTY_BASE_URL}?period_start=${encodeURIComponent(start.toISOString())}&period_end=${encodeURIComponent(end.toISOString())}`;
-}
-
-// Strip quoted annotations like "SVART TRØYE" — handles straight and curly double quotes
-function normalizeName(name) {
-  return name.replace(/\s*["“”][^"“”]+["“”]\s*/g, '').trim();
 }
 
 function shiftRow(row, shiftMs) {

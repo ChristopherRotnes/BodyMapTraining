@@ -2,6 +2,36 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.6] — 2026-05-15
+
+### Developer / Infrastructure
+- **CI/CD pipeline overhaul (issues #218–#225)** — workflow files renamed to `ci.yml`, `cleanup-staging.yml`, and new `audit.yml`; main pipeline split into a `validate` job (lint + test) and a `deploy` job (`needs: validate`) so lint/test failures give instant feedback as a separate status check without waiting for a build; concurrency group added to cancel stale in-progress runs on the same branch; `timeout-minutes: 15` on all jobs; Vite cache key corrected from `app/src/**` to `app/package-lock.json` (dep cache is not affected by source changes); `output_location: "."` annotated with a comment pointing to CLAUDE.md pitfall #9; `lfs: false` removed (default); `npm audit` moved out of the PR gate into a weekly `audit.yml` schedule (`--omit=dev --audit-level=high --audit-level=high`); production master deploys tagged with `environment: production`, PR and dev-branch deploys tagged with `environment: preview`.
+- **`normalizeName` extracted to `sportyUtils.js`** — the quote-stripping function was inline in `sportySync.js` (which imports from `@azure/functions`), making it untestable from the `app/` Vitest runner. Extracted to `app/api/sportyUtils.js` with no Azure SDK dependency; 5 unit tests added in `app/api/__tests__/sportySync.test.js`.
+- **Stale test description fixed** — `claudeUtils.test.js` described the model allowlist as "two production model IDs" when only one exists; corrected.
+
+## [1.5.5] — 2026-05-15
+
+### Changed
+- **`useFetch` adoption in `TemplatePicker` and `GruppetimePicker` (issue #213)** — both components previously managed their own `loading/error/data` useState triplet plus a manual fetch `useEffect`. Replaced with `useFetch(fetchTemplates)` from `hooks.js`. `GruppetimePicker` also replaced its manual debounce `useEffect` with `useDebouncedSearch(200)`. Mutation error in `GruppetimePicker` (`handleCreate`) is kept in a separate `createError` state so it does not conflict with the fetch error from `useFetch`.
+
+## [1.5.4] — 2026-05-15
+
+### Changed
+- **`MuscleMap.jsx` split (issue #213)** — the 852-line component has been reduced to 352 lines. Upload step extracted to `MuscleMapUpload.jsx` (181 lines); confirm step extracted to `MuscleMapConfirm.jsx` (201 lines, includes `getConfidenceColor`); result step extracted to `MuscleMapResult.jsx` (182 lines). Parent retains `useReducer`, all 4 `useEffect` hooks, `addImage`/`handleFiles`/`analyze`/`confirm`/`recommend` callbacks, and the step-indicator strip. No behaviour change.
+- **`History.jsx` split (issue #213)** — the 813-line component has been reduced to 525 lines. `MonthGrid` (calendar heatmap) extracted to `MonthGrid.jsx` (103 lines, includes `calHeatColor`). The expanded session panel extracted to `SessionEditPanel.jsx` (218 lines); it imports `checkGymCalendarConflict` directly rather than threading it through props. Parent retains all state, callbacks, and the session-row header rendering. No behaviour change.
+
+## [1.5.3] — 2026-05-15
+
+### Fixed
+- **Silent delete errors in `db.js` (issue #213)** — `deleteLibraryExercise` did not check the error from the junction-table delete (`session_template_exercises`); a failure would silently leave orphaned rows while the library exercise itself was deleted. `saveWeekPlan` did not check the error from the `week_plan_days` delete; a failure would leave stale day rows and then attempt to insert new rows on top of them. Both now throw on any Supabase error before proceeding.
+- **Claude proxy could hang indefinitely (issue #213)** — `claude.js` had no timeout on the upstream fetch to Anthropic. A slow or stalled Anthropic server could hold the Azure Function open until the platform killed it. Now returns 504 after 25 s via `AbortController`.
+
+### Changed
+- **`useDebouncedSearch` custom hook (issue #213)** — the "debounce search input via local timer" pattern was copy-pasted across `OvelsePicker`, `Bibliotek`, and `Planlegger` (TemplatePickerSheet). Extracted into `app/src/lib/hooks.js` (`useDebouncedSearch`). Each site now imports the hook, removing 6 `useState` + 4 `useEffect` calls from those components.
+- **`useFetch` custom hook skeleton (issue #213)** — `hooks.js` also exports `useFetch(fn, deps)` as a foundation for future adoption of the loading/error/data pattern used in 10+ components.
+- **`Report.jsx` muscleCounts derivations batched (issue #213)** — `musclesCovered`, `untrainedMuscles`, `secondaryOnlyMuscles`, `frequencyTable`, and `trainedIds` were each computed with a separate `Object.entries(muscleCounts)` pass on every render (including unrelated state changes such as `hoveredMuscle` or `loadingRecs`). Consolidated into a single `useMemo` that re-runs only when `muscleCounts` changes. `getAdvice` and the recommendation-cache `useEffect` both now read `trainedIds` from this shared memo instead of recomputing it independently.
+- **`db.js` select fragment constants (issue #213)** — five functions repeated the same Supabase JOIN string (`session_exercises(id, name, muscle_activations(muscle_id, activation_type))`). Extracted into two module-level constants (`SESSION_EXERCISES_SELECT`, `SESSION_EXERCISES_FULL_SELECT`) used by `fetchLastSession`, `fetchSessionsForWeek`, `fetchSessionsForReport`, `fetchSessionsByDate`, and `fetchClassHistory`.
+
 ## [1.5.2] — 2026-05-14
 
 ### Changed

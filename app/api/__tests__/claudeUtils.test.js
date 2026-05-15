@@ -8,7 +8,7 @@ import {
 } from '../claudeUtils.js';
 
 describe('ALLOWED_MODELS', () => {
-  it('contains exactly the two production model IDs', () => {
+  it('contains the production model ID', () => {
     expect([...ALLOWED_MODELS].sort()).toEqual(['claude-sonnet-4-6']);
   });
 

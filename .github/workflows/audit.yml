@@ -1,0 +1,29 @@
+name: Weekly dependency audit
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: npm audit
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+      - name: Audit production dependencies
+        working-directory: app
+        # --omit=dev: dev deps are not in the production bundle
+        # --audit-level=high: only fail on high/critical vulnerabilities
+        run: npm audit --audit-level=high --omit=dev

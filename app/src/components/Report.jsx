@@ -145,11 +145,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
     setRecs(null);
     setRecsError(null);
 
-    const trainedLabels = Object.entries(muscleCounts)
-      .filter(([, c]) => c.primary > 0)
-      .map(([id]) => MUSCLES[id]?.label || id)
-      .join(", ");
-
+    const trainedLabels = trainedIds.map(id => MUSCLES[id]?.label || id).join(", ");
     const untrainedLabels = untrainedMuscles.map(id => MUSCLES[id]?.label || id).join(", ");
 
     const prompt = buildPeriodRecommendPrompt(periodDays, sessionCount, trainedLabels, untrainedLabels, i18n.language);
@@ -171,9 +167,6 @@ export default function Report({ prefill, onPrefillConsumed }) {
         throw new Error("Svaret fra Claude var ikke gyldig JSON. Prøv igjen.");
       }
       setRecs(parsed);
-      const trainedIds = Object.entries(muscleCounts)
-        .filter(([, c]) => c.primary > 0)
-        .map(([id]) => id);
       saveRecsCache(recsCacheKey(periodDays, sessionCount, trainedIds, untrainedMuscles), parsed);
     } catch (err) {
       logDevError("Report/anbefalinger", err);
@@ -277,28 +270,24 @@ export default function Report({ prefill, onPrefillConsumed }) {
   };
 
   const sessionCount = filteredSessions.length;
-  const musclesCovered = Object.values(muscleCounts).filter(c => c.primary > 0).length;
   const avgPerWeek = (sessionCount / (periodDays / 7)).toFixed(1);
 
-  const untrainedMuscles = Object.entries(muscleCounts)
-    .filter(([, c]) => c.primary === 0)
-    .map(([id]) => id);
-
-  const secondaryOnlyMuscles = Object.entries(muscleCounts)
-    .filter(([, c]) => c.primary === 0 && c.secondary > 0)
-    .map(([id]) => id);
-
-  const frequencyTable = Object.entries(muscleCounts)
-    .map(([id, c]) => ({ id, ...c }))
-    .sort((a, b) => b.primary - a.primary || b.secondary - a.secondary);
+  const { musclesCovered, trainedIds, untrainedMuscles, secondaryOnlyMuscles, frequencyTable } = useMemo(() => {
+    const entries = Object.entries(muscleCounts);
+    const musclesCovered = entries.filter(([, c]) => c.primary > 0).length;
+    const trainedIds = entries.filter(([, c]) => c.primary > 0).map(([id]) => id);
+    const untrainedMuscles = entries.filter(([, c]) => c.primary === 0).map(([id]) => id);
+    const secondaryOnlyMuscles = entries.filter(([, c]) => c.primary === 0 && c.secondary > 0).map(([id]) => id);
+    const frequencyTable = entries
+      .map(([id, c]) => ({ id, ...c }))
+      .sort((a, b) => b.primary - a.primary || b.secondary - a.secondary);
+    return { musclesCovered, trainedIds, untrainedMuscles, secondaryOnlyMuscles, frequencyTable };
+  }, [muscleCounts]);
 
   useEffect(() => {
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRecsError(null);
-    const trainedIds = Object.entries(muscleCounts)
-      .filter(([, c]) => c.primary > 0)
-      .map(([id]) => id);
     fetchRecsCache(recsCacheKey(periodDays, sessionCount, trainedIds, untrainedMuscles))
       .then(cached => { if (!cancelled) setRecs(cached); })
       .catch(() => { if (!cancelled) setRecs(null); });
