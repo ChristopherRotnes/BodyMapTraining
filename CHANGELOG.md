@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.12] — 2026-05-16
+
+### Security
+- **Pin `Azure/static-web-apps-deploy` to commit SHA (issue #255)** — both `ci.yml` and `cleanup-staging.yml` referenced `Azure/static-web-apps-deploy@v1`, a mutable tag that could be silently updated to run arbitrary code in CI. Pinned to the exact commit SHA (`1a947af`) that `v1` currently resolves to.
+
 ## [1.5.11] — 2026-05-16
 
 ### Developer / Infrastructure
