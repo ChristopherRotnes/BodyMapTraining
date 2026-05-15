@@ -60,8 +60,11 @@ export async function fetchExerciseTemplateCounts() {
 }
 
 export async function deleteLibraryExercise(id) {
-  // Remove from any templates that reference this exercise
-  await supabase.from("session_template_exercises").delete().eq("library_exercise_id", id);
+  const { error: junctionError } = await supabase
+    .from("session_template_exercises")
+    .delete()
+    .eq("library_exercise_id", id);
+  if (junctionError) throw junctionError;
   const { error } = await supabase
     .from("exercise_library")
     .delete()
@@ -349,7 +352,8 @@ export async function saveWeekPlan(weekIso, assignments) {
     .single();
   if (upsertError) throw upsertError;
 
-  await supabase.from("week_plan_days").delete().eq("plan_id", plan.id);
+  const { error: deleteError } = await supabase.from("week_plan_days").delete().eq("plan_id", plan.id);
+  if (deleteError) throw deleteError;
 
   if (assignments.length > 0) {
     const rows = assignments.map((a, i) => ({

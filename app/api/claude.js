@@ -60,15 +60,31 @@ app.http('claude', {
     let upstream;
     for (let attempt = 0; attempt < 5; attempt++) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2 ** attempt * 1000));
-      upstream = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: requestBody,
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25_000);
+      try {
+        upstream = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: requestBody,
+          signal: controller.signal,
+        });
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          context.warn('Anthropic request timed out after 25s');
+          return new Response(
+            JSON.stringify({ error: 'Upstream timeout' }),
+            { status: 504, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+        throw err;
+      }
+      clearTimeout(timeoutId);
       if (upstream.status !== 529) break;
       context.warn(`Anthropic overloaded (529), attempt ${attempt + 1}/5`);
     }
