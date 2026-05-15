@@ -2,6 +2,12 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.9] — 2026-05-15
+
+### Security
+- **Excess anon DB privileges revoked (issue #237)** — `anon` role had TRUNCATE, TRIGGER, and REFERENCES on all 14 public tables. TRUNCATE bypasses RLS at the PostgreSQL level; TRIGGER and REFERENCES are unused by PostgREST. All three revoked across every table — standard SELECT/INSERT/UPDATE/DELETE grants unchanged.
+- **Duplicate `{public}` RLS policies removed (issue #237)** — `sessions`, `session_exercises`, and `muscle_activations` each had a legacy `{public}` ALL policy alongside a `{authenticated}` replacement with an identical USING clause. The `{public}` copies never granted anon access in practice (every USING checks `auth.uid()`, which is null for unauthenticated requests) but added evaluation overhead and policy-list noise. Legacy policies dropped; `{authenticated}` versions remain.
+
 ## [1.5.8] — 2026-05-15
 
 ### Developer / Infrastructure

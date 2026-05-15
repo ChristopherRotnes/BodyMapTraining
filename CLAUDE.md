@@ -462,3 +462,9 @@ Symptom: Home → "Siste økt" showed "Ingen økter logget ennå" even though se
 
 **Pattern to watch:** Do not combine `.limit(1)` with `.maybeSingle()` in Supabase JS v2 when the table can have multiple rows. Use `.limit(1)` with an array query and take `data?.[0]` instead. `.maybeSingle()` is only safe on queries where the base set is already guaranteed to be 0 or 1 rows (e.g. `.eq("id", id)` on a primary key).
 
+### Issue #237 — Excess anon grants + duplicate RLS policies (resolved 2026-05-15)
+
+**Excess grants:** Supabase's default `GRANT ALL` on new tables gives `anon` TRUNCATE, TRIGGER, and REFERENCES — none of which PostgREST exposes. TRUNCATE bypasses RLS at the PostgreSQL level, so it is a latent risk even though PostgREST doesn't route it. Revoked via `REVOKE TRUNCATE, TRIGGER, REFERENCES ON ... FROM anon` in migration `20260516_db_permissions_cleanup.sql`. When creating a new table, only grant the privileges PostgREST actually needs — see the migration hygiene template above.
+
+**Duplicate policies:** `{public}` role in a PostgreSQL RLS policy means the policy applies to *all* roles including `anon`. Several tables accumulated pairs of `{public}` ALL and `{authenticated}` ALL policies with identical USING clauses (the `{public}` one was the original; the `{authenticated}` one replaced it later but the old one was never cleaned up). PostgreSQL ORs multiple permissive policies — the duplicates were harmless (every USING checked `auth.uid()`, which is null for anon, so anon access was always blocked) but added noise. When replacing a policy, always `DROP POLICY IF EXISTS` the old one in the same migration.
+
