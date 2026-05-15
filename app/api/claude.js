@@ -59,7 +59,7 @@ app.http('claude', {
     const requestBody = JSON.stringify(body);
     let upstream;
     for (let attempt = 0; attempt < 5; attempt++) {
-      if (attempt > 0) await new Promise(r => setTimeout(r, 2 ** attempt * 1000));
+      if (attempt > 0) await new Promise(r => setTimeout(r, Math.min(2 ** attempt * 1000 + Math.random() * 500, 32_000)));
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 25_000);
       try {
