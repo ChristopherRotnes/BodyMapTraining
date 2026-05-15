@@ -1,119 +1,19 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, checkGymCalendarConflict, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
+import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
 import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
 import { compressImage, buildMuscleMapFromSession, buildMuscleMapFromExercises, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {
-  Button, Tag, InlineNotification, InlineLoading,
-  Select, SelectItem, AccordionSkeleton, SkeletonPlaceholder,
+  Button, Tag,
+  AccordionSkeleton, SkeletonPlaceholder,
 } from "@carbon/react";
-import { Camera, Add, Renew, ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
-import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
-import BodyPanel from "./BodyPanel";
+import { ChevronDown, ChevronLeft, ChevronRight } from "@carbon/icons-react";
+import MonthGrid from "./MonthGrid";
+import SessionEditPanel from "./SessionEditPanel";
 import PageShell, { SectionLabel, PageHeading } from "./PageShell";
 import { useTranslation } from "react-i18next";
 
 const MUSCLE_FILTER_ITEMS = Object.entries(MUSCLES).map(([id, { label }]) => ({ id, label }));
-
-function calHeatColor(count) {
-  if (!count) return "var(--surface-card)";
-  if (count <= 1) return "var(--heat-1)";
-  if (count <= 3) return "var(--heat-2)";
-  if (count <= 5) return "var(--heat-3)";
-  if (count <= 7) return "var(--heat-4)";
-  return "var(--heat-5)";
-}
-
-function MonthGrid({ year, month, sessionCountMap, onDayClick, selectedDate, today }) {
-  const { t } = useTranslation();
-  const DAY_HEADERS = [
-    t("history.days.mon"),
-    t("history.days.tue"),
-    t("history.days.wed"),
-    t("history.days.thu"),
-    t("history.days.fri"),
-    t("history.days.sat"),
-    t("history.days.sun"),
-  ];
-  const todayStr = toIsoDate(today);
-  const selectedStr = selectedDate ? toIsoDate(selectedDate) : null;
-  const firstDOW = (new Date(year, month, 1).getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const cells = useMemo(() => {
-    const c = [];
-    for (let i = 0; i < firstDOW; i++) c.push(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-      const mm = String(month + 1).padStart(2, "0");
-      const dd = String(d).padStart(2, "0");
-      c.push(`${year}-${mm}-${dd}`);
-    }
-    return c;
-  }, [year, month, firstDOW, daysInMonth]);
-
-  return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1, marginBottom: 2 }}>
-        {DAY_HEADERS.map(d => (
-          <div key={d} style={{ textAlign: "center", fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--cds-text-secondary)", letterSpacing: "0.1em", textTransform: "uppercase", padding: "6px 0" }}>
-            {d}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1 }}>
-        {cells.map((dateStr, i) => {
-          if (!dateStr) return <div key={`pad-${i}`} style={{ height: 40, background: "var(--surface-card)", borderRadius: 0 }} />;
-          const count = sessionCountMap[dateStr] || 0;
-          const isToday = dateStr === todayStr;
-          const isSelected = dateStr === selectedStr;
-          const isFuture = dateStr > todayStr;
-          const isInteractive = !isFuture && count > 0;
-          const day = parseInt(dateStr.split("-")[2], 10);
-          const cellStyle = {
-            height: 40,
-            borderRadius: 0,
-            background: calHeatColor(count),
-            border: "1px solid var(--border-subtle-wl)",
-            outline: isSelected ? "3px solid var(--cds-background)" : isToday ? "1px dashed var(--cds-text-secondary)" : undefined,
-            outlineOffset: isSelected ? "-3px" : "-2px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          };
-          const daySpan = (
-            <span style={{
-              fontSize: 10, fontFamily: "var(--cds-font-mono)", letterSpacing: "0.06em",
-              color: count > 0 ? "rgba(255,255,255,0.9)" : isFuture ? "var(--cds-text-disabled)" : "var(--cds-text-secondary)",
-            }}>
-              {day}
-            </span>
-          );
-          if (isInteractive) {
-            return (
-              <button
-                key={dateStr}
-                aria-label={`${dateStr}: ${t("history.sessionCount", { count })}`}
-                aria-pressed={isSelected}
-                aria-current={isToday ? "date" : undefined}
-                onClick={() => onDayClick(dateStr)}
-                style={{ ...cellStyle, cursor: "pointer", padding: 0, fontFamily: "inherit" }}
-              >
-                {daySpan}
-              </button>
-            );
-          }
-          return (
-            <div
-              key={dateStr}
-              aria-current={isToday ? "date" : undefined}
-              style={{ ...cellStyle, cursor: "default" }}
-            >
-              {daySpan}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function sessionExToEditFormat(exercises) {
   return exercises.map(ex => ({
@@ -172,7 +72,6 @@ export default function History({ initialDate }) {
 
   const [muscleFilter, setMuscleFilter] = useState([]);
 
-  // Per-session edit state (Map<sessionId, editState>)
   const [sessionEdits, setSessionEdits] = useState(new Map());
   const [libraryExercises, setLibraryExercises] = useState([]);
   const libraryCache = useRef(null);
@@ -446,7 +345,7 @@ export default function History({ initialDate }) {
           )}
         </PageHeading>
 
-        {/* Muscle filter — horizontal pill scroll */}
+        {/* Muscle filter chips */}
         <div style={{ marginBottom: 16, paddingBottom: 8, borderBottom: "1px solid var(--border-subtle-wl)" }}>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingBottom: 8 }}>
             {MUSCLE_FILTER_ITEMS.map(item => {
@@ -589,212 +488,25 @@ export default function History({ initialDate }) {
                     </div>
                   </button>
 
-                  {isExpanded && (() => {
-                    const isDirty = edit.dirty || false;
-                    const isSaving = edit.saving || false;
-                    const gymSessions = edit.gymSessions || [];
-                    const gymSessionId = edit.gymSessionId ?? (session.gym_calendar_id || "");
-                    const gymConflict = edit.gymConflict;
-                    const isAnalyzing = edit.analyzing || false;
-                    const hasErrors = workExercises && workExercises.some(e => e.enabled && !e.name?.trim());
-                    return (
-                    <div id={`session-content-${session.id}`} aria-live="polite" style={{ border: "1px solid var(--border-subtle-wl)", borderTop: "none", borderInlineStart: isFilterMatch ? "3px solid var(--accent)" : "3px solid var(--border-subtle-wl)", padding: "16px 14px", marginBottom: 0 }}>
-
-                      {/* Gym class selector (always visible when options exist) */}
-                      {gymSessions.length > 0 ? (
-                        <>
-                          <Select
-                            id={`gym-session-${session.id}`}
-                            labelText={t("history.gymClassLabel")}
-                            value={gymSessionId}
-                            onChange={(e) => {
-                              const newId = e.target.value;
-                              patchSessionEdit(session.id, { gymSessionId: newId, gymConflict: null, dirty: true });
-                              if (newId && newId !== (session.gym_calendar_id || "")) {
-                                checkGymCalendarConflict(newId, session.id)
-                                  .then(c => patchSessionEdit(session.id, { gymConflict: c }))
-                                  .catch(() => {});
-                              }
-                            }}
-                            style={{ marginBottom: gymConflict ? 8 : 16 }}
-                          >
-                            <SelectItem value="" text={t("history.noClassSelected")} />
-                            {gymSessions.map(s => {
-                              const time = new Date(s.start_time).toLocaleTimeString(getIntlLocale(), { hour: "2-digit", minute: "2-digit" });
-                              const label = s.instructor ? `${time} – ${s.name} (${s.instructor})` : `${time} – ${s.name}`;
-                              return <SelectItem key={s.id} value={s.id} text={label} />;
-                            })}
-                          </Select>
-                          {gymConflict && (
-                            <InlineNotification kind="warning" title={t("history.conflictWarningTitle")}
-                              subtitle={t("history.conflictWarningBody", { date: gymConflict.session_date })}
-                              hideCloseButton style={{ marginBottom: 16 }} />
-                          )}
-                        </>
-                      ) : session.gym_calendar && (
-                        <div style={{ marginBottom: 12 }}>
-                          <Tag type="outline" size="sm">{session.gym_calendar.name}</Tag>
-                        </div>
-                      )}
-
-                      {/* Body map */}
-                      <BodyPanel
-                        primary={sessionMuscles.primary}
-                        secondary={sessionMuscles.secondary}
-                        muscleMap={sessionMuscleMap}
-                        onHover={setHoveredMuscle}
-                        hovered={hoveredMuscle}
-                        marginBottom={0}
-                      />
-
-                      <div style={{ height: 68, marginBottom: 16, overflow: "hidden" }}>
-                        {hoveredMuscle ? (
-                          <div style={{ borderInlineStart: "3px solid var(--accent)", background: "var(--surface-card)", padding: "10px 14px" }}>
-                            <div style={{ fontSize: 10, fontFamily: "var(--cds-font-mono)", color: "var(--text-muted-wl)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
-                              {t(`muscles.${hoveredMuscle}`, { defaultValue: MUSCLES[hoveredMuscle]?.label })}
-                            </div>
-                            <div style={{ display: "flex", gap: 24, alignItems: "baseline", overflow: "hidden" }}>
-                              <div style={{ flexShrink: 0 }}>
-                                <span style={{ fontSize: 28, fontWeight: 300, fontFamily: "var(--cds-font-sans)", color: "var(--cds-text-primary)" }}>
-                                  {(sessionMuscleMap[hoveredMuscle] || []).length}
-                                </span>
-                                <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", marginLeft: 6, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                                  {t("common.exercises")}
-                                </span>
-                              </div>
-                              <span style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, color: "var(--text-muted-wl)", letterSpacing: "0.08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", minWidth: 0 }}>
-                                {(sessionMuscleMap[hoveredMuscle] || []).join(" · ")}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: 11, color: "var(--text-muted-wl)", fontFamily: "var(--cds-font-mono)", padding: "10px 0", letterSpacing: "0.08em" }}>
-                            {t("history.hoverHint")}
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-                        <Tag type="green" size="sm">{t("history.primaryCount", { count: sessionMuscles.primary.length })}</Tag>
-                        <Tag type="blue" size="sm">{t("history.secondaryCount", { count: sessionMuscles.secondary.length })}</Tag>
-                      </div>
-
-                      {/* Exercise list — always editable */}
-                      <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
-                        {workExercises && (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
-                            {workExercises.map((ex) => (
-                              <ExerciseRowWithAutocomplete
-                                key={ex.id}
-                                exercise={ex}
-                                autoFocusName={edit.newExIds?.has(ex.id)}
-                                onChange={(updates) => patchSessionEdit(session.id, {
-                                  exercises: workExercises.map(e => e.id === ex.id ? { ...e, ...updates } : e),
-                                  dirty: true,
-                                })}
-                                onDelete={() => patchSessionEdit(session.id, {
-                                  exercises: workExercises.filter(e => e.id !== ex.id),
-                                  dirty: true,
-                                })}
-                                layer="layer-02"
-                                validateNumbers
-                                libraryExercises={libraryExercises}
-                                isNew={edit.newExIds?.has(ex.id)}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Action row: add exercise + re-upload photo */}
-                      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                        <Button kind="ghost" renderIcon={Add} size="sm"
-                          onClick={() => {
-                            const id = Date.now();
-                            patchSessionEdit(session.id, {
-                              exercises: [...(workExercises || []), { id, name: "", standardName: "", primary: [], secondary: [], enabled: true }],
-                              newExIds: new Set([...(edit.newExIds || []), id]),
-                              dirty: true,
-                            });
-                          }}
-                        >
-                          {t("muscleMap.addManual")}
-                        </Button>
-                        <Button kind="ghost" renderIcon={isAnalyzing ? Renew : Camera} size="sm" disabled={isAnalyzing}
-                          onClick={() => { uploadingForSession.current = session; fileRef.current?.click(); }}>
-                          {isAnalyzing ? t("history.analyzing") : t("history.reuploadPhoto")}
-                        </Button>
-                      </div>
-
-                      {/* Class history (gym-linked sessions only) */}
-                      {session.gym_calendar_id && (() => {
-                        const ch = classHistory.get(session.gym_calendar_id);
-                        if (!ch) return null;
-                        if (ch.loading) return (
-                          <div style={{ marginBottom: 12 }}>
-                            <InlineLoading description={t("history.classHistoryLoading")} />
-                          </div>
-                        );
-                        if (ch.error) return (
-                          <InlineNotification kind="error" title={t("history.classHistoryError")} hideCloseButton style={{ marginBottom: 12 }} />
-                        );
-                        if (!ch.sessions.length) return null;
-                        return (
-                          <div style={{ background: "var(--cds-layer-01)", border: "1px solid var(--border-subtle-wl)", padding: 14, marginBottom: 12 }}>
-                            <p style={{ fontSize: 11, color: "var(--text-muted-wl)", letterSpacing: "2px", marginBottom: 10, fontFamily: "var(--cds-font-mono)", textTransform: "uppercase" }}>
-                              {t("history.classHistory")}
-                            </p>
-                            {ch.sessions.map(cs => {
-                              const name = cs.profiles?.display_name || t("history.classHistoryInstructor");
-                              const exs = (cs.session_exercises || []).filter(e => e.name);
-                              return (
-                                <div key={cs.id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: "1px solid var(--border-subtle-wl)" }}>
-                                  <p style={{ fontFamily: "var(--cond)", fontWeight: 700, fontSize: 13, color: "var(--cds-text-primary)", margin: "0 0 6px", borderInlineStart: "3px solid var(--accent)", paddingInlineStart: 8 }}>
-                                    {name}
-                                  </p>
-                                  {exs.map(ex => (
-                                    <div key={ex.id} style={{ padding: "3px 0", fontSize: 13, color: "var(--cds-text-secondary)" }}>
-                                      {ex.name}
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
-
-                      {/* Hidden file input for photo re-upload */}
-                      <input ref={fileRef} id="session-image-upload" name="session-image-upload" type="file" accept="image/*" style={{ display: "none" }}
-                        onChange={(e) => {
-                          if (e.target.files[0] && uploadingForSession.current) {
-                            reanalyze(uploadingForSession.current, e.target.files[0]);
-                          }
-                          e.target.value = "";
-                          uploadingForSession.current = null;
-                        }} />
-
-                      {/* Dirty state: error notifications + save bar */}
-                      {isDirty && (
-                        <>
-                          {edit.analyzeError && (
-                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={edit.analyzeError} hideCloseButton style={{ marginBottom: 8 }} />
-                          )}
-                          {edit.saveError && (
-                            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={edit.saveError} hideCloseButton style={{ marginBottom: 8 }} />
-                          )}
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                            <Button kind="ghost" onClick={() => discardEdit(session)}>{t("common.discard")}</Button>
-                            <Button kind="primary" disabled={isSaving || hasErrors}
-                              onClick={() => saveEdit(session)} style={{ marginLeft: "auto" }}>
-                              {isSaving ? t("common.saving") : t("common.save")}
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    );
-                  })()}
+                  {isExpanded && (
+                    <SessionEditPanel
+                      session={session}
+                      edit={edit}
+                      isFilterMatch={isFilterMatch}
+                      sessionMuscles={sessionMuscles}
+                      sessionMuscleMap={sessionMuscleMap}
+                      hoveredMuscle={hoveredMuscle}
+                      onHoverMuscle={setHoveredMuscle}
+                      libraryExercises={libraryExercises}
+                      classHistory={classHistory}
+                      fileRef={fileRef}
+                      uploadingForSession={uploadingForSession}
+                      onPatch={(patch) => patchSessionEdit(session.id, patch)}
+                      onDiscard={() => discardEdit(session)}
+                      onSave={() => saveEdit(session)}
+                      onReanalyze={(file) => reanalyze(session, file)}
+                    />
+                  )}
                 </div>
               );
             })}

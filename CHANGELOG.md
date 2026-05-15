@@ -2,6 +2,12 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.4] — 2026-05-15
+
+### Changed
+- **`MuscleMap.jsx` split (issue #213)** — the 852-line component has been reduced to 352 lines. Upload step extracted to `MuscleMapUpload.jsx` (181 lines); confirm step extracted to `MuscleMapConfirm.jsx` (201 lines, includes `getConfidenceColor`); result step extracted to `MuscleMapResult.jsx` (182 lines). Parent retains `useReducer`, all 4 `useEffect` hooks, `addImage`/`handleFiles`/`analyze`/`confirm`/`recommend` callbacks, and the step-indicator strip. No behaviour change.
+- **`History.jsx` split (issue #213)** — the 813-line component has been reduced to 525 lines. `MonthGrid` (calendar heatmap) extracted to `MonthGrid.jsx` (103 lines, includes `calHeatColor`). The expanded session panel extracted to `SessionEditPanel.jsx` (218 lines); it imports `checkGymCalendarConflict` directly rather than threading it through props. Parent retains all state, callbacks, and the session-row header rendering. No behaviour change.
+
 ## [1.5.3] — 2026-05-15
 
 ### Fixed
