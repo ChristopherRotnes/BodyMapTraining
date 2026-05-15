@@ -4,6 +4,7 @@ dist/
 files.zip
 .env
 .env.local
+app/api/local.settings.json
 .claude/
 design_handoff_workout_lens/
 design_handoff_tilpass_appen/
