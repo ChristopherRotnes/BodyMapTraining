@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.11] — 2026-05-16
+
+### Developer / Infrastructure
+- **Codebase cleanup (issue #251)** — deleted `Bibliotek.jsx` and `OvelseDetail.jsx` (both unreferenced dead code); fixed wrong file paths in README project structure table (`carbon-tokens.css`, `app.css`, `staticwebapp.config.json`); bumped `package.json` version from stale `1.1.0-rc.1` to `1.5.10`; removed historical migration narrative from CLAUDE.md (Carbon "What was done" section, gym-wide RLS policy diff, sets/reps removal note, react-day-picker/Bebas Neue removed list); fixed stale API security header description (now correctly documents `X-Supabase-Token`).
+
 ## [1.5.10] — 2026-05-15
 
 ### Security

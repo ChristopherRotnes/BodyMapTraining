@@ -89,13 +89,12 @@ app/
       MuscleMap.jsx                # Logger — upload/template-preload, analyse, confirm, visualise
       History.jsx                  # History — custom month grid calendar + session detail + edit mode
       Report.jsx                   # Period report — heatmap body map + muscle coverage stats
-      ExerciseRow.jsx              # Shared editable exercise row (checkbox, name, sets, reps, delete)
+      ExerciseRow.jsx              # Shared editable exercise row (checkbox, name, delete)
       ExerciseRowWithAutocomplete.jsx # ExerciseRow wrapper with library autocomplete dropdown (History edit only)
       BodyPanel.jsx                # Shared front/back body map with mobile toggle (used in 3 views)
       MusclePicker.jsx             # Click-to-toggle body map for assigning muscles to exercises
       ExerciseForm.jsx             # Create/edit a library exercise with MusclePicker
       LibraryPicker.jsx            # Searchable exercise picker for adding library exercises to templates
-      Bibliotek.jsx                # Sett-sammen page — exercise library CRUD + template CRUD (two tabs; will be replaced by SetSammen.jsx landing in Sprint 2)
       TemplatePicker.jsx           # Template selection screen (recently used first)
       TemplateSessionEditor.jsx    # Edit/use a template with live body map; save-back or hand off to logger
       Planlegger.jsx               # Weekly training planner — untrained-this-week chip list + projected heatmap, assign templates
@@ -113,14 +112,15 @@ app/
                                    #   toWeekIso, weekIsoToMonday, getIntlLocale, inferMusclesFromName
       prompts.js                   # Claude model IDs + prompt builders
       i18n.js                      # i18next init — nb/en/fa resources, fallbackLng, RTL direction wiring
+    styles/
+      carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
+      app.css                      # Global resets and Carbon overrides
   public/
     locales/
       nb/translation.json          # Norwegian strings (default)
       en/translation.json          # English strings
       fa/translation.json          # Persian strings (RTL)
-    styles/
-      carbon-tokens.css            # IBM Carbon CSS variables (g10 + g100) + IBM Plex @font-face
-      app.css                      # Global resets and Carbon overrides
+    staticwebapp.config.json       # Azure SWA routing config
   api/
     index.js                       # Entry point — imports all Azure Functions
     claude.js                      # Azure Function — proxies requests to Anthropic API
@@ -128,7 +128,6 @@ app/
     sportyUtils.js                 # Pure utility — normalizeName() (no Azure SDK dep; unit-tested)
     host.json                      # Azure Functions runtime config
     package.json                   # API dependencies
-  staticwebapp.config.json         # Azure SWA routing config
 ```
 
 ## Branch strategy
