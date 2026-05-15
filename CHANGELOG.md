@@ -2,6 +2,13 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.6] — 2026-05-15
+
+### Developer / Infrastructure
+- **CI/CD pipeline overhaul (issues #218–#225)** — workflow files renamed to `ci.yml`, `cleanup-staging.yml`, and new `audit.yml`; main pipeline split into a `validate` job (lint + test) and a `deploy` job (`needs: validate`) so lint/test failures give instant feedback as a separate status check without waiting for a build; concurrency group added to cancel stale in-progress runs on the same branch; `timeout-minutes: 15` on all jobs; Vite cache key corrected from `app/src/**` to `app/package-lock.json` (dep cache is not affected by source changes); `output_location: "."` annotated with a comment pointing to CLAUDE.md pitfall #9; `lfs: false` removed (default); `npm audit` moved out of the PR gate into a weekly `audit.yml` schedule (`--omit=dev --audit-level=high --audit-level=high`); production master deploys tagged with `environment: production`, PR and dev-branch deploys tagged with `environment: preview`.
+- **`normalizeName` extracted to `sportyUtils.js`** — the quote-stripping function was inline in `sportySync.js` (which imports from `@azure/functions`), making it untestable from the `app/` Vitest runner. Extracted to `app/api/sportyUtils.js` with no Azure SDK dependency; 5 unit tests added in `app/api/__tests__/sportySync.test.js`.
+- **Stale test description fixed** — `claudeUtils.test.js` described the model allowlist as "two production model IDs" when only one exists; corrected.
+
 ## [1.5.5] — 2026-05-15
 
 ### Changed
