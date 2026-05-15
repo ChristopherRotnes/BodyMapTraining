@@ -40,12 +40,16 @@ Returner KUN et JSON-array, ingen annen tekst, ingen backticks:
 };
 
 // Prompt for inferring muscle groups from a single exercise name (text-only, cheap call).
-export const buildMuscleInferencePrompt = (name) =>
-  `Du er en personlig trener. Hvilke muskler trener øvelsen "${name}"?
+// The name is wrapped in XML tags (Anthropic-recommended boundary for untrusted input).
+// Angle brackets are stripped first so a crafted name cannot break the tag structure.
+export const buildMuscleInferencePrompt = (name) => {
+  const safe = name.replace(/[<>]/g, '');
+  return `Du er en personlig trener. Hvilke muskler trener øvelsen i <exercise>${safe}</exercise>?
 Bruk KUN disse muscle-ID-ene: ${MUSCLE_IDS}.
 Returner KUN JSON, ingen annen tekst, ingen backticks:
 {"primary":["muscle_id"],"secondary":["muscle_id"]}
 Hvis du er usikker, returner tomme arrays.`;
+};
 
 // Prompt for period-report recommendations based on aggregated training history.
 export const buildPeriodRecommendPrompt = (periodDays, sessionCount, trainedLabels, untrainedLabels, lang = 'nb') => {
