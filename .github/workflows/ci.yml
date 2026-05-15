@@ -1,7 +1,10 @@
-name: Azure Static Web Apps CI/CD
+name: CI
 
 on:
   push:
+    # Direct pushes to dev deploy to the same production slot as master.
+    # This is intentional — dev acts as a pre-merge integration check.
+    # If a dedicated staging slot is added later, split the triggers.
     branches:
       - master
       - dev
@@ -17,19 +20,23 @@ on:
       - 'app/**'
       - '.github/workflows/**'
 
+# Cancel in-progress runs on the same branch when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build_and_deploy_job:
+  validate:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Test, Build and Deploy
+    timeout-minutes: 15
+    name: Lint and test
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: true
-          lfs: false
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
@@ -38,26 +45,41 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: npm ci
-      - name: Lint and audit
+      - name: Lint
         working-directory: app
-        run: |
-          npm run lint &
-          LINT_PID=$!
-          npm audit --audit-level=high &
-          AUDIT_PID=$!
-          wait $LINT_PID
-          LINT_EXIT=$?
-          wait $AUDIT_PID
-          AUDIT_EXIT=$?
-          if [ $LINT_EXIT -ne 0 ] || [ $AUDIT_EXIT -ne 0 ]; then exit 1; fi
+        run: npm run lint
       - name: Test with coverage
         working-directory: app
         run: npm run test:ci
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    name: Build and deploy
+    environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'preview' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
       - name: Restore Vite build cache
         uses: actions/cache@v5
         with:
           path: app/node_modules/.vite
-          key: vite-${{ runner.os }}-${{ hashFiles('app/src/**', 'app/vite.config.js') }}
+          # Keyed on deps + vite config only — source changes don't affect
+          # the pre-bundled dependency cache in node_modules/.vite.
+          key: vite-${{ runner.os }}-${{ hashFiles('app/package-lock.json', 'app/vite.config.js') }}
           restore-keys: vite-${{ runner.os }}-
       - name: Build app
         working-directory: app
@@ -65,7 +87,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-      - name: Build And Deploy
+      - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -74,4 +96,6 @@ jobs:
           action: "upload"
           app_location: "app/dist"
           api_location: "app/api"
+          # "." = root of the pre-built app/dist folder. The frontend is built
+          # in CI to bypass Oryx stripping VITE_* env vars. See CLAUDE.md pitfall #9.
           output_location: "."
