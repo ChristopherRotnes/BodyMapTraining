@@ -2,6 +2,18 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.3] — 2026-05-15
+
+### Fixed
+- **Silent delete errors in `db.js` (issue #213)** — `deleteLibraryExercise` did not check the error from the junction-table delete (`session_template_exercises`); a failure would silently leave orphaned rows while the library exercise itself was deleted. `saveWeekPlan` did not check the error from the `week_plan_days` delete; a failure would leave stale day rows and then attempt to insert new rows on top of them. Both now throw on any Supabase error before proceeding.
+- **Claude proxy could hang indefinitely (issue #213)** — `claude.js` had no timeout on the upstream fetch to Anthropic. A slow or stalled Anthropic server could hold the Azure Function open until the platform killed it. Now returns 504 after 25 s via `AbortController`.
+
+### Changed
+- **`useDebouncedSearch` custom hook (issue #213)** — the "debounce search input via local timer" pattern was copy-pasted across `OvelsePicker`, `Bibliotek`, and `Planlegger` (TemplatePickerSheet). Extracted into `app/src/lib/hooks.js` (`useDebouncedSearch`). Each site now imports the hook, removing 6 `useState` + 4 `useEffect` calls from those components.
+- **`useFetch` custom hook skeleton (issue #213)** — `hooks.js` also exports `useFetch(fn, deps)` as a foundation for future adoption of the loading/error/data pattern used in 10+ components.
+- **`Report.jsx` muscleCounts derivations batched (issue #213)** — `musclesCovered`, `untrainedMuscles`, `secondaryOnlyMuscles`, `frequencyTable`, and `trainedIds` were each computed with a separate `Object.entries(muscleCounts)` pass on every render (including unrelated state changes such as `hoveredMuscle` or `loadingRecs`). Consolidated into a single `useMemo` that re-runs only when `muscleCounts` changes. `getAdvice` and the recommendation-cache `useEffect` both now read `trainedIds` from this shared memo instead of recomputing it independently.
+- **`db.js` select fragment constants (issue #213)** — five functions repeated the same Supabase JOIN string (`session_exercises(id, name, muscle_activations(muscle_id, activation_type))`). Extracted into two module-level constants (`SESSION_EXERCISES_SELECT`, `SESSION_EXERCISES_FULL_SELECT`) used by `fetchLastSession`, `fetchSessionsForWeek`, `fetchSessionsForReport`, `fetchSessionsByDate`, and `fetchClassHistory`.
+
 ## [1.5.2] — 2026-05-14
 
 ### Changed

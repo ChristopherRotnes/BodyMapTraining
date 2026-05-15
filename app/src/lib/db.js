@@ -1,6 +1,10 @@
 import { supabase } from "./supabase";
 import { toIsoDate, weekIsoToMonday, toWeekIso } from "./utils";
 
+// Shared Supabase select fragments — keeps the exercise+activation JOIN DRY across fetch functions.
+const SESSION_EXERCISES_SELECT = "session_exercises(id, name, muscle_activations(muscle_id, activation_type))";
+const SESSION_EXERCISES_FULL_SELECT = "session_exercises(id, name, standard_name, position, muscle_activations(muscle_id, activation_type))";
+
 // ── EXERCISE LIBRARY ──────────────────────────────────────────────────
 
 export async function fetchLibraryExercises() {
@@ -209,12 +213,7 @@ export async function saveSession(exercises, { imageUrl = null, notes = null, tr
 export async function fetchSessions() {
   const { data, error } = await supabase
     .from("sessions")
-    .select(`
-      id, session_date,
-      session_exercises(
-        muscle_activations(muscle_id, activation_type)
-      )
-    `)
+    .select(`id, session_date, session_exercises(muscle_activations(muscle_id, activation_type))`)
     .order("session_date", { ascending: false });
   if (error) throw error;
   return data;
@@ -223,14 +222,7 @@ export async function fetchSessions() {
 export async function fetchLastSession() {
   const { data, error } = await supabase
     .from("sessions")
-    .select(`
-      id, session_date,
-      gym_calendar(name),
-      session_exercises(
-        id, name,
-        muscle_activations(muscle_id, activation_type)
-      )
-    `)
+    .select(`id, session_date, gym_calendar(name), ${SESSION_EXERCISES_SELECT}`)
     .order("session_date", { ascending: false })
     .limit(1);
   if (error) throw error;
@@ -245,14 +237,7 @@ export async function fetchSessionsForWeek(weekIso) {
   const weekEnd = toIsoDate(sunLocal);
   const { data, error } = await supabase
     .from("sessions")
-    .select(`
-      id, session_date,
-      gym_calendar(name),
-      session_exercises(
-        id, name,
-        muscle_activations(muscle_id, activation_type)
-      )
-    `)
+    .select(`id, session_date, gym_calendar(name), ${SESSION_EXERCISES_SELECT}`)
     .gte("session_date", weekStart)
     .lte("session_date", weekEnd)
     .order("session_date", { ascending: true });
@@ -267,14 +252,7 @@ export async function fetchThisWeekSessions() {
 export async function fetchSessionsForReport(fromDate, toDate) {
   const { data, error } = await supabase
     .from("sessions")
-    .select(`
-      id, session_date, gym_calendar_id,
-      gym_calendar(name, start_time, instructor),
-      session_exercises(
-        id, name,
-        muscle_activations(muscle_id, activation_type)
-      )
-    `)
+    .select(`id, session_date, gym_calendar_id, gym_calendar(name, start_time, instructor), ${SESSION_EXERCISES_SELECT}`)
     .gte("session_date", fromDate)
     .lte("session_date", toDate)
     .order("session_date", { ascending: false });
@@ -285,14 +263,7 @@ export async function fetchSessionsForReport(fromDate, toDate) {
 export async function fetchSessionsByDate(dateStr) {
   const { data, error } = await supabase
     .from("sessions")
-    .select(`
-      id, session_date, created_at,
-      gym_calendar_id, gym_calendar(name, start_time),
-      session_exercises(
-        id, name, standard_name, position,
-        muscle_activations(muscle_id, activation_type)
-      )
-    `)
+    .select(`id, session_date, created_at, gym_calendar_id, gym_calendar(name, start_time), ${SESSION_EXERCISES_FULL_SELECT}`)
     .eq("session_date", dateStr)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -408,14 +379,7 @@ export async function fetchClassHistory(gymCalendarId) {
   const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("sessions")
-    .select(`
-      id, session_date, trainer_id,
-      profiles(display_name),
-      session_exercises(
-        id, name,
-        muscle_activations(muscle_id, activation_type)
-      )
-    `)
+    .select(`id, session_date, trainer_id, profiles(display_name), ${SESSION_EXERCISES_SELECT}`)
     .eq("gym_calendar_id", gymCalendarId)
     .neq("trainer_id", user?.id ?? "")
     .order("session_date", { ascending: false });
