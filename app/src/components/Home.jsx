@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchLastSession, fetchThisWeekSessions } from "../lib/db";
 import { extractMuscles, logDevError, getIntlLocale, toWeekIso, isoWeekMonday, toIsoDate } from "../lib/utils";
+import { supabase } from "../lib/supabase";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 
@@ -45,9 +46,12 @@ export default function Home({ onShowHistoryWithDate }) {
     setSyncState('loading');
     setSyncMsg('');
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/sporty-sync', {
         method: 'POST',
-        headers: { 'x-api-key': import.meta.env.VITE_SPORTY_SYNC_API_KEY ?? '' },
+        headers: {
+          ...(session?.access_token ? { 'X-Supabase-Token': session.access_token } : {}),
+        },
       });
       const json = await res.json();
       setSyncState(res.ok ? 'ok' : 'error');

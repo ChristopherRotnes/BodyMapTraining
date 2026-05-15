@@ -8,6 +8,6 @@
     "VITE_SUPABASE_ANON_KEY": "eyJ...",
     "SUPABASE_ANON_KEY": "eyJ...",
     "SUPABASE_SERVICE_ROLE_KEY": "eyJ...",
-    "SPORTY_SYNC_API_KEY": "any-secret-string-you-choose"
+    "SPORTY_SYNC_API_KEY": "any-secret-string-you-choose (used by /api/sporty-health monitoring endpoint only)"
   }
 }
