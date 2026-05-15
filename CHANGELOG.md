@@ -2,6 +2,20 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.7] — 2026-05-15
+
+### Security
+- **Sporty-sync HTTP trigger now requires Supabase JWT (issue #228)** — `POST /api/sporty-sync` previously relied on a shared `SPORTY_SYNC_API_KEY` secret that was also used by the health endpoint; any authenticated app user can now trigger a manual sync, and the health endpoint (`GET /api/sporty-health`) is the only remaining consumer of the API key. `Home.jsx` updated to send `X-Supabase-Token` instead.
+- **Recommendation cache owner-scoped writes (issue #235)** — `recommendation_cache` gains a `written_by uuid NOT NULL DEFAULT auth.uid()` column. The open UPDATE policy (`auth.role() = 'authenticated'`) is replaced by an owner-only policy (`written_by = auth.uid()`), preventing one user from overwriting another user's cached recommendation. INSERT policy tightened to the same constraint.
+- **Prompt injection protection in `buildMuscleInferencePrompt` (issue #236)** — exercise names containing `<>` characters could inject XML tags into the Claude prompt. Names are now sanitised (angle brackets stripped) and wrapped in `<exercise>…</exercise>` XML tags before insertion, following Anthropic's recommended boundary pattern. Three regression tests added.
+- **`handle_new_user()` RPC access revoked (issue #242)** — the auth trigger function was callable directly via `/rest/v1/rpc/handle_new_user` by any `anon` or `authenticated` role. Privilege revoked; the function now only fires internally via the `on_auth_user_created` trigger.
+- **`SET search_path = public` on all stored functions (issue #242)** — `replace_template_exercises`, `save_session`, and `update_session` lacked a pinned `search_path`. A privileged attacker could shadow public-schema tables with malicious objects in a different schema. Fixed with `ALTER FUNCTION … SET search_path = public`.
+- **`SPORTY_SYNC_API_KEY` removed from gitignore allowlist (issue #242)** — the key was previously explicitly tracked in `app/api/local.settings.json.example`; file updated to reflect health-only scope.
+- **Content-Security-Policy tightened (issue #242)** — `script-src` and `connect-src` directives in `staticwebapp.config.json` reduced to the minimum required origins.
+
+### Developer / Infrastructure
+- **Supabase preview branches now work (issue #247)** — `supabase/migrations/` previously contained only delta migrations (ALTER TABLE / REVOKE). Supabase preview creates a fresh database and runs every file in order; the earliest delta (`20260514_add_template_type_to_session_templates.sql`) failed immediately because `session_templates` didn't exist. Fixed by adding `20260101000000_baseline_schema.sql` — a comprehensive idempotent snapshot of all 15 tables, functions, the `on_auth_user_created` trigger, grants, and RLS policies. All `CREATE` statements use `IF NOT EXISTS` / `CREATE OR REPLACE` so the file is also safe to apply to the live database as a no-op. The two existing delta migrations were updated to use `ADD COLUMN IF NOT EXISTS` / `DROP POLICY IF EXISTS` for the same reason.
+
 ## [1.5.6] — 2026-05-15
 
 ### Developer / Infrastructure

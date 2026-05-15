@@ -178,7 +178,7 @@ Live URL: `https://workout.umulig.org`
 | `SUPABASE_URL` | Used by the Claude proxy (JWT verification) and sporty.no sync function |
 | `VITE_SUPABASE_ANON_KEY` | Used by the Claude proxy to verify Supabase JWTs — same value as the GitHub Actions secret |
 | `SUPABASE_SERVICE_ROLE_KEY` | Used by the sporty.no sync function (bypasses RLS — timer has no auth user) |
-| `SPORTY_SYNC_API_KEY` | Required `x-api-key` header value for `POST /api/sporty-sync` — any secret string; endpoint returns 401 without it |
+| `SPORTY_SYNC_API_KEY` | Required `x-api-key` header for `GET /api/sporty-health` (external monitoring check) — `POST /api/sporty-sync` now uses Supabase JWT auth |
 
 > **Note:** The frontend is built in the GitHub Actions runner (not by Oryx inside Azure SWA's Docker container). Oryx strips `VITE_*` env vars before spawning Vite, so they would never reach the bundle if built there. The workflow pre-builds `app/dist/` and the Azure SWA action uploads it directly via `app_location: "app/dist"`. Do not revert this.
 
