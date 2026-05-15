@@ -1,4 +1,5 @@
 import { app } from '@azure/functions';
+import { verifySupabaseJwt } from './claudeUtils.js';
 
 // BU 8 is hardcoded for the single-gym MVP (Sporty Thon Senter Ski).
 // When multi-gym support lands, replace with a DB lookup via user_gyms.sporty_business_unit_id.
@@ -180,14 +181,20 @@ app.http('sportySyncHealth', {
 // ── HTTP trigger: manual kick + optional backfill ─────────────────────
 // POST /api/sporty-sync                    → sync today
 // POST /api/sporty-sync  {"shiftDays":-7}  → duplicate current data 7 days back
-// Requires header:  x-api-key: <SPORTY_SYNC_API_KEY>
+// Requires header:  X-Supabase-Token: <valid Supabase JWT>
+// (Azure SWA hijacks the Authorization header — never use it for app JWTs)
 app.http('sportySyncHttp', {
   methods: ['POST'],
   route: 'sporty-sync',
   authLevel: 'anonymous',
   handler: async (request, context) => {
-    const expectedKey = process.env.SPORTY_SYNC_API_KEY;
-    if (!expectedKey || request.headers.get('x-api-key') !== expectedKey) {
+    const token = request.headers.get('x-supabase-token');
+    const userId = await verifySupabaseJwt(
+      token,
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY,
+    );
+    if (!userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
