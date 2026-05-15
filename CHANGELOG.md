@@ -2,6 +2,12 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.13] — 2026-05-16
+
+### Developer / Infrastructure
+- **Remove `closed` from `ci.yml` PR types (issue #258)** — the `closed` event and the `push` event both share the same concurrency group, causing the deploy job to be silently cancelled on every PR merge. Staging cleanup is handled exclusively by `cleanup-staging.yml`.
+- **Bump `package.json` version to `1.5.13`** — versions `1.5.11` and `1.5.12` were released without updating `package.json`, so the Settings page was showing a stale `v1.5.10`. Fast-forwarded to `1.5.13` to reflect all changes since `1.5.10`.
+
 ## [1.5.12] — 2026-05-16
 
 ### Security
