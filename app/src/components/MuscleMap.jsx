@@ -1,6 +1,6 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
-import { EX_DB, calcMuscles } from "../lib/bodymap.jsx";
+import { EX_DB, MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
 import { compressImage, buildMuscleMapFromExercises, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import { InlineLoading } from "@carbon/react";
@@ -11,7 +11,7 @@ import PageShell, { SectionLabel } from "./PageShell";
 import { useNav } from "../lib/NavContext";
 import { useTranslation } from "react-i18next";
 import i18n from "../lib/i18n";
-import { localDateStr, initialState, reducer } from "../lib/muscleMapReducer";
+import { initialState, reducer } from "../lib/muscleMapReducer";
 
 // Gym whiteboards are written in ALL CAPS by convention. Normalize to title
 // case when the entire string is uppercase so names display consistently.
