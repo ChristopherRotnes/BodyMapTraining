@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { logDevError } from "../lib/utils";
 import { supabase } from "../lib/supabase";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
+import { useDebouncedSearch } from "../lib/hooks";
 import {
   fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, deleteLibraryExercise,
   fetchTemplates, saveTemplate, deleteTemplate, fetchTemplateNamesUsingExercise,
@@ -19,20 +20,8 @@ export default function Bibliotek({ onEditTemplate, initialTab = 0 }) {
   const { t } = useTranslation();
 
   const [tabIndex, setTabIndex] = useState(initialTab);
-  const [exSearch, setExSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [tplSearch, setTplSearch] = useState("");
-  const [debouncedTplSearch, setDebouncedTplSearch] = useState("");
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(exSearch), 200);
-    return () => clearTimeout(timer);
-  }, [exSearch]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedTplSearch(tplSearch), 200);
-    return () => clearTimeout(timer);
-  }, [tplSearch]);
+  const { search: exSearch, setSearch: setExSearch, debouncedSearch } = useDebouncedSearch();
+  const { search: tplSearch, setSearch: setTplSearch, debouncedSearch: debouncedTplSearch } = useDebouncedSearch();
 
   const [exercises, setExercises] = useState([]);
   const [exLoading, setExLoading] = useState(true);

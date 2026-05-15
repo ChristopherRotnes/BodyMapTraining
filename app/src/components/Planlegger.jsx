@@ -6,19 +6,15 @@ import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../
 import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale } from "../lib/utils";
 import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
+import { useDebouncedSearch } from "../lib/hooks";
 
 function TemplatePickerSheet({ templates, onSelect, onClose }) {
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { search, setSearch, debouncedSearch } = useDebouncedSearch();
 
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), 200);
-    return () => clearTimeout(id);
-  }, [search]);
-
-  const filtered = debouncedSearch
-    ? templates.filter(tpl => tpl.name.toLowerCase().includes(debouncedSearch))
+  const q = debouncedSearch.trim().toLowerCase();
+  const filtered = q
+    ? templates.filter(tpl => tpl.name.toLowerCase().includes(q))
     : templates;
 
   return (

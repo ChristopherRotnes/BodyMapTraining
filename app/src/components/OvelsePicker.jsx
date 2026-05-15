@@ -7,6 +7,7 @@ import ExerciseForm from "./ExerciseForm";
 import { MUSCLES } from "../lib/bodymap.jsx";
 import { fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, fetchExerciseTemplateCounts } from "../lib/db";
 import { logDevError } from "../lib/utils";
+import { useDebouncedSearch } from "../lib/hooks";
 
 const REGION_MUSCLES = {
   overkropp:  new Set(["chest", "shoulders_front", "shoulders_side", "biceps", "forearms", "traps", "rear_delts", "lats", "triceps"]),
@@ -27,8 +28,7 @@ export default function OvelsePicker({ onBack }) {
   const [templateCounts, setTemplateCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { search, setSearch, debouncedSearch } = useDebouncedSearch();
   const [region, setRegion] = useState("alle");
   const [showNew, setShowNew] = useState(false);
   const [editingEx, setEditingEx] = useState(null);
@@ -40,11 +40,6 @@ export default function OvelsePicker({ onBack }) {
       .catch(e => { logDevError("OvelsePicker/fetch", e); setError(e.message); })
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 200);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   const regionCounts = useMemo(() => {
     const c = { alle: exercises.length };
