@@ -11,7 +11,7 @@ import { useFetch, useDebouncedSearch } from "../lib/hooks";
 export default function GruppetimePicker({ onBack, onEditTemplate }) {
   const { t } = useTranslation();
   const { data, loading, error, setData: setTemplates } = useFetch(fetchTemplates);
-  const templates = data ?? [];
+  const templates = useMemo(() => data ?? [], [data]);
   const { search, setSearch, debouncedSearch } = useDebouncedSearch(200);
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");

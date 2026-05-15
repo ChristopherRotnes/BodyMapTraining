@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { reducer, initialState } from '../../components/MuscleMap.jsx';
+import { reducer, initialState } from '../muscleMapReducer.js';
 
 describe('MuscleMap reducer', () => {
   it('RESET returns to initial state with fresh sessionDate', () => {
