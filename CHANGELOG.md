@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.5] — 2026-05-15
+
+### Changed
+- **`useFetch` adoption in `TemplatePicker` and `GruppetimePicker` (issue #213)** — both components previously managed their own `loading/error/data` useState triplet plus a manual fetch `useEffect`. Replaced with `useFetch(fetchTemplates)` from `hooks.js`. `GruppetimePicker` also replaced its manual debounce `useEffect` with `useDebouncedSearch(200)`. Mutation error in `GruppetimePicker` (`handleCreate`) is kept in a separate `createError` state so it does not conflict with the fetch error from `useFetch`.
+
 ## [1.5.4] — 2026-05-15
 
 ### Changed

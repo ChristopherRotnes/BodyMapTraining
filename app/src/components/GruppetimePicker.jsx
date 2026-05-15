@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Button, InlineLoading, InlineNotification, TextInput } from "@carbon/react";
 import { Add, Search, ChevronRight } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
@@ -6,29 +6,17 @@ import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import { BodySVG } from "../lib/bodymap.jsx";
 import { fetchTemplates, saveTemplate } from "../lib/db";
 import { logDevError } from "../lib/utils";
+import { useFetch, useDebouncedSearch } from "../lib/hooks";
 
 export default function GruppetimePicker({ onBack, onEditTemplate }) {
   const { t } = useTranslation();
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { data, loading, error, setData: setTemplates } = useFetch(fetchTemplates);
+  const templates = data ?? [];
+  const { search, setSearch, debouncedSearch } = useDebouncedSearch(200);
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetchTemplates()
-      .then(setTemplates)
-      .catch(e => { logDevError("GruppetimePicker/fetch", e); setError(e.message); })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 200);
-    return () => clearTimeout(timer);
-  }, [search]);
+  const [createError, setCreateError] = useState(null);
 
   const filtered = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
@@ -38,16 +26,17 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
   async function handleCreate() {
     if (!newName.trim()) return;
     setSaving(true);
+    setCreateError(null);
     try {
       const tpl = await saveTemplate(newName.trim());
       const full = { ...tpl, session_template_exercises: [] };
-      setTemplates(p => [full, ...p]);
+      setTemplates(prev => [full, ...(prev ?? [])]);
       setNewName("");
       setShowNew(false);
       onEditTemplate(full);
     } catch (e) {
       logDevError("GruppetimePicker/create", e);
-      setError(e.message);
+      setCreateError(e.message);
     } finally {
       setSaving(false);
     }
@@ -60,8 +49,8 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
         <div style={{ padding: "0 16px" }}>
           <BackButton onClick={onBack} />
 
-          {error && (
-            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={error} hideCloseButton style={{ marginBottom: 16 }} />
+          {(error || createError) && (
+            <InlineNotification kind="error" title={`${t("common.error")}:`} subtitle={error || createError} hideCloseButton style={{ marginBottom: 16 }} />
           )}
 
           {!showNew && (

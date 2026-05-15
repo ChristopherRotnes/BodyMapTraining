@@ -386,7 +386,7 @@ Coverage (`npm run test:ci`) is configured in `vite.config.js` to scope to `src/
 
 Audit findings that are deferred to a future sprint:
 
-- **`useFetch` adoption** — `hooks.js` exports `useFetch` but it is not yet wired to any component. 10+ components independently manage `loading/error/data` state; replace them incrementally, starting with read-only single-fetch cases (`TemplatePicker`, `GruppetimePicker`).
+- **`useFetch` adoption** — `TemplatePicker` and `GruppetimePicker` now use `useFetch`. 8+ components still manage their own `loading/error/data` useState triplet; replace them incrementally, prioritising read-only single-fetch cases next.
 - **Shared library-exercise cache** — `MuscleMap`, `GruppetimeEditor`, `History`, and `TemplatePicker` each fetch `fetchLibraryExercises()` independently on mount. Consider a React Context or a module-level cache to share the result.
 
 **Never add new debounce timer useEffects** — always import `useDebouncedSearch` from `app/src/lib/hooks.js` instead.

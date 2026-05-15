@@ -1,25 +1,16 @@
-import { useState, useEffect } from "react";
 import { Button, InlineLoading, InlineNotification } from "@carbon/react";
 import { Notebook } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import { fetchTemplates } from "../lib/db";
-import { logDevError } from "../lib/utils";
 import PageShell, { PageTitle, BackButton } from "./PageShell";
 import { useNav } from "../lib/NavContext";
+import { useFetch } from "../lib/hooks";
 
 export default function TemplatePicker({ onBack, onSelectTemplate }) {
   const { t } = useTranslation();
   const { onShowSetSammen } = useNav();
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchTemplates()
-      .then(setTemplates)
-      .catch(e => { logDevError("TemplatePicker/fetchTemplates", e); setError(e.message); })
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, loading, error } = useFetch(fetchTemplates);
+  const templates = data ?? [];
 
   const STEPS = [t("templatePicker.step1"), t("templatePicker.step2"), t("templatePicker.step3")];
 
