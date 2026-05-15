@@ -125,6 +125,7 @@ app/
     index.js                       # Entry point — imports all Azure Functions
     claude.js                      # Azure Function — proxies requests to Anthropic API
     sportySync.js                  # Azure Function — timer (04:00+11:00 UTC) + HTTP trigger for sporty.no sync
+    sportyUtils.js                 # Pure utility — normalizeName() (no Azure SDK dep; unit-tested)
     host.json                      # Azure Functions runtime config
     package.json                   # API dependencies
   staticwebapp.config.json         # Azure SWA routing config
@@ -135,8 +136,8 @@ app/
 | Branch | Purpose |
 |---|---|
 | `master` | Production — auto-deploys to Azure SWA on every push |
-| `dev` | Staging — Azure SWA creates a preview URL on push |
-| Feature branches | PR against `dev`; Azure SWA creates a preview per PR |
+| `dev` | Pre-merge integration — deploys to the same production slot as `master`; use sparingly |
+| Feature branches | PR against `master` or `dev`; Azure SWA creates an isolated preview URL per open PR |
 
 ## Issue format
 
