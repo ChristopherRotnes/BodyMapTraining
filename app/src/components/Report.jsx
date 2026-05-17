@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { fetchSessionsForReport, saveLibraryExercise, fetchRecsCache, saveRecsCache } from "../lib/db";
-import { HeatmapBodySVG, MUSCLES } from "../lib/bodymap.jsx";
+import { HeatmapBodySVG } from "../lib/bodymap.jsx";
+import { MUSCLES } from "../lib/bodymap";
 import { callClaude, logDevError, getIntlLocale } from "../lib/utils";
 import { CLAUDE_MODEL_TEXT, buildPeriodRecommendPrompt, RECS_PROMPT_VERSION } from "../lib/prompts";
 import {

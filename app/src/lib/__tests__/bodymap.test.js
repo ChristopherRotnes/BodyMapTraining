@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcMuscles } from '../bodymap.jsx';
+import { calcMuscles } from '../bodymap';
 
 describe('calcMuscles', () => {
   it('returns empty arrays for empty input', () => {

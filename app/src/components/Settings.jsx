@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import PageShell, { useNavHints } from "./PageShell";
-import { useTheme } from "../theme";
+import PageShell from "./PageShell";
+import { useTheme, useNavHints } from "../lib/hooks";
 import { supabase } from "../lib/supabase";
 import { fetchDisplayName, updateDisplayName } from "../lib/db";
 import i18n from "../lib/i18n";

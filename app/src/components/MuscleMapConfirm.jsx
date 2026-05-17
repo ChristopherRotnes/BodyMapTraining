@@ -2,7 +2,7 @@ import { Button, Select, SelectItem, DatePicker, DatePickerInput, InlineNotifica
 import { Add, ArrowLeft, ArrowRight, Edit } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import { SectionLabel, StickyCta } from "./PageShell";
-import { EX_DB } from "../lib/bodymap.jsx";
+import { EX_DB } from "../lib/bodymap";
 import { toIsoDate, getIntlLocale } from "../lib/utils";
 import { useTranslation } from "react-i18next";
 

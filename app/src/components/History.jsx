@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { fetchSessions, fetchSessionsByDate, fetchGymSessionsByDate, updateSession, fetchLibraryExercises, fetchClassHistory } from "../lib/db";
-import { MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
+import { MUSCLES, calcMuscles } from "../lib/bodymap";
 import { compressImage, buildMuscleMapFromSession, buildMuscleMapFromExercises, callClaude, extractMuscles, logDevError, getIntlLocale, toIsoDate } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, ANALYZE_PROMPT } from "../lib/prompts";
 import {

@@ -6,7 +6,7 @@ import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import BodyPanel from "./BodyPanel";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import ExFlyt from "./ExFlyt";
-import { MUSCLES } from "../lib/bodymap.jsx";
+import { MUSCLES } from "../lib/bodymap";
 import { buildMuscleMapFromExercises, logDevError, getIntlLocale } from "../lib/utils";
 import { fetchLibraryExercises, replaceTemplateExercises, updateTemplateDetails, touchTemplate } from "../lib/db";
 

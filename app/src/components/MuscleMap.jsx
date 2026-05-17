@@ -1,6 +1,6 @@
 import { useReducer, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { saveSession, fetchGymSessionsByDate, checkGymCalendarConflict, fetchLibraryExercises } from "../lib/db";
-import { EX_DB, MUSCLES, calcMuscles } from "../lib/bodymap.jsx";
+import { EX_DB, MUSCLES, calcMuscles } from "../lib/bodymap";
 import { compressImage, buildMuscleMapFromExercises, callClaude, logDevError } from "../lib/utils";
 import { CLAUDE_MODEL_VISION, CLAUDE_MODEL_TEXT, ANALYZE_PROMPT, buildRecommendPrompt } from "../lib/prompts";
 import { InlineLoading } from "@carbon/react";

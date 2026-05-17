@@ -39,18 +39,18 @@ function App() {
     };
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) runEnsures(session.user);
+      if (session) {
+        runEnsures(session.user);
+        if (!localStorage.getItem("wl-intro-seen")) setIntroOpen(true);
+      }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (session && !localStorage.getItem("wl-intro-seen")) setIntroOpen(true);
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) runEnsures(session.user);
     });
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (session && !localStorage.getItem("wl-intro-seen")) setIntroOpen(true);
-  }, [session]);
 
   function handleShowIntro() {
     localStorage.removeItem("wl-intro-seen");

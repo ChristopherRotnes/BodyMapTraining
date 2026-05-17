@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal, Button, Theme } from "@carbon/react";
 import { Camera, RecentlyViewed, Analytics, EventSchedule, Notebook } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../theme";
+import { useTheme } from "../lib/hooks";
 import { PageHeading } from "./PageShell";
 
 const SLIDES = [

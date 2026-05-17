@@ -3,7 +3,7 @@ import { Camera, Add, Renew } from "@carbon/icons-react";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";
 import { checkGymCalendarConflict } from "../lib/db";
-import { MUSCLES } from "../lib/bodymap.jsx";
+import { MUSCLES } from "../lib/bodymap";
 import { getIntlLocale } from "../lib/utils";
 import { useTranslation } from "react-i18next";
 

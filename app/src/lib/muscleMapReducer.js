@@ -1,4 +1,4 @@
-import { MUSCLES } from "./bodymap.jsx";
+import { MUSCLES } from "./bodymap";
 
 export const localDateStr = () => {
   const d = new Date();

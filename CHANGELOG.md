@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.14] — 2026-05-17
+
+### Developer / Infrastructure
+- **Resolve all ESLint warnings (issue #253)** — `npm run lint` now exits with 0 problems. Changes are purely structural with no runtime impact:
+  - Split `bodymap.jsx` into `bodymap.js` (constants, `MUSCLES`, `SHAPES`, `EX_DB`, `calcMuscles`, `useIsMobile`, color constants) and `bodymap.jsx` (only `BodySVG` + `HeatmapBodySVG`); fixes 5 fast-refresh warnings.
+  - Moved `useTheme` and `ThemeCtx` from `theme.jsx` to `hooks.js`; `theme.jsx` now exports only `ThemeProvider`; fixes 1 fast-refresh warning.
+  - Moved `useNavHints` from `PageShell.jsx` to `hooks.js`; fixes 1 fast-refresh warning.
+  - Removed the standalone `useEffect` in `App.jsx` that called `setIntroOpen` synchronously — merged the intro check into the existing Supabase auth event handlers; fixes 1 `set-state-in-effect` warning.
+
 ## [1.5.13] — 2026-05-16
 
 ### Developer / Infrastructure

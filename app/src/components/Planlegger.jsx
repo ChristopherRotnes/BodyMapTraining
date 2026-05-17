@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight, Add, Close, Search } from "@carbon/icons-rea
 import { useTranslation } from "react-i18next";
 import { fetchWeekPlan, saveWeekPlan, deleteWeekPlan, fetchTemplates } from "../lib/db";
 import { buildMuscleMapFromExercises, toWeekIso, logDevError, getIntlLocale } from "../lib/utils";
-import { calcMuscles, MUSCLES, HeatmapBodySVG, useIsMobile } from "../lib/bodymap.jsx";
+import { HeatmapBodySVG } from "../lib/bodymap.jsx";
+import { calcMuscles, MUSCLES, useIsMobile } from "../lib/bodymap";
 import PageShell, { SectionLabel, AccentChip } from "./PageShell";
 import { useDebouncedSearch } from "../lib/hooks";
 

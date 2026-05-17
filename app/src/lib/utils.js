@@ -1,4 +1,4 @@
-import { EX_DB } from "./bodymap.jsx";
+import { EX_DB } from "./bodymap";
 import { supabase } from "./supabase";
 import i18n from "./i18n";
 import { CLAUDE_MODEL_TEXT, buildMuscleInferencePrompt } from "./prompts";

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@carbon/react";
 import { useTranslation } from "react-i18next";
-import { BodySVG, useIsMobile } from "../lib/bodymap.jsx";
+import { BodySVG } from "../lib/bodymap.jsx";
+import { useIsMobile } from "../lib/bodymap";
 
 // Renders a front+back body map pair: side-by-side on desktop, toggled on mobile.
 // Manages its own mobile view state so parents don't need to.

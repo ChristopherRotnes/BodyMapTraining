@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@carbon/react";
 import { Add, Close, Search } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
-import { MUSCLES } from "../lib/bodymap.jsx";
+import { MUSCLES } from "../lib/bodymap";
 import { AccentChip } from "./PageShell";
 
 export default function ExFlyt({ libraryExercises, onAdd, onClose }) {
