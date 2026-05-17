@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MUSCLES } from '../bodymap.jsx';
+import { MUSCLES } from '../bodymap';
 import {
   ANALYZE_PROMPT,
   buildRecommendPrompt,

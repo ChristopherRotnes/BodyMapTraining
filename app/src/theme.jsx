@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-
-const ThemeCtx = createContext({ theme: 'g100', setTheme: () => {} });
+import { useEffect, useState } from 'react';
+import { ThemeCtx } from './lib/hooks';
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
@@ -20,5 +19,3 @@ export function ThemeProvider({ children }) {
 
   return <ThemeCtx.Provider value={{ theme, setTheme }}>{children}</ThemeCtx.Provider>;
 }
-
-export const useTheme = () => useContext(ThemeCtx);

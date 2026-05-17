@@ -1,5 +1,5 @@
 import { Modal, Accordion, AccordionItem, Theme } from "@carbon/react";
-import { useTheme } from "../theme";
+import { useTheme } from "../lib/hooks";
 import { CHANGELOG } from "../lib/changelog";
 
 const MONTHS = [

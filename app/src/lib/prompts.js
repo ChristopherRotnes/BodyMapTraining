@@ -1,4 +1,4 @@
-import { MUSCLES } from './bodymap.jsx';
+import { MUSCLES } from './bodymap';
 
 // claude-sonnet-4-6 is used for all Claude calls (vision and text).
 export const CLAUDE_MODEL_VISION = "claude-sonnet-4-6";

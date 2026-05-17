@@ -6,7 +6,7 @@ import { Add, ArrowLeft, ArrowRight, Save, Edit } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import { fetchLibraryExercises, replaceTemplateExercises, touchTemplate, updateTemplateName } from "../lib/db";
-import { calcMuscles } from "../lib/bodymap.jsx";
+import { calcMuscles } from "../lib/bodymap";
 import { buildMuscleMapFromExercises, logDevError } from "../lib/utils";
 import ExerciseRowWithAutocomplete from "./ExerciseRowWithAutocomplete";
 import BodyPanel from "./BodyPanel";

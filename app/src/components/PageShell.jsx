@@ -1,33 +1,10 @@
-import { forwardRef, useState, useEffect } from "react";
+import { forwardRef } from "react";
 import { Camera, RecentlyViewed, Analytics, Notebook, EventSchedule, Settings, ArrowLeft } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { useTranslation } from "react-i18next";
 import { useNav } from "../lib/NavContext";
 import { useIsMobile } from "../lib/bodymap";
-
-export function useNavHints() {
-  const [hints, setHints] = useState(() => localStorage.getItem("wl-nav-hints") !== "false");
-
-  useEffect(() => {
-    function handler() {
-      setHints(localStorage.getItem("wl-nav-hints") !== "false");
-    }
-    window.addEventListener("storage", handler);
-    window.addEventListener("wl-nav-hints-change", handler);
-    return () => {
-      window.removeEventListener("storage", handler);
-      window.removeEventListener("wl-nav-hints-change", handler);
-    };
-  }, []);
-
-  function toggle(val) {
-    localStorage.setItem("wl-nav-hints", val ? "true" : "false");
-    window.dispatchEvent(new Event("wl-nav-hints-change"));
-    setHints(val);
-  }
-
-  return [hints, toggle];
-}
+import { useNavHints } from "../lib/hooks";
 
 const NavBtn = forwardRef(function NavBtn({ onClick, ariaLabel, active, tooltip, children, ...rest }, ref) {
   return (

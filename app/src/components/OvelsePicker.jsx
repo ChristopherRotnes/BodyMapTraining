@@ -4,7 +4,7 @@ import { Add, Search, ChevronRight } from "@carbon/icons-react";
 import { useTranslation } from "react-i18next";
 import PageShell, { SectionLabel, BackButton } from "./PageShell";
 import ExerciseForm from "./ExerciseForm";
-import { MUSCLES } from "../lib/bodymap.jsx";
+import { MUSCLES } from "../lib/bodymap";
 import { fetchLibraryExercises, saveLibraryExercise, updateLibraryExercise, fetchExerciseTemplateCounts } from "../lib/db";
 import { logDevError } from "../lib/utils";
 import { useDebouncedSearch } from "../lib/hooks";

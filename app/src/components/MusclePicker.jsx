@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { MUSCLES, SHAPES, BODY_PATH, PRIMARY_FILL, PRIMARY_HOVER, PRIMARY_STROKE, SEC_STROKE, useIsMobile } from "../lib/bodymap.jsx";
+import { MUSCLES, SHAPES, BODY_PATH, PRIMARY_FILL, PRIMARY_HOVER, PRIMARY_STROKE, SEC_STROKE, useIsMobile } from "../lib/bodymap";
 import { Tag } from "@carbon/react";
 
 function MusclePickerView({ view, primary, secondary, onToggle, instanceId }) {

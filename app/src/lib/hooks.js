@@ -1,5 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext, createContext } from "react";
 import { logDevError } from "./utils";
+
+export const ThemeCtx = createContext({ theme: 'g100', setTheme: () => {} });
+
+export function useTheme() {
+  return useContext(ThemeCtx);
+}
+
+export function useNavHints() {
+  const [hints, setHints] = useState(() => localStorage.getItem("wl-nav-hints") !== "false");
+
+  useEffect(() => {
+    function handler() {
+      setHints(localStorage.getItem("wl-nav-hints") !== "false");
+    }
+    window.addEventListener("storage", handler);
+    window.addEventListener("wl-nav-hints-change", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("wl-nav-hints-change", handler);
+    };
+  }, []);
+
+  function toggle(val) {
+    localStorage.setItem("wl-nav-hints", val ? "true" : "false");
+    window.dispatchEvent(new Event("wl-nav-hints-change"));
+    setHints(val);
+  }
+
+  return [hints, toggle];
+}
 
 /**
  * useFetch — fires `fn` on mount (and when deps change), manages loading/error/data.

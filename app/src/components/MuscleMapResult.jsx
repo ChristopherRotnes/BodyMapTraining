@@ -2,7 +2,7 @@ import { Button, Tag, InlineNotification, InlineLoading, DefinitionTooltip } fro
 import { AiRecommend, Renew } from "@carbon/icons-react";
 import BodyPanel from "./BodyPanel";
 import { AccentChip } from "./PageShell";
-import { MUSCLES } from "../lib/bodymap.jsx";
+import { MUSCLES } from "../lib/bodymap";
 import { buildRecMuscleMap } from "../lib/utils";
 import { useTranslation } from "react-i18next";
 
