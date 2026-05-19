@@ -390,6 +390,7 @@
   /* Accent — magenta */
   --accent:          #ee2c80;
   --accent-hover:    #d9246f;
+  --accent-active:   #b5116a;
   --accent-soft:     #ff7eb6;
   --accent-bg-08:    rgba(238,44,128,.08);
   --accent-bg-14:    rgba(238,44,128,.14);
