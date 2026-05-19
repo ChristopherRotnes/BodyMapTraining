@@ -2,6 +2,15 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.16] — 2026-05-19
+
+### Accessibility
+- **Fix WCAG AA contrast violations across codebase (issue #262)** — systematic audit identified four categories of failures:
+  - **Filled accent backgrounds**: `--accent` (#ee2c80, 3.95:1 vs white — FAIL) was used as `background` with white text on the Home CTA button, MuscleMapConfirm Today/Other-day pills and Save CTA, Settings save button, and Report add-to-library button. Replaced with `--accent-active` (#b5116a, ~6.45:1 vs white — PASS) in all five locations.
+  - **`--accent-soft` text in light mode**: `--accent-soft: #ff7eb6` used as text colour on `--accent-bg-14` backgrounds produces ~1.77:1 in light mode (FAIL). Added `--accent-soft: #b5116a` override to the `[data-theme="g10"]` block in `carbon-tokens.css`; dark mode keeps the existing `#ff7eb6` (~7.7:1 on dark bg — PASS).
+  - **`--exercise` label text on `--exercise-soft` background**: 10px mono label in `OvelsePicker` used `--exercise` (#1a8c4e in light mode) on a pale `--exercise-soft` background (~3.79:1 — FAIL). Changed to `--cds-text-primary` for that label; green identity preserved via border and icon.
+  - **Focus rings suppressed on raw inputs**: inline `outline: none` on custom-styled `<input>` elements in `ExFlyt`, `GruppetimePicker`, `OvelsePicker`, and `Planlegger` overrode the app-level CSS rule. Removed all four inline suppressions and broadened `app.css` to cover `input:not(.cds--text-input):not(.cds--search-input):focus-visible`.
+
 ## [1.5.15] — 2026-05-19
 
 ### Accessibility

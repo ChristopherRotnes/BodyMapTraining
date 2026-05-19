@@ -70,7 +70,6 @@ export default function ExFlyt({ libraryExercises, onAdd, onClose }) {
                 borderRadius: 8,
                 color: "var(--cds-text-primary)",
                 fontFamily: "var(--cds-font-sans)", fontSize: 14,
-                outline: "none",
               }}
             />
           </div>
@@ -163,7 +162,6 @@ export default function ExFlyt({ libraryExercises, onAdd, onClose }) {
               borderRadius: 8,
               color: "var(--cds-text-primary)",
               fontFamily: "var(--cds-font-sans)", fontSize: 14,
-              outline: "none",
             }}
           />
           <Button kind="primary" size="sm" renderIcon={Add} onClick={handleQuickAdd} disabled={!quickName.trim()}>

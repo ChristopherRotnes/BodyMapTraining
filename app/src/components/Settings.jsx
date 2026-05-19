@@ -240,7 +240,7 @@ export default function Settings({ onShowIntro }) {
             onClick={handleDisplayNameSave}
             disabled={displayNameSaving || !isDirty || !displayNameDraft.trim()}
             style={{
-              padding: "10px 20px", background: "var(--accent)", color: "#fff",
+              padding: "10px 20px", background: "var(--accent-active)", color: "#fff",
               border: 0, cursor: "pointer", fontFamily: "var(--cds-font-sans)",
               fontSize: 13, fontWeight: 500,
               opacity: (displayNameSaving || !isDirty || !displayNameDraft.trim()) ? 0.45 : 1,
