@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [1.5.15] — 2026-05-19
+
+### Accessibility
+- **Fix WCAG AA contrast on active filter chips (History + Report)** — active chips used `#ee2c80` (magenta) fill with white text at 3.95:1, failing WCAG AA for normal text (requires 4.5:1). Added `--accent-active: #b5116a` token (~6:1 with white) to `carbon-tokens.css` and updated the active chip `background` and `borderColor` in `History.jsx` and the `FilterChip` component in `Report.jsx` to use it.
+
 ## [1.5.14] — 2026-05-17
 
 ### Developer / Infrastructure
