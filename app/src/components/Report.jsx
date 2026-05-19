@@ -608,7 +608,7 @@ export default function Report({ prefill, onPrefillConsumed }) {
                                 disabled={savingRec === r.name}
                                 style={{
                                   width: 28, height: 28, borderRadius: "50%",
-                                  background: savingRec === r.name ? "var(--cds-layer-02)" : "var(--accent)",
+                                  background: savingRec === r.name ? "var(--cds-layer-02)" : "var(--accent-active)",
                                   border: "none",
                                   cursor: savingRec === r.name ? "default" : "pointer",
                                   color: savingRec === r.name ? "var(--cds-text-secondary)" : "#fff",

@@ -80,7 +80,6 @@ function TemplatePickerSheet({ templates, onSelect, onClose }) {
                 color: "var(--cds-text-primary)",
                 fontFamily: "var(--cds-font-sans)",
                 fontSize: 14,
-                outline: "none",
                 boxSizing: "border-box",
               }}
             />

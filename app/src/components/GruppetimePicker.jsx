@@ -139,7 +139,6 @@ export default function GruppetimePicker({ onBack, onEditTemplate }) {
                   borderRadius: 8,
                   color: "var(--cds-text-primary)",
                   fontFamily: "var(--cds-font-sans)", fontSize: 14,
-                  outline: "none",
                 }}
               />
             </div>

@@ -23,8 +23,8 @@ button:not(.cds--btn):focus-visible,
   outline-offset: 2px;
 }
 
-/* Custom number inputs suppress outline inline; restore it here */
-input[type=number]:focus-visible {
+/* Restore focus ring on all raw (non-Carbon) inputs */
+input:not(.cds--text-input):not(.cds--search-input):focus-visible {
   outline: 2px solid #0f62fe;
   outline-offset: 0;
 }

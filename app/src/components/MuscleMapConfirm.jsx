@@ -56,7 +56,7 @@ export default function MuscleMapConfirm({
             onClick={() => { setUseTodayDate(true); dispatch({ type: "SET_SESSION_DATE", date: todayStr }); }}
             style={{
               flex: 1, padding: "10px 0",
-              background: useTodayDate ? "var(--accent)" : "transparent",
+              background: useTodayDate ? "var(--accent-active)" : "transparent",
               color: useTodayDate ? "#fff" : "var(--cds-text-primary)",
               border: "none", cursor: "pointer",
               fontFamily: "var(--cds-font-sans)", fontSize: 13, fontWeight: useTodayDate ? 600 : 400,
@@ -69,7 +69,7 @@ export default function MuscleMapConfirm({
             onClick={() => setUseTodayDate(false)}
             style={{
               flex: 1, padding: "10px 0",
-              background: !useTodayDate ? "var(--accent)" : "transparent",
+              background: !useTodayDate ? "var(--accent-active)" : "transparent",
               color: !useTodayDate ? "#fff" : "var(--cds-text-primary)",
               border: "none", borderLeft: "1px solid var(--border-subtle-wl)", cursor: "pointer",
               fontFamily: "var(--cds-font-sans)", fontSize: 13, fontWeight: !useTodayDate ? 600 : 400,
@@ -182,7 +182,7 @@ export default function MuscleMapConfirm({
             disabled={!hasEnabled}
             style={{
               width: "100%", padding: "14px 20px",
-              background: hasEnabled ? "var(--accent)" : "var(--cds-layer-01)",
+              background: hasEnabled ? "var(--accent-active)" : "var(--cds-layer-01)",
               border: "none",
               borderRadius: "var(--r-pill)",
               color: hasEnabled ? "#fff" : "var(--text-muted-wl)",

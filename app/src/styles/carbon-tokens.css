@@ -434,6 +434,7 @@
   --text-subdued-wl:  #6f6f6f;
   --text-disabled-wl: rgba(22,22,22,.25);
   --exercise:         #1a8c4e;
+  --accent-soft:      #b5116a;
 }
 
 /* Element defaults — semantic tags, productive sizing */

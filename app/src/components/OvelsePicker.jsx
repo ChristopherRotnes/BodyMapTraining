@@ -137,7 +137,7 @@ export default function OvelsePicker({ onBack }) {
                 <p style={{ fontFamily: "var(--cond)", fontSize: 15, fontWeight: 700, color: "var(--cds-text-primary)", margin: "0 0 2px" }}>
                   {t("settSammen.nyOvelse")}
                 </p>
-                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--exercise)", margin: 0 }}>
+                <p style={{ fontFamily: "var(--cds-font-mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--cds-text-primary)", margin: 0 }}>
                   {t("ovelsePicker.nyOvelseSubtitle")}
                 </p>
               </div>
@@ -195,7 +195,6 @@ export default function OvelsePicker({ onBack }) {
                   borderRadius: 8,
                   color: "var(--cds-text-primary)",
                   fontFamily: "var(--cds-font-sans)", fontSize: 14,
-                  outline: "none",
                 }}
               />
             </div>

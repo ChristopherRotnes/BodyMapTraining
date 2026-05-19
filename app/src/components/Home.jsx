@@ -112,7 +112,7 @@ export default function Home({ onShowHistoryWithDate }) {
             onClick={onShowLogger}
             style={{
               width: "100%", padding: "16px 20px",
-              background: "var(--accent)", color: "#fff",
+              background: "var(--accent-active)", color: "#fff",
               border: "none", borderRadius: "var(--r-pill)",
               fontFamily: "var(--cds-font-sans)", fontWeight: 600, fontSize: 15,
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
