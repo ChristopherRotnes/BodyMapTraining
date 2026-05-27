@@ -7,17 +7,40 @@ import { normalizeName } from './sportyUtils.js';
 const SPORTY_BASE_URL =
   'https://sporty.no/api/v1/businessunits/8/groupactivities';
 
-function buildSportyUrl(daysAhead = 10, daysBack = 0) {
-  // sporty.no uses Oslo midnight = previous day T22:00:00.000Z (CEST / UTC+2)
+const SYNC_DAYS_AHEAD = 10;
+
+function buildSportyUrl(daysBack = 0) {
+  // sporty.no uses Oslo midnight = previous day T22:00:00.000Z (CEST / UTC+2).
+  // NOTE: sporty.no ignores period_start and always returns sessions from tomorrow
+  // onwards — the period_start param is kept for intent documentation only.
   const start = new Date();
   start.setUTCHours(22, 0, 0, 0);
   start.setUTCDate(start.getUTCDate() - 1 - daysBack);
 
-  const end = new Date();
-  end.setUTCHours(22, 0, 0, 0);
-  end.setUTCDate(end.getUTCDate() - 1 + daysAhead);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + SYNC_DAYS_AHEAD);
 
   return `${SPORTY_BASE_URL}?period_start=${encodeURIComponent(start.toISOString())}&period_end=${encodeURIComponent(end.toISOString())}`;
+}
+
+// Returns the next Oslo midnight as a UTC Date (22:00 UTC in CEST, 23:00 in CET).
+// Used as the delete floor: we never remove sessions before this point so that
+// same-day sessions captured by the 22:00 UTC run are preserved by later runs.
+function nextOsloMidnightUTC() {
+  const d = new Date();
+  d.setUTCHours(22, 0, 0, 0);
+  if (d <= new Date()) d.setUTCDate(d.getUTCDate() + 1);
+  return d;
+}
+
+// Returns the sync window end (same arithmetic as buildSportyUrl).
+function syncWindowEnd() {
+  const start = new Date();
+  start.setUTCHours(22, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - 1);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + SYNC_DAYS_AHEAD);
+  return end;
 }
 
 function shiftRow(row, shiftMs) {
@@ -42,7 +65,7 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
 
   let sportyData;
   try {
-    const res = await fetch(buildSportyUrl(10, daysBack), {
+    const res = await fetch(buildSportyUrl(daysBack), {
       headers: { 'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)' },
     });
     if (!res.ok) throw new Error(`sporty.no returned ${res.status}`);
@@ -63,7 +86,7 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
   })).filter(r => r.start_time && r.end_time);
 
   if (rows.length === 0) {
-    context.log('No sessions returned from sporty.no');
+    context.log('No sessions returned from sporty.no — skipping cleanup to preserve existing data');
     return { ok: true, upserted: 0 };
   }
 
@@ -72,6 +95,32 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
     const shiftMs = shiftDays * 24 * 60 * 60 * 1000;
     rows = rows.map(r => shiftRow(r, shiftMs));
     context.log(`Shifting ${rows.length} rows by ${shiftDays} days`);
+  }
+
+  // Safe cleanup: delete future gym_calendar rows within the sync window so
+  // cancelled/rescheduled sessions don't accumulate. Only runs for normal syncs
+  // (not backfills) and only when Sporty returned data (guards against outages).
+  // Rows before nextOsloMidnight are never touched — this preserves same-day
+  // sessions captured by the 22:00 UTC run from being lost by later runs.
+  if (shiftDays === 0) {
+    const floor = nextOsloMidnightUTC();
+    const ceiling = syncWindowEnd();
+    const cleanupRes = await fetch(
+      `${supabaseUrl}/rest/v1/gym_calendar?start_time=gte.${floor.toISOString()}&start_time=lte.${ceiling.toISOString()}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Prefer': 'return=minimal',
+        },
+      }
+    );
+    if (cleanupRes.ok) {
+      context.log(`Cleaned up future gym_calendar rows in window ${floor.toISOString()} → ${ceiling.toISOString()}`);
+    } else {
+      context.warn('gym_calendar cleanup failed (non-fatal):', await cleanupRes.text());
+    }
   }
 
   const upsertRes = await fetch(
@@ -98,11 +147,13 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
   return { ok: true, upserted: rows.length };
 }
 
-// ── Timer trigger: 04:00, 11:00, and 14:00 UTC daily ─────────────────
+// ── Timer trigger: 22:00, 04:00, 11:00, and 14:00 UTC daily ──────────
+// 22:00 UTC = midnight Oslo (CEST/UTC+2) — captures next day's sessions while
+// Sporty still returns them as "tomorrow". Later runs keep the schedule fresh.
 // Skipped locally — SWA CLI only supports HTTP triggers.
 if (process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
   app.timer('sportySyncTimer', {
-    schedule: '0 4,11,14 * * *',
+    schedule: '0 4,11,14,22 * * *',
     handler: async (myTimer, context) => {
       await syncGymCalendar(context, { daysBack: 7 });
     },
