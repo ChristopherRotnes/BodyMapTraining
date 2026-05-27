@@ -7,14 +7,15 @@ import { normalizeName } from './sportyUtils.js';
 const SPORTY_BASE_URL =
   'https://sporty.no/api/v1/businessunits/8/groupactivities';
 
-function buildSportyUrl(daysAhead = 10) {
+function buildSportyUrl(daysAhead = 10, daysBack = 0) {
   // sporty.no uses Oslo midnight = previous day T22:00:00.000Z (CEST / UTC+2)
   const start = new Date();
   start.setUTCHours(22, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - 1);
+  start.setUTCDate(start.getUTCDate() - 1 - daysBack);
 
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + daysAhead);
+  const end = new Date();
+  end.setUTCHours(22, 0, 0, 0);
+  end.setUTCDate(end.getUTCDate() - 1 + daysAhead);
 
   return `${SPORTY_BASE_URL}?period_start=${encodeURIComponent(start.toISOString())}&period_end=${encodeURIComponent(end.toISOString())}`;
 }
@@ -29,7 +30,7 @@ function shiftRow(row, shiftMs) {
   };
 }
 
-async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
+async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -41,7 +42,7 @@ async function syncGymCalendar(context, { shiftDays = 0 } = {}) {
 
   let sportyData;
   try {
-    const res = await fetch(buildSportyUrl(), {
+    const res = await fetch(buildSportyUrl(10, daysBack), {
       headers: { 'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)' },
     });
     if (!res.ok) throw new Error(`sporty.no returned ${res.status}`);
@@ -103,7 +104,7 @@ if (process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
   app.timer('sportySyncTimer', {
     schedule: '0 4,11,14 * * *',
     handler: async (myTimer, context) => {
-      await syncGymCalendar(context);
+      await syncGymCalendar(context, { daysBack: 7 });
     },
   });
 }
@@ -198,7 +199,8 @@ app.http('sportySyncHttp', {
     }
     const body = await request.json().catch(() => ({}));
     const shiftDays = typeof body.shiftDays === 'number' ? body.shiftDays : 0;
-    const result = await syncGymCalendar(context, { shiftDays });
+    const daysBack = typeof body.daysBack === 'number' ? Math.min(body.daysBack, 90) : 0;
+    const result = await syncGymCalendar(context, { shiftDays, daysBack });
     return new Response(JSON.stringify(result), {
       status: result.ok ? 200 : 500,
       headers: { 'Content-Type': 'application/json' },
