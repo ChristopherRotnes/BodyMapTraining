@@ -2,6 +2,11 @@
 
 All notable changes to Workout Lens are documented here.
 
+## [Unreleased]
+
+### Developer / Infrastructure
+- **Fix sporty sync writes blocked by missing User-Agent** — Supabase rejects POST and DELETE requests from the `sb_secret` service role key when no `User-Agent` header is present (treats the request as a browser). Azure Functions' built-in `fetch` sends no User-Agent, so the cleanup DELETE and upsert POST in `sportySync.js` were silently failing after each sync — the cleanup wiped future rows, then the upsert failed to re-insert them, leaving `gym_calendar` empty from June 6 onwards. Added `User-Agent: WorkoutLens/1.0 sporty-sync (Azure Functions)` to both requests. A post-deploy manual backfill is needed to restore June data.
+
 ## [1.5.16] — 2026-05-19
 
 ### Accessibility

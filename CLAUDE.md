@@ -181,3 +181,6 @@ Preview branches apply all migrations on a fresh empty DB. Delta migrations fail
 
 ### #237 — Excess anon grants + duplicate RLS policies
 Default `GRANT ALL` gives anon TRUNCATE (bypasses RLS). **Only grant what PostgREST needs.** Always `DROP POLICY IF EXISTS` old policies when replacing them.
+
+### #268 — Supabase blocks sb_secret writes without User-Agent
+Supabase treats POST/DELETE with an `sb_secret` service role key and no `User-Agent` as a browser request and returns 403 "Forbidden use of secret API key in browser". Azure Functions' built-in `fetch` sends no User-Agent by default. **Always add `'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)'` to every write request (POST, DELETE, PATCH) that uses the service role key.** GET requests are unaffected.
