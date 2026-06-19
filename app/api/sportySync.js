@@ -113,6 +113,7 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
           'apikey': serviceKey,
           'Authorization': `Bearer ${serviceKey}`,
           'Prefer': 'return=minimal',
+          'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)',
         },
       }
     );
@@ -132,6 +133,7 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
         'apikey': serviceKey,
         'Authorization': `Bearer ${serviceKey}`,
         'Prefer': 'resolution=merge-duplicates,return=minimal',
+        'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)',
       },
       body: JSON.stringify(rows),
     }
