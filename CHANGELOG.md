@@ -4,7 +4,10 @@ All notable changes to Workout Lens are documented here.
 
 ## [Unreleased]
 
+## [1.5.17] — 2026-06-25
+
 ### Developer / Infrastructure
+- **Fix sporty.no sync never running — timer trigger unsupported on SWA managed functions** — the automatic calendar sync was implemented as an Azure Functions timer trigger (`app.timer('sportySyncTimer', ...)`) in `sportySync.js`. Azure Static Web Apps **managed functions run HTTP triggers only** — timer/cron triggers are silently ignored and never register, so the scheduled sync never fired in production (the secondary `AZURE_FUNCTIONS_ENVIRONMENT === 'Production'` guard was moot). Fix: removed the dead timer and drive the sync externally with a new GitHub Actions cron workflow (`.github/workflows/sporty-sync.yml`) that `POST`s to `/api/sporty-sync` at 04:00, 11:00, 14:00 and 22:00 UTC with a 7-day self-healing lookback. The `POST /api/sporty-sync` endpoint now accepts machine auth (`X-Api-Key: <SPORTY_SYNC_API_KEY>`) in addition to the existing Supabase JWT (`X-Supabase-Token`) for manual kicks. **Setup: add `SPORTY_SYNC_URL` and `SPORTY_SYNC_API_KEY` as GitHub Actions repo secrets.** Documented as pitfall #270.
 - **Fix sporty sync writes blocked by missing User-Agent** — Supabase rejects POST and DELETE requests from the `sb_secret` service role key when no `User-Agent` header is present (treats the request as a browser). Azure Functions' built-in `fetch` sends no User-Agent, so the cleanup DELETE and upsert POST in `sportySync.js` were silently failing after each sync — the cleanup wiped future rows, then the upsert failed to re-insert them, leaving `gym_calendar` empty from June 6 onwards. Added `User-Agent: WorkoutLens/1.0 sporty-sync (Azure Functions)` to both requests. A post-deploy manual backfill is needed to restore June data.
 
 ## [1.5.16] — 2026-05-19

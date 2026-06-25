@@ -78,7 +78,7 @@ Skeleton dark-mode tokens must be added to `[data-theme="g100"]` in `carbon-toke
 
 **Azure Functions entry:** `app/api/index.js` must import every new function file — Azure v4 only loads what `main` references. API files must use raw `fetch` to Supabase REST — never `import { createClient } from '@supabase/supabase-js'`.
 
-**Sporty sync:** `sportySync.js` timer triggers 04:00, 11:00, 14:00 UTC. Timer guarded by `AZURE_FUNCTIONS_ENVIRONMENT === 'Production'` — skipped in local dev.
+**Sporty sync:** SWA managed functions run **HTTP triggers only** — Azure Functions timer triggers never fire in production (see pitfall #270). The sync is driven by a GitHub Actions cron workflow (`.github/workflows/sporty-sync.yml`) that `POST`s to `/api/sporty-sync` at 04:00, 11:00, 14:00, 22:00 UTC with `{"daysBack":7}`. The endpoint accepts either `X-Api-Key: <SPORTY_SYNC_API_KEY>` (automation) or `X-Supabase-Token: <JWT>` (manual kick from a signed-in user). Do NOT re-add an `app.timer(...)` — it is dead code on this platform.
 
 **Recs cache:** Bump `RECS_PROMPT_VERSION` in both `prompts.js` AND `recsCacheCleanup.js` whenever the recommendation prompt or model changes. A CI test (`recsVersion.test.js`) fails if they drift.
 
@@ -184,3 +184,6 @@ Default `GRANT ALL` gives anon TRUNCATE (bypasses RLS). **Only grant what PostgR
 
 ### #268 — Supabase blocks sb_secret writes without User-Agent
 Supabase treats POST/DELETE with an `sb_secret` service role key and no `User-Agent` as a browser request and returns 403 "Forbidden use of secret API key in browser". Azure Functions' built-in `fetch` sends no User-Agent by default. **Always add `'User-Agent': 'WorkoutLens/1.0 sporty-sync (Azure Functions)'` to every write request (POST, DELETE, PATCH) that uses the service role key.** GET requests are unaffected.
+
+### #270 — SWA managed functions ignore timer triggers
+Azure Static Web Apps **managed** functions (`api_location: "app/api"` in `ci.yml`) run **HTTP triggers only** — `app.timer(...)` and every other non-HTTP trigger is silently dropped, never registers, and never fires. This is why the sporty.no sync never ran: it was an `app.timer('sportySyncTimer', ...)`. **Fix: drive scheduled work from outside** — a GitHub Actions cron workflow (`.github/workflows/sporty-sync.yml`) that `POST`s to the HTTP endpoint. Never schedule recurring work with `app.timer` on this platform; the only escape hatch is "bring your own Functions app". [Docs](https://learn.microsoft.com/azure/static-web-apps/apis-functions#constraints).
