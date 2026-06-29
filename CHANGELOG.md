@@ -4,6 +4,21 @@ All notable changes to Workout Lens are documented here.
 
 ## [Unreleased]
 
+## [1.5.18] — 2026-06-29
+
+### Developer / Infrastructure
+- **Weekly dependency audit** — resolved 4 npm audit vulnerabilities (2 high, 1 moderate, 1 low) and updated all direct dependencies to latest patch/minor releases within semver ranges:
+  - `vite` 8.0.10 → 8.1.0 — fixes high-severity `server.fs.deny` bypass on Windows and NTLMv2 hash disclosure via UNC path (GHSA-fx2h-pf6j-xcff, GHSA-v6wh-96g9-6wx3)
+  - `ws` (transitive) upgraded to 8.21.0 — fixes high-severity memory exhaustion DoS and uninitialized memory disclosure (GHSA-96hv-2xvq-fx4p, GHSA-58qx-3vcg-4xpx)
+  - `brace-expansion` (transitive) upgraded to 5.0.6 — fixes moderate numeric range DoS (GHSA-jxxr-4gwj-5jf2)
+  - `@babel/core` (transitive) upgraded — fixes low-severity arbitrary file read via sourceMappingURL (GHSA-4x5r-pxfx-6jf8)
+  - `@carbon/icons-react` 11.79.0 → 11.82.0, `@carbon/react` 1.106.0 → 1.110.0
+  - `@supabase/supabase-js` 2.104.1 → 2.108.2
+  - `i18next` 26.0.8 → 26.3.3, `react-i18next` 17.0.6 → 17.0.8
+  - `react` + `react-dom` 19.2.5 → 19.2.7
+  - `eslint` 10.2.1 → 10.6.0, `@vitejs/plugin-react` 6.0.1 → 6.0.3
+  - `vitest` + `@vitest/coverage-v8` 4.1.5 → 4.1.9, `globals` 17.5.0 → 17.7.0
+
 ## [1.5.17] — 2026-06-25
 
 ### Developer / Infrastructure
