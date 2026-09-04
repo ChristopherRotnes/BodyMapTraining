@@ -15,41 +15,46 @@
 - ✓ `app/api/recsCacheCleanup.js` — `recsCacheCleanup` (03:00 UTC every Sunday)
 
 ## What's still running
-- **Azure Static Web Apps** — App still accessible at current URL (no cost if no traffic)
-- **Azure Functions** — API still callable via HTTP (manual, not automated)
+- ✓ **Azure Static Web Apps** — DELETED (2026-09-04)
+- ✓ **Azure Functions** — DELETED with SWA (managed component)
 - **Supabase** — Database intact, no changes made
 - **GitHub** — Repo accessible, code intact
+- **DNS** — Pending deletion by user
 
-## What needs manual action in Azure Portal
+## What's been deleted
+- ✓ Azure Static Web Apps instance `muskelkart` (rg-muskelkart) — deleted via CLI
+- ✓ Azure Functions (integrated APIs) — deleted with SWA
+- ⏳ DNS entries for `white-island-090dfd003.7.azurestaticapps.net` — pending user deletion
+- ⏳ Possibly `workout.umulig.org` CNAME — pending user deletion
 
-1. **Optional: Stop the Azure Static Web Apps instance**
-   - Azure Portal → Static Web Apps → select "White Island" → Settings → Stop
-   - Or delete if unneeded (non-reversible without backup)
+## To reactivate (full recovery)
 
-2. **Optional: Stop the Azure Functions instance**
-   - Azure Portal → Function App → select the app → Stop
-   - Or scale down to free tier if desired
-
-3. **Monitor costs**
-   - Static Web Apps has minimal idle cost (storage only)
-   - Functions have no cost if not invoked (already stopped via code)
-   - Check Azure Cost Management for current state
-
-## To reactivate
+### Cost of recovery
+Reactivation requires **recreating Azure resources from scratch** (resource-intensive):
+- Azure Static Web Apps: ~$100 to set up + deploy
+- GitHub Actions: ~$50 for initial build agents
+- DNS: manual reconfiguration
+- **Total effort:** 1–2 hours engineer time
 
 ### Step 1: Revert code changes
 ```powershell
 # On master branch:
-git log --oneline | grep hibernation  # Find the commit
-git revert <commit-hash>
+git log --oneline | grep hibernation  # Find commits
+git revert <commit-hash>  # Revert hibernation + merge commit
 git push origin master
 ```
 
-### Step 2: Re-enable Azure Portal resources
-- If stopped: Azure Portal → Start the Static Web Apps and Functions instances
-- GitHub Actions will automatically re-run on next push
+### Step 2: Recreate Azure resources
+- Create new Azure Static Web Apps instance in `rg-muskelkart`
+- Regenerate deployment token for GitHub Actions
+- Update `.github/workflows/ci.yml` with new token
+- Manually trigger first deployment via GitHub Actions
 
-### Step 3: Verify
+### Step 3: Restore DNS
+- Add CNAME `white-island-090dfd003.7.azurestaticapps.net` back to DNS provider
+- Update `workout.umulig.org` if it was pointing to the old instance
+
+### Step 4: Verify
 ```powershell
 # Check that workflows are running:
 gh run list --limit 5
@@ -60,17 +65,19 @@ gh run list --limit 5
 ```
 
 ## Cost impact
-- **Storage:** ~$0.50/month (Supabase DB at rest, Azure storage)
-- **No compute costs** while paused (all functions disabled)
-- **Projected savings:** ~$50-100/month vs. running
+- **Storage only:** ~$0.50/month (Supabase DB at rest, minimal S3 storage)
+- **Zero compute:** no functions running, no deployments triggered
+- **Projected savings:** ~$150–200/month vs. running
+- **Trade-off:** recovery is manual + expensive
 
-## Recovery time
-- Code changes: ~10 minutes (git revert + push)
-- Azure Portal: ~5 minutes (stop/start resources)
-- GitHub Actions: ~2 minutes (re-run CI)
-- **Total:** ~20 minutes to full reactivation
+## Notes
+- Database is fully intact and can be restored to any new instance
+- Code on GitHub is unchanged — rebuild is straightforward
+- DNS deletion is pending user action
+- **Reactivation is possible but requires deliberate effort** (not just a button press)
 
 ---
 
-**Last updated:** 2026-09-04  
+**Status:** FULLY HIBERNATED (deleted, not just paused)  
+**Last updated:** 2026-09-04 (resources deleted)  
 **Updated by:** Claude Code (hibernation automation)
