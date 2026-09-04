@@ -149,15 +149,20 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
   return { ok: true, upserted: rows.length };
 }
 
-// ── No timer trigger ──────────────────────────────────────────────────
-// Azure Static Web Apps managed functions support HTTP triggers ONLY — timer
-// (cron) triggers are silently ignored and never register. The scheduled sync
-// is therefore driven externally by a GitHub Actions cron workflow
-// (.github/workflows/sporty-sync.yml) that POSTs to /api/sporty-sync at
-// 04:00, 11:00, 14:00 and 22:00 UTC with {"daysBack": 7}.
+// ── Timer trigger: DISABLED for hibernation ──────────────────────
+// Original: 22:00, 04:00, 11:00, and 14:00 UTC daily
 // 22:00 UTC = midnight Oslo (CEST/UTC+2) — captures next day's sessions while
-// Sporty still returns them as "tomorrow".
-// Docs: https://learn.microsoft.com/azure/static-web-apps/apis-functions#constraints
+// Sporty still returns them as "tomorrow". Later runs keep the schedule fresh.
+// Skipped locally — SWA CLI only supports HTTP triggers.
+// HIBERNATION: Project paused 2026-09-04 — timer disabled
+if (false && process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
+  app.timer('sportySyncTimer', {
+    schedule: '0 4,11,14,22 * * *',
+    handler: async (myTimer, context) => {
+      await syncGymCalendar(context, { daysBack: 7 });
+    },
+  });
+}
 
 // ── HTTP trigger: health check ────────────────────────────────────────
 // GET /api/sporty-health  → returns most-recent gym_calendar row + count
@@ -225,38 +230,23 @@ app.http('sportySyncHealth', {
   },
 });
 
-// ── HTTP trigger: scheduled sync (cron) + manual kick + optional backfill ──
+// ── HTTP trigger: manual kick + optional backfill ─────────────────────
 // POST /api/sporty-sync                    → sync today
-// POST /api/sporty-sync  {"daysBack":7}    → self-healing 7-day lookback (cron default)
 // POST /api/sporty-sync  {"shiftDays":-7}  → duplicate current data 7 days back
-//
-// Two auth paths are accepted:
-//   1. Automation (GitHub Actions cron): header  X-Api-Key: <SPORTY_SYNC_API_KEY>
-//      SWA managed functions only run HTTP triggers — no timer trigger ever fires
-//      in production (see .github/workflows/sporty-sync.yml), so an external
-//      scheduler drives the sync via this endpoint.
-//   2. Manual kick from a signed-in user: header  X-Supabase-Token: <valid JWT>
-//      (Azure SWA hijacks the Authorization header — never use it for app JWTs)
+// Requires header:  X-Supabase-Token: <valid Supabase JWT>
+// (Azure SWA hijacks the Authorization header — never use it for app JWTs)
 app.http('sportySyncHttp', {
   methods: ['POST'],
   route: 'sporty-sync',
   authLevel: 'anonymous',
   handler: async (request, context) => {
-    const apiKey = request.headers.get('x-api-key');
-    const expectedKey = process.env.SPORTY_SYNC_API_KEY;
-    let authorized = Boolean(expectedKey && apiKey === expectedKey);
-
-    if (!authorized) {
-      const token = request.headers.get('x-supabase-token');
-      const userId = await verifySupabaseJwt(
-        token,
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_ANON_KEY,
-      );
-      authorized = Boolean(userId);
-    }
-
-    if (!authorized) {
+    const token = request.headers.get('x-supabase-token');
+    const userId = await verifySupabaseJwt(
+      token,
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY,
+    );
+    if (!userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
