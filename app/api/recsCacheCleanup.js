@@ -22,7 +22,8 @@ async function deleteRows(supabaseUrl, serviceKey, filter) {
   return match ? parseInt(match[1], 10) : 0;
 }
 
-app.timer('recsCacheCleanup', {
+// HIBERNATION: Timer disabled 2026-09-04 — project paused
+if (false) app.timer('recsCacheCleanup', {
   schedule: '0 3 * * 0',
   handler: async (_myTimer, context) => {
     const supabaseUrl = process.env.SUPABASE_URL;

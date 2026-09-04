@@ -149,11 +149,13 @@ async function syncGymCalendar(context, { shiftDays = 0, daysBack = 0 } = {}) {
   return { ok: true, upserted: rows.length };
 }
 
-// ── Timer trigger: 22:00, 04:00, 11:00, and 14:00 UTC daily ──────────
+// ── Timer trigger: DISABLED for hibernation ──────────────────────
+// Original: 22:00, 04:00, 11:00, and 14:00 UTC daily
 // 22:00 UTC = midnight Oslo (CEST/UTC+2) — captures next day's sessions while
 // Sporty still returns them as "tomorrow". Later runs keep the schedule fresh.
 // Skipped locally — SWA CLI only supports HTTP triggers.
-if (process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
+// HIBERNATION: Project paused 2026-09-04 — timer disabled
+if (false && process.env.AZURE_FUNCTIONS_ENVIRONMENT === 'Production') {
   app.timer('sportySyncTimer', {
     schedule: '0 4,11,14,22 * * *',
     handler: async (myTimer, context) => {

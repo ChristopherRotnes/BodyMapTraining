@@ -10,6 +10,7 @@ on:
 
 jobs:
   close_pull_request_job:
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 5
     name: Close staging environment
