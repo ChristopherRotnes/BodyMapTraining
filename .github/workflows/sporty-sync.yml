@@ -1,0 +1,58 @@
+name: Sporty sync
+
+# Azure Static Web Apps managed functions only run HTTP triggers — the timer
+# trigger in app/api/sportySync.js never fires in production. This scheduled
+# workflow drives the sync externally by POSTing to /api/sporty-sync.
+#
+# Required repository secrets:
+#   SPORTY_SYNC_URL      — full endpoint URL, e.g. https://workout.umulig.org/api/sporty-sync
+#   SPORTY_SYNC_API_KEY  — same value as the SPORTY_SYNC_API_KEY app setting in Azure
+on:
+  schedule:
+    # 04:00, 11:00, 14:00 and 22:00 UTC daily. 22:00 UTC = midnight Oslo
+    # (CEST/UTC+2) — captures the next day's sessions while Sporty still
+    # returns them as "tomorrow". GitHub cron is best-effort and may be
+    # delayed under load; the 7-day lookback makes each run self-healing.
+    - cron: '0 4,11,14,22 * * *'
+  workflow_dispatch:
+    inputs:
+      daysBack:
+        description: 'Days to look back (self-heal window)'
+        required: false
+        default: '7'
+
+# Don't pile up overlapping syncs if a run is slow.
+concurrency:
+  group: sporty-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: Trigger sporty.no sync
+    steps:
+      - name: POST /api/sporty-sync
+        env:
+          SPORTY_SYNC_URL: ${{ secrets.SPORTY_SYNC_URL }}
+          SPORTY_SYNC_API_KEY: ${{ secrets.SPORTY_SYNC_API_KEY }}
+          DAYS_BACK: ${{ github.event.inputs.daysBack || '7' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SPORTY_SYNC_URL:-}" ] || [ -z "${SPORTY_SYNC_API_KEY:-}" ]; then
+            echo "::error::SPORTY_SYNC_URL and SPORTY_SYNC_API_KEY repository secrets must be set"
+            exit 1
+          fi
+          http=$(curl -sS -o response.json -w '%{http_code}' \
+            --retry 3 --retry-delay 5 --retry-all-errors --max-time 120 \
+            -X POST "$SPORTY_SYNC_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Api-Key: $SPORTY_SYNC_API_KEY" \
+            --data "{\"daysBack\": ${DAYS_BACK}}")
+          echo "HTTP $http"
+          cat response.json || true
+          echo
+          if [ "$http" != "200" ]; then
+            echo "::error::sporty.no sync failed with HTTP $http"
+            exit 1
+          fi
